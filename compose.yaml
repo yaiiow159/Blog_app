@@ -1,0 +1,58 @@
+version: '3.7'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '8080:8080'
+    container_name: blog_app
+    restart: on-failure
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m -DSpring.profiles.active=dev -Dfile.encoding=UTF-8
+      - LOGGING_FILE_NAME=blog_app
+      - LOGGING_FILE_PATH=./logs
+    deploy:
+      replicas: 1
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - network1
+  mysql:
+    image: mysql:8.0
+    container_name: mysql8.0
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    restart: on-failure
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - D:/docker/mysql/etc/my.cnf:/etc/my.cnf
+    deploy:
+      replicas: 1
+    environment:
+      - MYSQL_DATABASE=blog_app
+      - MYSQL_ROOT_PASSWORD=root
+    ports:
+      - "3305:3306"
+    networks:
+      - network1
+  redis:
+    image: redis:7.2.1-alpine
+    container_name: redis7
+    restart: on-failure
+    command: redis-server --config /etc/redis/redis.conf
+    volumes:
+      - D:/docker/redis/redis.conf:/etc/redis/redis.conf
+      - redis_data:/var/lib/redis
+    deploy:
+      replicas: 1
+    ports:
+      - "6380:6379"
+    networks:
+      - network1
+networks:
+  network1:
+    driver: bridge
+volumes:
+  mysql_data:
+  redis_data:
