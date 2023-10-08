@@ -12,3 +12,4 @@
 9. AOP應用 (使用AOP在創建評論或文章時，過濾包含惡意留言的文章或是評論) 待做
 10. Redis 主要作用式存放jwtToken，設置expireTime 做驗證
 11. 基本CRUD操作
+12. dockerfile以及docker-compose 創建容器
