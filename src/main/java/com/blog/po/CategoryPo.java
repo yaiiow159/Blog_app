@@ -1,8 +1,8 @@
 package com.blog.po;
 
+import jakarta.persistence.*;
 import lombok.*;
 
-import javax.persistence.*;
 import java.io.Serializable;
 import java.util.List;
 
@@ -13,7 +13,6 @@ import java.util.List;
 @Entity
 @Table(name = "categories")
 public class CategoryPo extends BasicPo implements Serializable {
-
     @Column(name = "name")
     private String name;
 

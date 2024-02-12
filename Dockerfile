@@ -1,21 +1,19 @@
 FROM openjdk:17
 LABEL authors="Timmy <https://github.com/yaiiow159>"
-MAINTAINER Timmy
-# Environment
-ENV MYSQL_DATABASE blog_app
-ENV MYSQL_ROOT_PASSWORD root
-ENV REDIS_PORT 6379
-ENV REDIS_HOST localhost
-ENV REDIS_PASSWORD null
-ENV REDIS_DB 0
-# Workdir
-WORKDIR /app
+ARG JAR_FILE=target/blog_app-0.0.1.jar
 
-# Copy JAR file
-COPY /target/Blog_app-0.0.1-SNAPSHOT.jar /app/Blog_app-0.0.1-SNAPSHOT.jar
+# Environment
+ENV TZ=Asia/Taipei
+ENV JAVA_OPTS="-Xms128m -Xmx256m"
+ENV APP_NAME=blog_app
+
+# Workdir
+WORKDIR /user/local
+
+ADD target/${JAR_FILE} /user/local/app.jar
 
 # Expose port
-EXPOSE 9091
+EXPOSE 19090
 
-# Command to run the application
-CMD ["java", "-jar", "/app/Blog_app-0.0.1-SNAPSHOT.jar"]
+# Run
+ENTRYPOINT ["java","-jar","-Dspring.profiles.active=dev","/user/local/app.jar"]

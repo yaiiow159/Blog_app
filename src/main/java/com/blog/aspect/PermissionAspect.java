@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 @Component
 @Aspect
 public class PermissionAspect {
-
     @Before("@annotation(com.blog.annotation.AdminPermission)")
     public void validateAdminPermission() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

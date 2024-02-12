@@ -23,6 +23,6 @@ public enum UserRole {
                 return role;
             }
         }
-        throw new IllegalArgumentException("No enum constant with name " + roleName);
+        throw new IllegalArgumentException("沒有這個權限 " + roleName);
     }
 }

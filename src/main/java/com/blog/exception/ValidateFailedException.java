@@ -2,12 +2,12 @@ package com.blog.exception;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
-import org.springframework.boot.autoconfigure.quartz.QuartzTransactionManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@Getter
 public class ValidateFailedException extends RuntimeException {
 
     public ValidateFailedException(String message){
@@ -27,10 +27,6 @@ public class ValidateFailedException extends RuntimeException {
         errors.add(error);
     }
 
-    public List<DomainErrorStatus> getErrors() {
-        return errors;
-    }
-
     public void addError(DomainErrorStatus error){
         errors.add(error);
     }
@@ -39,9 +35,11 @@ public class ValidateFailedException extends RuntimeException {
         this.errors.addAll(errors);
     }
 
+    @Getter
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     public enum DomainErrorStatus {
 
+        CAPTCHA_VALIDATION_ERROR("Captcha-error-01","圖形驗證碼錯誤"),
         JWT_AUTHENTICATION_ACCESS_ERROR("JWT-error-01","JWT認證時發生錯誤"),
         JWT_AUTHENTICATION_REFRESH_ERROR("JWT-error-02","授權認證時刷新錯誤"),
         JWT_AUTHENTICATION_TOKEN_EXPIRED("JWT-error-03","JWT-token已過期"),
@@ -56,15 +54,17 @@ public class ValidateFailedException extends RuntimeException {
         RESOURCE_CANNOT_CREATE("RE008","創建物件時發生錯誤"),
         RESOURCE_CANNOT_GET("RE009","取得物件時發生錯誤"),
         RESOURCE_IS_EMPTY("RE010", "資源不得為空"),
-        REVIEW_LEVEL_IS_EMPTY("REVIEW001", "覆核權限等級不得為空"),;
-
-        private final String code;
-        @Getter
+        REVIEW_LEVEL_IS_EMPTY("REVIEW001", "覆核權限等級不得為空"),
+        CAPTCHA_IMAGE_ERROR("", "圖形驗證碼發生錯誤"),
+        CAPTCHA_CODE_ERROR("CAPTCHA_CODE_ERROR", "驗證碼錯誤"),
+        USER_ALREADY_EXISTS("U001","用戶已存在"),
+        EMAIL_ALREADY_EXISTS("U002","電子郵箱已存在");
         private String message;
+        private final String code;
 
         DomainErrorStatus(String code, String message) {
-            this.code = code;
             this.message = message;
+            this.code = code;
         }
 
         public void setMessage(String message) {

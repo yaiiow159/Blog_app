@@ -5,13 +5,18 @@ import com.blog.dto.UserProfileRequestBody;
 import com.blog.exception.ResourceNotFoundException;
 import com.blog.exception.ValidateFailedException;
 import com.blog.dto.UserDto;
+import jakarta.mail.MessagingException;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import javax.naming.AuthenticationNotSupportedException;
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 public interface UserService {
+    public static final String DEFAULT_USER_NAME = "admin";
     UserDto findByUserId(Long userId);
 
     UserDto createUser(UserDto userDto) throws AuthenticationNotSupportedException, ValidateFailedException;
@@ -22,13 +27,18 @@ public interface UserService {
 
     UserDto findByUserName(String userName);
 
-    Page<UserDto> findBySpec(Long userId, String userName, String userEmail, int page, int size, String sort, String direction);
+    Page<UserDto> findBySpec(String userName, String userEmail, int page, int size, String sort, String direction);
 
     List<UserDto> findUsersByRoleId(Long id);
 
-    UserDto register(UserDto body);
-
-    UserProfileDto findUserProfileByUserNameOrEmail(UserProfileRequestBody userProfileRequestBody) throws ResourceNotFoundException;
+    String register(UserDto body);
 
     String logout(String token) throws AuthenticationNotSupportedException;
+
+    UserProfileDto updateUserProfile(UserProfileRequestBody userProfileRequestBody) throws IOException, ExecutionException, InterruptedException, TimeoutException;
+
+    UserProfileDto getUserProfile(String username) throws ResourceNotFoundException, ExecutionException, InterruptedException, IOException, Exception;
+
+    List<UserDto> findUsersByRoleName(long id);
+
 }

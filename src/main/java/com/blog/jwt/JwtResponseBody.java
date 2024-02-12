@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -16,8 +17,10 @@ public class JwtResponseBody implements Serializable {
     private static final long serialVersionUID = 1L;
     @Schema(description = "使用者帳戶")
     private String account;
-    @Schema(description = "jwt類型")
+    @Schema(description = "jwt類型",defaultValue = "bearer")
     private String type;
     @Schema(description = "jwt令牌")
     private String token;
+    @Schema(description = "使用者角色")
+    private Set<String> roles;
 }

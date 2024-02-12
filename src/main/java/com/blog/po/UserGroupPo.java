@@ -1,14 +1,10 @@
 package com.blog.po;
 
 import com.blog.enumClass.ReviewLevel;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
 
-import javax.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -16,12 +12,15 @@ import java.util.List;
 import java.util.Objects;
 
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "user_group")
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class UserGroupPo extends BasicPo implements Serializable {
+    public static final String DEFAULT_GROUP_NAME = "group1";
     /**
      * 群組名稱
      */
@@ -42,7 +41,6 @@ public class UserGroupPo extends BasicPo implements Serializable {
     private ReviewLevel reviewLevel;
 
     @OneToMany(mappedBy = "userGroupPo", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("userName")
     @ToString.Exclude
     private List<UserPo> userPoList = new ArrayList<>();
 

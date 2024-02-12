@@ -23,7 +23,11 @@ public class SwaggerConfig {
                         .description("Application Blog App")
                         .license(new License()
                         .name("MIT").url("https://opensource.org/licenses/MIT"))
-                        .contact(new io.swagger.v3.oas.models.info.Contact().name("TimmyChung").email("examyou076@gmail.com").url("https://github.com/yaiiow159")))
+                        .contact(new io.swagger.v3.oas.models.info
+                                .Contact()
+                                .name("TimmyChung")
+                                .email("examyou076@gmail.com")
+                                .url("https://github.com/yaiiow159")))
                 .addSecurityItem(new SecurityRequirement()
                         .addList(securitySchemeName))
                 .components(new Components()

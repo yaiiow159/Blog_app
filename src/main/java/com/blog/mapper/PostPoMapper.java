@@ -10,10 +10,11 @@ import org.springframework.data.domain.PageImpl;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE,uses = {CategoryPoMapper.class})
 public interface PostPoMapper {
 
     PostPoMapper INSTANCE = Mappers.getMapper(PostPoMapper.class);
+
     PostPo toPo(PostDto postDto);
 
     PostDto toDto(PostPo postPo);

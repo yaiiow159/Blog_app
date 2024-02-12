@@ -8,10 +8,10 @@ import java.util.Map;
 public interface CapchaService {
 
     // 生成token
-    Map<String,Object> createToken(String text);
+    String createToken(String text);
 
     //生成capcha驗證碼
-    Map<String, Object> capchaCreator() throws IOException;
+    Object capchaCreator() throws IOException;
     // 驗證驗證碼
-    Boolean verifyCapchaCode(String text,String code);
+    Boolean verifyCapchaCode(String key,String code);
 }

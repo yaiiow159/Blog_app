@@ -7,7 +7,6 @@ import org.mapstruct.factory.Mappers;
 
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface CategoryPoMapper {
-
     CategoryPoMapper INSTANCE = Mappers.getMapper(CategoryPoMapper.class);
     CategoryPo toPo(CategoryDto categoryDto);
 

@@ -5,11 +5,14 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.UpdateTimestamp;
 
-
-import javax.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -18,6 +21,10 @@ import java.time.LocalDateTime;
 @Setter
 @MappedSuperclass
 public class BasicPo implements Serializable {
+    public BasicPo() {
+        // 設置預設值
+        this.isDeleted = false;
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -33,16 +40,18 @@ public class BasicPo implements Serializable {
     @Column(name = "create_date")
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    @CreationTimestamp
     LocalDateTime createDate;// TIMESTAMP
 
     @Column(name = "update_user")
     String updateUser;// VARCHAR2(16)
 
-    @Column(name = "is_deleted")
+    @Column(name = "is_deleted",columnDefinition = "boolean default false", nullable = false)
     Boolean isDeleted;// boolean(1)
 
     @Column(name = "update_date")
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    @UpdateTimestamp
     LocalDateTime updDate;// TIMESTAMP
 }
