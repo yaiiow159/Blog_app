@@ -23,7 +23,6 @@ public class ResetPasswordRequest implements Serializable {
 
     @Schema(description = "重製密碼")
     @NotBlank(message = "密碼不得為空")
-    // 是否是英文數字組合
     @Pattern(regexp = "^[a-zA-Z0-9]+$", message = "密碼不符合規定")
     private String newPassword;
 }

@@ -1,10 +1,8 @@
 package com.blog.service.impl;
 
-import com.alibaba.fastjson2.JSONObject;
 import com.blog.dao.PostPoRepository;
 import com.blog.dao.RecentViewPoRepository;
-import com.blog.dao.UserJpaRepository;
-import com.blog.dto.PostDto;
+import com.blog.dao.UserPoRepository;
 import com.blog.dto.RecentViewPoDto;
 import com.blog.exception.ResourceNotFoundException;
 import com.blog.po.PostPo;
@@ -17,31 +15,25 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.chrono.ChronoLocalDate;
-import java.time.chrono.ChronoLocalDateTime;
-import java.time.chrono.Chronology;
-import java.time.chrono.MinguoChronology;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.DecimalStyle;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class RecentViewServiceImpl implements RecentViewService {
     //2024-01-01T14:33
-    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
 
     private final RecentViewPoRepository recentViewPoRepository;
-    private final UserJpaRepository userJpaRepository;
+    private final UserPoRepository userJpaRepository;
     private final PostPoRepository postPoRepository;
     @Override
-    public Page<PostVo> getRecentView(String dateTime, Long postId, String username, Integer page, Integer size, String sort, String direction) {;
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.Direction.fromString(direction), sort);
+    public Page<PostVo> getRecentView(String dateTime, Long postId, String username, Integer page, Integer size) {;
+        Pageable pageable = PageRequest.of(page - 1, size);
         LocalDateTime createTime = dateTime.isEmpty() ? null : LocalDateTime.parse(dateTime, dateTimeFormatter);
         //利用username 查詢使用者
         if(Strings.isNullOrEmpty(username)) {
@@ -52,19 +44,18 @@ public class RecentViewServiceImpl implements RecentViewService {
             throw new UsernameNotFoundException("找不到該使用者");
         }
         Long userId = user.get().getId();
-        List<PostVo> postVoList = recentViewPoRepository.findPostPoByUserIdAndCreateTimeBefore(userId, createTime);
-        if(!postVoList.isEmpty()) {
-            for (PostVo postVo : postVoList) {
+        Page<PostVo> postVoPage = recentViewPoRepository.findPostPoByUserIdAndCreateTimeBefore(userId, createTime,pageable);
+        if(!postVoPage.getContent().isEmpty()) {
+            for (PostVo postVo : postVoPage) {
                 postVo.setCreateTimeStr(transformDateToString(postVo.getCreateTime()));
             }
         }
-        return new PageImpl<>(postVoList, pageable, postVoList.size());
+        return postVoPage;
     }
 
     @Override
     public String createRecentView(RecentViewPoDto recentViewPoDto) throws ResourceNotFoundException {
         // 找出對應使用者
-        JSONObject jsonObject = new JSONObject();
         String userName = recentViewPoDto.getUserName();
         if(Strings.isNullOrEmpty(userName)) {
             throw new UsernameNotFoundException("找不到該用戶");
@@ -87,9 +78,8 @@ public class RecentViewServiceImpl implements RecentViewService {
             Set<PostPo> postPoSet = Collections.singleton(postPo1);
             recentViewPo.setPosts(postPoSet);
         }
-        recentViewPoRepository.save(recentViewPo);
-        jsonObject.put("message", "新增最近瀏覽紀錄成功");
-        return jsonObject.toJSONString();
+        recentViewPoRepository.saveAndFlush(recentViewPo);
+        return "新增瀏覽紀錄成功";
     }
 
     private String transformDateToString(LocalDateTime dateTime) {

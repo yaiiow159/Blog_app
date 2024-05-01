@@ -15,6 +15,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.concurrent.ThreadPoolExecutor;
 
 @Component
@@ -61,7 +62,7 @@ public class EmailNotificationConsumer {
             mailNotificationPo.setName(emailNotification.getConsumer());
             mailNotificationPo.setAction(emailNotification.getAction());
             mailNotificationPo.setContent(emailNotification.getContent());
-            mailNotificationPo.setSendTime(LocalDateTime.now());
+            mailNotificationPo.setSendTime(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             mailNotificationPoRepository.save(mailNotificationPo);
 
         } catch (Exception e) {
@@ -99,7 +100,7 @@ public class EmailNotificationConsumer {
             mailNotificationPo.setName(emailNotification.getConsumer());
             mailNotificationPo.setAction(emailNotification.getAction());
             mailNotificationPo.setContent(emailNotification.getContent());
-            mailNotificationPo.setSendTime(LocalDateTime.now());
+            mailNotificationPo.setSendTime(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             mailNotificationPoRepository.save(mailNotificationPo);
             log.info("Sending email notification: {}", message);
         } catch (Exception e) {

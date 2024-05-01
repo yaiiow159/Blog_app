@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,34 +27,48 @@ public class MailNotificationServiceImpl implements MailNotificationService {
     @Override
     public void sendMailNotification(MailNotificationDto mailNotificationDto) {
         MailNotificationPo mailNotificationPo = MailNotificationPoMapper.INSTANCE.toPo(mailNotificationDto);
-        mailNotificationPoRepository.save(mailNotificationPo);
+        mailNotificationPoRepository.saveAndFlush(mailNotificationPo);
     }
 
     @Override
     public void sendMailNotification(List<MailNotificationDto> mailNotificationDtoList) {
         for (MailNotificationDto mailNotificationDto : mailNotificationDtoList) {
             MailNotificationPo mailNotificationPo = MailNotificationPoMapper.INSTANCE.toPo(mailNotificationDto);
-            mailNotificationPoRepository.save(mailNotificationPo);
+            mailNotificationPoRepository.saveAndFlush(mailNotificationPo);
         }
     }
 
     @Override
-    public Page<MailNotificationDto> getAllMailNotification(String name, String subject, String email, boolean isRead, int page, int size, String sort, String direction) {
-        PageRequest pageRequest = PageRequest.of(page, size, direction.equals("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sort);
-        List<MailNotificationPo> mailNotificationPoList = mailNotificationPoRepository.findByNameOrContentOrEmailOrSubjectAndIsRead(name, email, subject, isRead);
-        // 轉換成Page物件
-        List<MailNotificationDto> mailNotificationDtoList = MailNotificationPoMapper.INSTANCE.toDtoList(mailNotificationPoList);
-        return new PageImpl<>(mailNotificationDtoList, pageRequest, mailNotificationPoList.size());
+    public Page<MailNotificationDto> getAllMailNotification(String username,String name, String subject, String email, boolean isRead, int page, int size) {
+        Specification<MailNotificationPo> specification = (root, query, criteriaBuilder) -> {
+            if (username != null) {
+                query.where(criteriaBuilder.equal(root.get("username"), username));
+            }
+            if (name != null) {
+                query.where(criteriaBuilder.like(root.get("name"), "%" + name + "%"));
+            }
+            if (subject != null) {
+                query.where(criteriaBuilder.like(root.get("subject"), "%" + subject + "%"));
+            }
+            if (email != null) {
+                query.where(criteriaBuilder.like(root.get("email"), "%" + email + "%"));
+            }
+            if (isRead) {
+                query.where(criteriaBuilder.equal(root.get("isRead"), isRead));
+            }
+            return query.getRestriction();
+        };
+        PageRequest pageRequest = PageRequest.of(page - 1, size);
+        Page<MailNotificationPo> mailNotificationPos = mailNotificationPoRepository.findAll(specification, pageRequest);
+        return new PageImpl<>(MailNotificationPoMapper.INSTANCE.toDtoList(mailNotificationPos.getContent()), pageRequest, mailNotificationPos.getTotalElements());
     }
 
     @Override
     public String updateMailNotification(MailNotificationDto mailNotificationDto) {
-        JSONObject jsonObject = new JSONObject();
         MailNotificationPo mailNotificationPo = mailNotificationPoRepository.findById(mailNotificationDto.getId()).orElseThrow(() -> new ResourceNotFoundException("找不到該筆資料"));
         mailNotificationPo.setRead(mailNotificationDto.getIsRead());
-        mailNotificationPoRepository.save(mailNotificationPo);
-        jsonObject.put("message", "更新成功");
-        return jsonObject.toJSONString();
+        mailNotificationPoRepository.saveAndFlush(mailNotificationPo);
+        return "更新狀態成功";
     }
 
     @Override

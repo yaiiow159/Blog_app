@@ -18,11 +18,10 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RoleDto extends BaseDto implements Serializable {
-
-    @Schema(description = "角色ID")
-    String roleId;
-
     @Schema(description = "角色名稱", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "角色名稱不能為空")
     String roleName;
+
+    @Schema(description = "角色描述")
+    String description;
 }

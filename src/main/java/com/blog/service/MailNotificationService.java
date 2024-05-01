@@ -11,7 +11,7 @@ public interface MailNotificationService {
 
     void sendMailNotification(List<MailNotificationDto> mailNotificationDtoList);
 
-    Page<MailNotificationDto> getAllMailNotification(String name, String subject, String email, boolean isRead, int page, int size,String  sort, String direction);
+    Page<MailNotificationDto> getAllMailNotification(String username,String name, String subject, String email, boolean isRead, int page, int size);
 
     String updateMailNotification(MailNotificationDto mailNotificationDto);
 

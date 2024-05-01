@@ -7,5 +7,4 @@ public interface CommonService {
     UserCommentLikeVo getUserCommentLikeCount(String username);
 
     UserPostLikeCountVo getUserPostLikeCount(String username);
-
 }

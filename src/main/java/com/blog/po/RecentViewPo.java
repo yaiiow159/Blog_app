@@ -27,12 +27,12 @@ public class RecentViewPo implements java.io.Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "user_id",foreignKey = @ForeignKey(name = "fk_recent_view_user_id"),referencedColumnName = "id")
     @ToString.Exclude
     private UserPo user;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinTable(name = "recent_view_post",
             joinColumns = @JoinColumn(name = "recent_view_id"),
             inverseJoinColumns = @JoinColumn(name = "post_id"),

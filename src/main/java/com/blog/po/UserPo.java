@@ -6,27 +6,25 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-import org.hibernate.annotations.JdbcType;
+import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
-import org.hibernate.type.descriptor.jdbc.BlobJdbcType;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
+@ToString
 @Entity
 @Table(name = "users")
 @AllArgsConstructor
 public class UserPo extends BasicPo implements Serializable {
+
+    public static final String DEFAULT_USER_NAME = "admin";
     public UserPo() {
         this.isLocked = false;
     }
@@ -59,14 +57,14 @@ public class UserPo extends BasicPo implements Serializable {
     @Column(name = "avatar_name")
     private String avatarName;
 
-    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_group_po_id",nullable = false,
             foreignKey = @ForeignKey(name = "fk_user_group_user"),
             referencedColumnName = "id")
+    @ToString.Exclude
     private UserGroupPo userGroupPo;
 
-    @ManyToMany(fetch = FetchType.EAGER,
-            cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE,CascadeType.PERSIST})
     @JoinTable(name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id",
                     referencedColumnName = "id",
@@ -79,6 +77,7 @@ public class UserPo extends BasicPo implements Serializable {
     private boolean isLocked;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private Set<RecentViewPo> recentViews;
 
     @Override

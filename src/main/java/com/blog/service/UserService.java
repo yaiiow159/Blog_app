@@ -5,9 +5,7 @@ import com.blog.dto.UserProfileRequestBody;
 import com.blog.exception.ResourceNotFoundException;
 import com.blog.exception.ValidateFailedException;
 import com.blog.dto.UserDto;
-import jakarta.mail.MessagingException;
 import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
 
 import javax.naming.AuthenticationNotSupportedException;
 import java.io.IOException;
@@ -16,24 +14,19 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 public interface UserService {
-    public static final String DEFAULT_USER_NAME = "admin";
     UserDto findByUserId(Long userId);
 
-    UserDto createUser(UserDto userDto) throws AuthenticationNotSupportedException, ValidateFailedException;
+    void add(UserDto userDto) throws AuthenticationNotSupportedException, ValidateFailedException;
 
-    UserDto updateUser(UserDto userDto) throws AuthenticationNotSupportedException;
+    void edit(UserDto userDto) throws AuthenticationNotSupportedException;
 
-    String deleteUser(Long userId);
+    String delete(Long userId);
 
     UserDto findByUserName(String userName);
 
-    Page<UserDto> findBySpec(String userName, String userEmail, int page, int size, String sort, String direction);
+    String register(UserDto body) throws AuthenticationNotSupportedException;
 
-    List<UserDto> findUsersByRoleId(Long id);
-
-    String register(UserDto body);
-
-    String logout(String token) throws AuthenticationNotSupportedException;
+    void logout(String token) throws AuthenticationNotSupportedException;
 
     UserProfileDto updateUserProfile(UserProfileRequestBody userProfileRequestBody) throws IOException, ExecutionException, InterruptedException, TimeoutException;
 
@@ -41,4 +34,11 @@ public interface UserService {
 
     List<UserDto> findUsersByRoleName(long id);
 
+    String unlockUser(Long userId);
+
+    String lockUser(Long userId);
+
+    void changePassword(String oldPassword, String newPassword);
+
+    Page<UserDto> findAll(String userName, String userEmail, int page, int pageSize);
 }

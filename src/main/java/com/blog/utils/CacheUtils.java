@@ -61,18 +61,18 @@ public class CacheUtils {
         return quavaCache.getIfPresent(key);
     }
 
-    public static void put(String key, String value) {
-        quavaCache.put(key, value);
-    }
-
-    public static void remove(String key) {
-        if(quavaCache.getIfPresent(key) == null) {
-            return;
+        public static void put(String key, String value) {
+            quavaCache.put(key, value);
         }
-        quavaCache.invalidate(key);
-    }
 
-    public static void clear() {
+        public static void remove(String key) {
+            if(quavaCache.getIfPresent(key) == null) {
+                return;
+            }
+            quavaCache.invalidate(key);
+        }
+
+        public static void clear() {
         quavaCache.cleanUp();
         System.out.println("清除緩存...");
     }

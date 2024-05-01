@@ -1,14 +1,10 @@
 package com.blog.service.impl;
 
-import com.alibaba.fastjson2.JSONObject;
-import com.amazonaws.util.IOUtils;
 import com.blog.annotation.NotifyByEmail;
-import com.blog.coverter.PageConverter;
 import com.blog.dao.CategoryPoRepository;
 import com.blog.dao.PostPoRepository;
-import com.blog.dao.UserJpaRepository;
+import com.blog.dao.UserPoRepository;
 import com.blog.dto.PostDto;
-import com.blog.enumClass.PostStatus;
 import com.blog.exception.ResourceNotFoundException;
 import com.blog.mapper.PostPoMapper;
 import com.blog.po.CategoryPo;
@@ -21,8 +17,6 @@ import com.blog.utils.SpringSecurityUtils;
 
 import jakarta.annotation.Resource;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.PersistenceContextType;
 import jakarta.persistence.criteria.Predicate;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.search.engine.search.query.SearchResult;
@@ -33,22 +27,18 @@ import org.jsoup.safety.Safelist;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.FileCopyUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -58,7 +48,7 @@ public class PostServiceImpl implements PostService {
     @Resource
     private PostPoRepository postPoRepository;
     @Resource
-    private UserJpaRepository userJpaRepository;
+    private UserPoRepository userJpaRepository;
     @Resource
     private EntityManager  entityManager;
     @Resource
@@ -66,7 +56,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public PostDto createPost(Long categoryId,PostDto postDto) throws ResourceNotFoundException, IOException, ExecutionException, InterruptedException {
+    public void add(PostDto postDto) throws ResourceNotFoundException, IOException, ExecutionException, InterruptedException {
         // 查詢使用者email 以及名稱
         Optional<UserPo> optional = userJpaRepository.findByUserName(SpringSecurityUtils.getCurrentUser());
         if(optional.isPresent()){
@@ -76,52 +66,28 @@ public class PostServiceImpl implements PostService {
             throw new ResourceNotFoundException("使用者不存在");
         }
         // 確認該篇文章是否已經存在分類中
-        CategoryPo categoryPo = categoryPoRepository.findByIdAndIsDeletedFalse(categoryId).orElseThrow(ResourceNotFoundException::new);
-        postDto.setCreatUser(SpringSecurityUtils.getCurrentUser());
-        postDto.setCategoryId(String.valueOf(categoryId));
-        postDto.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
+        CategoryPo categoryPo = categoryPoRepository.findByIdAndIsDeletedFalse(postDto.getCategoryId()).orElseThrow(ResourceNotFoundException::new);
         //驗證文章內容 防止xss注入攻擊
         String content = postDto.getContent();
         String cleanContent = Jsoup.clean(content, Safelist.relaxed());
         postDto.setContent(cleanContent);
         PostPo postPo = PostPoMapper.INSTANCE.toPo(postDto);
-        File file = null;
-        if(!ObjectUtils.isEmpty(postDto.getMultipartFile())) {
-            MultipartFile image = postDto.getMultipartFile();
-            file = FileUtils.convertMultipartFileToFile(image);
-            String fileName = FileUtils.generateFileName(image);
-            try {
-                CompletableFuture<String> result = awsS3ClientService.uploadFileToS3Bucket(fileName, file);
-                if(!result.get().equals("文件上傳成功")){
-                    log.error("上傳文章圖片失敗");
-                    throw new ResourceNotFoundException("上傳文章圖片失敗");
-                } else {
-                    postPo.setImageName(fileName);
-                }
-            } catch (Exception e) {
-                log.error("上傳文章圖片失敗", e);
-            }
-        }
+        postPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
+        postPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
         postPo.setCategory(categoryPo);
-        // 設置狀態為發布
-        postPo.setStatus(PostStatus.PUBLISHED);
-        PostDto dto = PostPoMapper.INSTANCE.toDto(postPoRepository.save(postPo));
-        dto.setCategoryId(String.valueOf(categoryId));
-        if(null != file){
-            dto.setImage(FileCopyUtils.copyToByteArray(Objects.requireNonNull(file)));
-        }
-        return dto;
+        //上傳文章圖片
+        uploadFile(postPo, postDto);
+        postPoRepository.saveAndFlush(postPo);
     }
-
     @NotifyByEmail
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public PostDto updatePost(Long categoryId,Long postId,PostDto postDto) throws ResourceNotFoundException, IOException, ExecutionException, InterruptedException {
+    public void edit(Long postId, PostDto postDto) throws ResourceNotFoundException, IOException, ExecutionException, InterruptedException {
         // 查詢使用者email 以及名稱
-        Optional<UserPo> optional = userJpaRepository.findByUserName(SpringSecurityUtils.getCurrentUser());
-        if(optional.isPresent()){
-            postDto.setAuthorEmail(optional.get().getEmail());
-            postDto.setAuthorName(optional.get().getUserName());
+        Optional<UserPo> userPoOptional = userJpaRepository.findByUserName(SpringSecurityUtils.getCurrentUser());
+        if(userPoOptional.isPresent()){
+            postDto.setAuthorEmail(userPoOptional.get().getEmail());
+            postDto.setAuthorName(userPoOptional.get().getUserName());
         } else {
             throw new ResourceNotFoundException("使用者不存在");
         }
@@ -131,8 +97,8 @@ public class PostServiceImpl implements PostService {
         String cleanContent = Jsoup.clean(content, Safelist.relaxed());
         postDto.setContent(cleanContent);
         // 確認該篇文章是否已經存在分類中
-        CategoryPo categoryPo = categoryPoRepository.findById(categoryId).orElseThrow(ResourceNotFoundException::new);
-        PostPo postPo = postPoRepository.findByPostIdAndIsDeletedFalseAndCategoryId(postId, categoryId).orElseThrow(ResourceNotFoundException::new);
+        CategoryPo categoryPo = categoryPoRepository.findById(postDto.getCategoryId()).orElseThrow(ResourceNotFoundException::new);
+        PostPo postPo = postPoRepository.findByPostIdAndIsDeletedFalseAndCategoryId(postId, postDto.getCategoryId()).orElseThrow(ResourceNotFoundException::new);
         postPo = PostPoMapper.INSTANCE.partialUpdate(postDto, postPo);
         postPo.setCategory(categoryPo);
         // 將multipartFile轉換成lob數據
@@ -161,39 +127,22 @@ public class PostServiceImpl implements PostService {
                 postPo.setImageName(null);
             }
         }
-        postPoRepository.save(postPo);
-        PostDto dto = PostPoMapper.INSTANCE.toDto(postPo);
-        dto.setCategoryId(String.valueOf(categoryId));
-        if(null != file){
-            dto.setImage(FileCopyUtils.copyToByteArray(Objects.requireNonNull(file)));
-        }
-        return dto;
+        postPoRepository.saveAndFlush(postPo);
     }
-
     @Override
-    public List<PostDto> getAllPosts() {
-        List<PostPo> postPoList = postPoRepository.findByIsDeletedFalse();
-        return postPoList.stream()
-                .map(this::downloadImage).toList();
-    }
-
-    @Override
-    public PostDto getOnePost(long id) {
+    public PostDto findPostById(Long id) {
         PostPo postPo = postPoRepository.findByIdAndIsDeletedFalse(id);
         CategoryPo categoryPo = postPo.getCategory();
         return downloadImage(postPo, categoryPo);
     }
     @Override
-    public Page<PostDto> getAllPosts(String title, String content, String authorName, int page, int size, String sort, String direction) {
+    public Page<PostDto> findAll(String title, String authorName, Integer page, Integer size) {
         Specification<PostPo> spec = (root, query, criteriaBuilder) ->{
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(criteriaBuilder.isNotNull(root.get("category")));
             predicates.add(criteriaBuilder.equal(root.get("isDeleted"), false));
             if (null != title) {
                 predicates.add(criteriaBuilder.like(root.get("title"), "%" + title + "%"));
-            }
-            if (null != content) {
-                predicates.add(criteriaBuilder.like(root.get("content"), "%" + content + "%"));
             }
             if (null != authorName) {
                 predicates.add(criteriaBuilder.like(root.get("authorName"), "%" + authorName + "%"));
@@ -203,28 +152,22 @@ public class PostServiceImpl implements PostService {
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
 
-        Pageable pageable = null;
-        if (direction.equals("desc")) {
-            pageable = PageRequest.of(page - 1, size, Sort.by(sort).descending());
-        } else {
-            pageable = PageRequest.of(page - 1, size, Sort.by(sort).ascending());
-        }
+        Pageable pageable = PageRequest.of(page - 1, size);
         Page<PostPo> postPos = postPoRepository.findAll(spec, pageable);
         List<PostDto> dtoList = new ArrayList<>(postPos.getSize());
         postPos.forEach(postPo -> {
             PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
             if(postPo.getImageName()!= null){
                 try {
-                    InputStream inputStream = awsS3ClientService.downloadFileFromS3Bucket(postPo.getImageName());
-                    if(inputStream != null) {
-                        byte[] image = IOUtils.toByteArray(inputStream);
+                    byte[] image = awsS3ClientService.downloadFileFromS3Bucket(postPo.getImageName());
+                    if(image != null) {
                         postDto.setImage(image);
                     }
                 } catch (Exception e) {
                     log.error("下載文章圖片失敗", e);
                 }
             }
-            postDto.setCategoryId(String.valueOf(postPo.getCategory().getId()));
+            postDto.setCategoryId(postPo.getCategory().getId());
             dtoList.add(postDto);
         });
         return new PageImpl<>(dtoList, pageable, postPos.getTotalElements());
@@ -232,8 +175,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String deletePost(long id) throws ResourceNotFoundException {
-        JSONObject jsonObject = new JSONObject();
+    public String delete(Long id) throws ResourceNotFoundException {
         PostPo postPo = postPoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("文章不存在"));
         postPo.setIsDeleted(true);
         try{
@@ -250,39 +192,19 @@ public class PostServiceImpl implements PostService {
         postPoRepository.save(postPo);
         postPo = postPoRepository.findByIdAndIsDeletedFalse(id);
         if(postPo != null){
-        jsonObject.put("message", "刪除失敗");
-        return jsonObject.toJSONString();
+            return "刪除失敗";
         }
-        jsonObject.put("message", "刪除成功");
-        return jsonObject.toJSONString();
+        return "刪除成功";
     }
 
-    @Override
-    public Page<PostDto> findPosts(Long id) throws ResourceNotFoundException {
-        Optional<CategoryPo> optional = categoryPoRepository.findByIdAndIsDeletedFalse(id);
-        if (optional.isEmpty()) {
-            throw new ResourceNotFoundException("該分類不存在");
-        }
-        CategoryPo categoryPo = optional.get();
-        List<PostPo> posts = categoryPo.getPosts();
-
-        List<PostDto> dtoList = new ArrayList<>();
-        for (PostPo postPo : posts) {
-            PostDto postDto = null;
-            postDto = downloadImage(postPo);
-            dtoList.add(postDto);
-        }
-
-        return PageConverter.covertToPage(dtoList, 1, dtoList.size());
-    }
 
     @Override
-    public PostDto findTheOnePostsByCategory(Long id, Long postId) throws ResourceNotFoundException {
-        Optional<CategoryPo> optional = categoryPoRepository.findByIdAndIsDeletedFalse(id);
-        if (optional.isEmpty()) {
+    public PostDto findPostByCategoryId(Long id, Long postId) throws ResourceNotFoundException {
+        Optional<CategoryPo> categoryPoOptional = categoryPoRepository.findByIdAndIsDeletedFalse(id);
+        if (categoryPoOptional.isEmpty()) {
             throw new ResourceNotFoundException("該分類不存在");
         }
-        CategoryPo categoryPo = optional.get();
+        CategoryPo categoryPo = categoryPoOptional.get();
         List<PostPo> postPoList = categoryPo.getPosts();
         PostDto postDto = null;
         for (PostPo postPo : postPoList) {
@@ -294,17 +216,6 @@ public class PostServiceImpl implements PostService {
         }
         return postDto;
     }
-
-    @Override
-    public List<PostPo> findByCreateDateBefore(LocalDateTime nowDate) {
-        return postPoRepository.findByCreateDateBefore(nowDate);
-    }
-
-    @Override
-    public boolean existsByPostId(Long postId) {
-        return postPoRepository.existsById(postId);
-    }
-
 
     // 查詢創建時間最新的前五筆文章
     @Override
@@ -360,7 +271,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public synchronized Long getLikeCount(String postId) {
+    public Long getLikeCount(String postId) {
         return postPoRepository.getLikeCount(Long.parseLong(postId));
     }
 
@@ -371,22 +282,25 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public synchronized Long getViewCount(String postId) {
+    public Long getViewCount(String postId) {
         return postPoRepository.getViewCount(Long.parseLong(postId));
     }
 
     @Override
-    public PostDto createDraft(PostDto postDto) {
-        return null;
+    public void createDraft(PostDto postDto) {
+        PostPo postPo = PostPoMapper.INSTANCE.toPo(postDto);
+        postPo.setIsDeleted(false);
+        postPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
+        postPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
+        postPoRepository.saveAndFlush(postPo);
     }
 
     private PostDto downloadImage(PostPo postPo, CategoryPo categoryPo) {
         PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
-        postDto.setCategoryId(String.valueOf(categoryPo.getId()));
+        postDto.setCategoryId(categoryPo.getId());
         if (postPo.getImageName() != null) {
             try {
-                InputStream inputStream = awsS3ClientService.downloadFileFromS3Bucket(postPo.getImageName());
-                byte[] image = (inputStream != null) ? IOUtils.toByteArray(inputStream) : null;
+                byte[] image = awsS3ClientService.downloadFileFromS3Bucket(postPo.getImageName());
                 postDto.setImage(image);
             } catch (Exception e) {
                 log.error("下載文章圖片失敗", e);
@@ -399,8 +313,7 @@ public class PostServiceImpl implements PostService {
         PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
         if (postPo.getImageName() != null) {
             try {
-                InputStream inputStream = awsS3ClientService.downloadFileFromS3Bucket(postPo.getImageName());
-                byte[] image = (inputStream != null) ? IOUtils.toByteArray(inputStream) : null;
+                byte[] image = awsS3ClientService.downloadFileFromS3Bucket(postPo.getImageName());
                 postDto.setImage(image);
             } catch (Exception e) {
                 log.error("下載文章圖片失敗", e);
@@ -408,5 +321,26 @@ public class PostServiceImpl implements PostService {
         }
         return postDto;
     }
+
+    private void uploadFile(PostPo postPo, PostDto postDto) throws IOException {
+        //上傳文章圖片
+        if(!ObjectUtils.isEmpty(postDto.getMultipartFile())) {
+            MultipartFile image = postDto.getMultipartFile();
+            String fileName = FileUtils.generateFileName(image);
+            File convertFile = FileUtils.convertMultipartFileToFile(image);
+            try {
+                CompletableFuture<String> result = awsS3ClientService.uploadFileToS3Bucket(fileName, convertFile);
+                if(!result.get().equals("文件上傳成功")){
+                    log.error("上傳文章圖片失敗");
+                    throw new ResourceNotFoundException("上傳文章圖片失敗");
+                } else {
+                    postPo.setImageName(fileName);
+                }
+            } catch (Exception e) {
+                log.error("上傳文章圖片失敗", e);
+            }
+        }
+    }
+
 
 }

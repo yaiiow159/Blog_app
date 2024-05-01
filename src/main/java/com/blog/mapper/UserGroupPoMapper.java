@@ -1,7 +1,6 @@
 package com.blog.mapper;
 
 import com.blog.dto.UserGroupDto;
-import com.blog.enumClass.ReviewLevel;
 import com.blog.po.UserGroupPo;
 
 import org.mapstruct.*;
@@ -13,10 +12,6 @@ import java.util.stream.Collectors;
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface UserGroupPoMapper {
     UserGroupPoMapper INSTANCE = Mappers.getMapper(UserGroupPoMapper.class);
-
-    default ReviewLevel map(Object value) {
-        return ReviewLevel.valueOf(value.toString());
-    }
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     UserGroupPo partialUpdate(UserGroupDto userGroupDto, @MappingTarget UserGroupPo userGroupPo);

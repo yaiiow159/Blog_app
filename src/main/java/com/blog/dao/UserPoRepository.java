@@ -5,16 +5,17 @@ import com.blog.vo.CommentVo;
 import com.blog.vo.PostVo;
 import com.blog.vo.UserCommentLikeVo;
 import com.blog.vo.UserPostLikeCountVo;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-public interface UserJpaRepository extends CrudRepository<UserPo, Long> , JpaSpecificationExecutor<UserPo> {
+public interface UserPoRepository extends JpaRepository<UserPo, Long>, JpaSpecificationExecutor<UserPo> {
 
     @Query(value = "SELECT users.username,users.email FROM users " +
             "INNER JOIN user_roles ON users.id = user_roles.user_id " +
@@ -44,9 +45,14 @@ public interface UserJpaRepository extends CrudRepository<UserPo, Long> , JpaSpe
             + "WHERE p.authorName = :username AND p.isDeleted = false")
     UserPostLikeCountVo getPostLikeCount(@Param("username") String username);
 
-    @Query(value = "SELECT NEW com.blog.vo.CommentVo(c.id,c.body,c.name,c.email,c.createDate) FROM CommentPo c WHERE c.name = :username AND c.isDeleted = false")
+    @Query(value = "SELECT NEW com.blog.vo.CommentVo(c.id,c.content,c.name,c.email,c.createDate) FROM CommentPo c WHERE c.name = :username AND c.isDeleted = false")
     Set<CommentVo> getComments(@Param("username") String username);
 
     @Query(value = "SELECT NEW com.blog.vo.PostVo(p.id,p.title,p.authorName,p.authorEmail,p.content,p.createDate) FROM PostPo p WHERE p.authorName = :username AND p.isDeleted = false")
     Set<PostVo> getPosts(@Param("username") String username);
+
+    @Modifying
+    @Query(value = "UPDATE users SET password = :encode WHERE username = :username", nativeQuery = true)
+    void changePassword(String encode, String username);
+
 }

@@ -1,18 +1,14 @@
 package com.blog.service.impl;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.blog.exception.ResourceNotFoundException;
 import com.blog.service.AwsS3ClientService;
 import jakarta.annotation.Resource;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.InputStream;
+import java.io.IOException;
 import java.util.concurrent.*;
 
 @Service
@@ -32,23 +28,21 @@ public class AmazonS3ClientService implements AwsS3ClientService {
 
     public CompletableFuture<String> deleteFileFromS3Bucket(String fileName) {
         String key = folderName + "/" + fileName;
-
         if (!amazonS3Client.doesObjectExist(bucketName, key)) {
             return CompletableFuture.completedFuture("文件不存在");
         }
-
         return CompletableFuture.runAsync(() -> {
             amazonS3Client.deleteObject(bucketName, key);
         }, executor).thenApply(result -> "文件删除成功");
     }
 
-    public InputStream downloadFileFromS3Bucket(String fileName)  {
+    public byte[] downloadFileFromS3Bucket(String fileName) throws IOException {
         String key = folderName + "/" + fileName;
         // 驗證是否有這個 key 的檔案存在
         boolean exist = amazonS3Client.doesObjectExist(bucketName, key);
         if (!exist) {
             return null;
         }
-        return amazonS3Client.getObject(new GetObjectRequest(bucketName, key)).getObjectContent();
+        return amazonS3Client.getObject(new GetObjectRequest(bucketName, key)).getObjectContent().readAllBytes();
     }
 }

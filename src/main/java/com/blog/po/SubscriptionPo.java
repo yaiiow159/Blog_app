@@ -22,14 +22,16 @@ public class SubscriptionPo implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "user_id",referencedColumnName = "id",
             foreignKey = @ForeignKey(name = "fk_subscription_user"))
+    @ToString.Exclude
     private UserPo user;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "post_id",referencedColumnName = "id",
             foreignKey = @ForeignKey(name = "fk_subscription_post"))
+    @ToString.Exclude
     private PostPo post;
 
     @Column(name = "authorName", length = 100)

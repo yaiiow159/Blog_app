@@ -23,11 +23,13 @@ public class BaseDto implements Serializable {
     String creatUser;
 
     @Schema(description = "創建物件日期",example = "2022-01-01 00:00:00")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     LocalDateTime createDate;
 
     @Schema(description = "更新物件者",example = "admin")
     String updateUser;
 
     @Schema(description = "更新物件日期",example = "2022-01-01 00:00:00")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     LocalDateTime updDate;
 }

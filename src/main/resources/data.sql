@@ -168,6 +168,30 @@ CREATE TABLE login_history
     logout_timeStamp DATETIME         NULL
 ) comment '登入歷史紀錄';
 
+drop table if exists recent_view;
+CREATE TABLE recent_view
+(
+    id          BIGINT AUTO_INCREMENT NOT NULL,
+    user_id     BIGINT                NULL,
+    post_id     BIGINT                NULL,
+    CONSTRAINT pk_recent_view PRIMARY KEY (id),
+    CONSTRAINT recent_view_post_id_fk FOREIGN KEY (post_id) REFERENCES posts (id),
+    CONSTRAINT recent_view_user_id_fk FOREIGN KEY (user_id) REFERENCES users (id)
+) comment '最近瀏覽紀錄';
+
+drop table if exists mail_notification;
+CREATE TABLE mail_notification
+(
+    id          BIGINT primary key AUTO_INCREMENT NOT NULL,
+    content     VARCHAR(255)          NULL,
+    email       VARCHAR(100)          NULL,
+    is_read     TINYINT               NULL DEFAULT 0,
+    name        VARCHAR(100)          NULL,
+    send_time   DATETIME              NULL,
+    subject     VARCHAR(100)          NULL,
+    action      VARCHAR(100)          NULL
+) comment '郵件通知';
+
 
 
 

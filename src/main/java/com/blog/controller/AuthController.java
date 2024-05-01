@@ -1,5 +1,6 @@
 package com.blog.controller;
 
+import com.blog.dto.ApiResponse;
 import com.blog.dto.ForgotPasswordRequest;
 import com.blog.dto.ResetPasswordRequest;
 import com.blog.dto.UserDto;
@@ -93,7 +94,7 @@ public class AuthController {
             out.flush();
         } catch (Exception e) {
             log.error("取得驗證碼失敗", e);
-            throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.CAPTCHA_IMAGE_ERROR, "取得驗證碼失敗");
+            throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.CAPTCHA_VALIDATION_ERROR, "取得驗證碼失敗");
         } finally {
             IOUtils.closeQuietly(out);
         }
@@ -101,12 +102,12 @@ public class AuthController {
 
     @Operation(summary = "取得生成令牌", description = "取得生成令牌", tags = {"JWT認證相關功能"})
     @PostMapping(value = "/login")
-    public ResponseEntity<JwtResponseBody> getJwtToken(@Parameter(description = "帳號與密碼與電子郵件") @Validated @RequestBody JwtRequestBody jwtRequest) {
+    public ApiResponse<JwtResponseBody> getJwtToken(@Parameter(description = "帳號與密碼與電子郵件") @Validated @RequestBody JwtRequestBody jwtRequest) {
         // 驗證圖形驗證碼
         final String captchaCode = stringRedisTemplate.opsForValue().get(Constants.KAPTCHA_SESSION_KEY);
         //驗證圖形驗證碼
         if (Objects.equals(captchaCode, null) || !captchaCode.equalsIgnoreCase(jwtRequest.getCaptchaCode())) {
-            throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.CAPTCHA_CODE_ERROR, "驗證碼錯誤");
+            throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.CAPTCHA_VALIDATION_ERROR, "驗證碼錯誤");
         }
         //取得驗證碼
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(jwtRequest.getUsername(), jwtRequest.getPassword()));
@@ -123,34 +124,44 @@ public class AuthController {
                 .roles(roles)
                 .build();
 
-        return ResponseEntity.ok(res);
+        return new ApiResponse<>(true, "登入成功", res, HttpStatus.OK);
     }
 
-    @PostMapping("/forget")
+    @PostMapping("/forgetPassword")
     @Operation(summary = "忘記密碼", description = "忘記密碼並發送電子郵件", tags = {"JWT認證相關功能"})
-    public ResponseEntity<String> forgotPassword(@Validated @RequestBody ForgotPasswordRequest request) throws MessagingException, NoSuchAlgorithmException {
+    public ApiResponse<String> forgotPassword(@Validated @RequestBody ForgotPasswordRequest request) throws MessagingException, NoSuchAlgorithmException {
         authService.forgotPassword(request.getEmail());
-        return ResponseEntity.ok("重設密碼電子郵件已發送至 " + request.getEmail());
+        return new ApiResponse<>(true, "發送電子郵件成功", HttpStatus.OK);
     }
 
     @Operation(summary = "重設密碼", description = "重設密碼並更新密碼")
-    @PostMapping("/reset")
-    public ResponseEntity<String> resetPassword(@Validated @RequestBody ResetPasswordRequest request) {
+    @PostMapping("/resetPassword")
+    public ApiResponse<String> resetPassword(@Validated @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request.getToken(), request.getNewPassword());
-        return ResponseEntity.ok("密碼重設成功");
+        return new ApiResponse<>(true, "重設密碼成功", HttpStatus.OK);
     }
 
     @PostMapping("/register")
     @Operation(summary = "註冊使用者", description = "註冊使用者並將使用者訊息返回給前端")
-    public ResponseEntity<String> register(@Parameter(description = "帳號與密碼") @Validated @RequestBody UserDto userDto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userService.register(userDto));
+    public ApiResponse<String> register(@Parameter(description = "帳號與密碼") @Validated @RequestBody UserDto userDto) throws AuthenticationNotSupportedException {
+        String id = userService.register(userDto);
+        if(null == id){
+            return new ApiResponse<>(false, "註冊失敗", HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "註冊成功", id, HttpStatus.OK);
     }
 
     @PostMapping("/logout")
     @Operation(summary = "登出", description = "登出")
-    public ResponseEntity<String> logout(@RequestHeader("Authorization") String token) throws AuthenticationNotSupportedException {
+    public ApiResponse<String> logout(@RequestHeader("Authorization") String token) throws AuthenticationNotSupportedException {
         final String jwtToken = token.substring(7);
-        return ResponseEntity.status(HttpStatus.OK).body(userService.logout(jwtToken));
+        try {
+            userService.logout(jwtToken);
+        } catch (Exception e) {
+            log.error("登出失敗", e);
+            return new ApiResponse<>(false, "登出失敗", HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "登出成功", HttpStatus.OK);
     }
 
 }

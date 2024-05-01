@@ -3,13 +3,14 @@ package com.blog.dao;
 import com.blog.po.RecentViewPo;
 
 import com.blog.vo.PostVo;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 
 public interface RecentViewPoRepository extends JpaRepository<RecentViewPo, Long>, JpaSpecificationExecutor<RecentViewPo> {
@@ -20,5 +21,5 @@ public interface RecentViewPoRepository extends JpaRepository<RecentViewPo, Long
             "JOIN rv.posts p " +
             "WHERE rv.user.id = :userId " +
             "AND (:createTime IS NULL OR rv.createTime < :createTime)")
-    List<PostVo> findPostPoByUserIdAndCreateTimeBefore(@Param("userId") Long userId, @Param("createTime") LocalDateTime createTime);
+    Page<PostVo> findPostPoByUserIdAndCreateTimeBefore(@Param("userId") Long userId, @Param("createTime") LocalDateTime createTime, Pageable pageable);
 }

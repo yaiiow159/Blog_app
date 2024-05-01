@@ -9,16 +9,17 @@ services:
     deploy:
       replicas: 1
     ports:
-      - "19090:9090"
+      - "9090:9090"
+      - "19090:19090"
     depends_on:
       - mysql
       - redis
       - zookeeper
       - kafka
     networks:
-      - network1
+      - blog_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:19090/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:9090/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -29,17 +30,17 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - mysql_conf:/etc/mysql/conf.d
-      - ./resources/data.sql:/docker-entrypoint-initdb.d/data.sql
     deploy:
       replicas: 1
     environment:
       - MYSQL_DATABASE=blog_app
-      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_ROOT_PASSWORD=Timmy@870728
       - MYSQL_ROOT_HOST=%
     ports:
       - "3306:3306"
+      - "13306:13306"
     networks:
-      - network1
+      - blog_network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -57,8 +58,9 @@ services:
       replicas: 1
     ports:
       - "6379:6379"
+      - "16379:16379"
     networks:
-      - network1
+      - blog_network
     healthcheck:
       test: ["CMD", "redis-cli", "ping", "-h", "localhost"]
       interval: 10s
@@ -69,16 +71,13 @@ services:
     container_name: zookeeper
     ports:
       - "2181:2181"
+      - "2888:2888"
+      - "3888:3888"
     volumes:
       - zookeeper_data:/data
       - zookeeper_conf:/conf
     networks:
-      - network1
-    healthcheck:
-      test: ["CMD", "zookeeper-shell", "zookeeper:2181", "ruok"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+      - blog_network
   kafka:
     image: wurstmeister/kafka:latest
     container_name: kafka
@@ -96,25 +95,19 @@ services:
     depends_on:
       - zookeeper
     networks:
-      - network1
+      - blog_network
     healthcheck:
       test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--describe"]
       interval: 10s
       timeout: 5s
       retries: 3
 networks:
-  network1:
+  blog_network:
     driver: bridge
 volumes:
   mysql_data:
-    name: mysql_data
   mysql_conf:
-    name: mysql_conf
-  redis_data:
-    name: redis_data
   redis_conf:
-    name: redis_conf
+  redis_data:
   zookeeper_data:
-    name: zookeeper_data
   kafka_data:
-    name: kafka_data

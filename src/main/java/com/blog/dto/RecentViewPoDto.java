@@ -32,13 +32,10 @@ public class RecentViewPoDto implements Serializable {
     @Schema(description = "文章主鍵", example = "1")
     Long postId;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     @Schema(description = "創建時間", example = "2022-01-01 00:00:00")
     String createTime;
 
-    @Schema(description = "文章")
-    List<PostDto> postDtoList;
-
-    @Schema(description = "使用者")
-    UserDto userDto;
+    @Schema(description = "使用者ID")
+    Long userId;
 }

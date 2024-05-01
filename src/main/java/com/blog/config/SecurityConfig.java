@@ -36,7 +36,7 @@ import java.util.Collections;
 
 
 @Configuration
-@EnableMethodSecurity
+@EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
 @EnableWebSecurity
 public class SecurityConfig {
     @Resource
@@ -102,17 +102,9 @@ public class SecurityConfig {
                                 .accessDeniedHandler(accessDeniedHandler)
                                 .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 )
-                .formLogin(formLogin ->{
-                    formLogin
-                            .loginPage("http://localhost:3000/login")
-                            .loginProcessingUrl("http://localhost:9090/api/v1/auth/login")
-                            .defaultSuccessUrl("http://localhost:3000/home")
-                            .permitAll();
-                })
                 .logout(logout ->
                         logout
                                 .logoutUrl("/api/v1/auth/logout")
-                                .logoutSuccessUrl("http://localhost:3000/login")
                                 .clearAuthentication(true)
                                 .addLogoutHandler(logoutHandler)
                                 .logoutSuccessHandler(jwtLogoutSuccessHandler)

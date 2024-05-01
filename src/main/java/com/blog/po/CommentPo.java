@@ -21,8 +21,8 @@ public class CommentPo extends BasicPo implements Serializable {
         this.isReport = false;
     }
 
-    @Column(name = "body")
-    private String body;
+    @Column(name = "content")
+    private String content;
 
     @Column(name = "email")
     @Email(message = "Email 格式錯誤")
@@ -31,13 +31,13 @@ public class CommentPo extends BasicPo implements Serializable {
     @Column(name = "name")
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false,cascade = {CascadeType.MERGE, CascadeType.REFRESH })
     @JoinColumn(name = "post_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_comment_post"),
             referencedColumnName = "id")
     private PostPo post;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false,cascade = {CascadeType.MERGE, CascadeType.REFRESH })
     @JoinColumn(name = "user_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_comment_user"),
             referencedColumnName = "id")

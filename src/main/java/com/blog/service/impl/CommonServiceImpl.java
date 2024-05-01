@@ -1,21 +1,20 @@
 package com.blog.service.impl;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.TypeReference;
-import com.blog.dao.UserJpaRepository;
+import com.blog.dao.UserPoRepository;
 import com.blog.service.CommonService;
 import com.blog.vo.*;
-import io.swagger.v3.core.util.Json;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CommonServiceImpl implements CommonService {
 
-    private final UserJpaRepository userJpaRepository;
+    private final UserPoRepository userJpaRepository;
 
     @Override
     public UserCommentLikeVo getUserCommentLikeCount(String username) {

@@ -1,6 +1,5 @@
 package com.blog.po;
 
-import com.blog.enumClass.ReviewLevel;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
@@ -20,6 +19,7 @@ import java.util.Objects;
 @AllArgsConstructor
 @ToString
 public class UserGroupPo extends BasicPo implements Serializable {
+
     public static final String DEFAULT_GROUP_NAME = "group1";
     /**
      * 群組名稱
@@ -36,11 +36,10 @@ public class UserGroupPo extends BasicPo implements Serializable {
     /**
      * 覆核權限等級
      */
-    @Enumerated(EnumType.ORDINAL)
     @Column(name = "review_level")
-    private ReviewLevel reviewLevel;
+    private String reviewLevel;
 
-    @OneToMany(mappedBy = "userGroupPo", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "userGroupPo",cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
     @ToString.Exclude
     private List<UserPo> userPoList = new ArrayList<>();
 

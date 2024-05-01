@@ -19,24 +19,6 @@ public interface PostPoRepository extends JpaRepository<PostPo, Long>, JpaSpecif
     @Query("SELECT p FROM PostPo p WHERE p.id = ?1 AND p.isDeleted = false")
     PostPo findByIdAndIsDeletedFalse(long id);
 
-    @Query("SELECT p FROM PostPo p WHERE p.isDeleted = false")
-    List<PostPo> findByIsDeletedFalse();
-
-    @Query("SELECT p FROM PostPo p WHERE p.isDeleted = false")
-    Page<PostPo> findByIsDeletedFalse(Pageable pageable);
-
-    @Query("SELECT p FROM PostPo p WHERE p.authorName = ?1 OR p.authorEmail = ?2 AND p.isDeleted = false")
-    List<PostPo> findByAuthorNameOrAuthorEmail(String authorName, String authorEmail);
-
-    @Query("SELECT p FROM PostPo p WHERE p.createDate < ?1 AND p.isDeleted = false")
-    List<PostPo> findByCreateDateBefore(LocalDateTime nowDate);
-
-    @Query("SELECT p FROM PostPo p WHERE p.title = ?1 AND p.isDeleted = false")
-    PostPo findByTitle(String name);
-
-    // 使用SQL語法查詢
-    @Query("SELECT p FROM PostPo p WHERE p.title LIKE %?1% AND p.isDeleted = false")
-    List<PostPo> findByQuery(String query);
 
     // 查詢創建時間最新的前五筆文章
     @Query("SELECT p FROM PostPo p WHERE p.isDeleted = false ORDER BY p.createDate DESC LIMIT 5")

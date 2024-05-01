@@ -2,19 +2,18 @@ package com.blog.service;
 
 import com.blog.dto.CommentDto;
 import com.blog.exception.ResourceNotFoundException;
-import org.springframework.data.domain.Page;
 
 import java.util.List;
 
 public interface CommentService {
-    CommentDto createComment(Long postId, CommentDto commentDto) throws ResourceNotFoundException;
+    void add(Long postId, CommentDto commentDto) throws ResourceNotFoundException;
+    void edit(Long postId, Long id , CommentDto commentDto) throws ResourceNotFoundException;
+    void delete(Long postId , Long id) throws ResourceNotFoundException;
     CommentDto findComment(Long postId,Long id) throws ResourceNotFoundException;
-    CommentDto updateComment(Long postId,Long id ,CommentDto commentDto) throws ResourceNotFoundException;
-    String deleteComment(Long postId ,Long id) throws ResourceNotFoundException;
 
     List<CommentDto> findAllComments(Long postId) throws ResourceNotFoundException;
 
-    String reportComment(CommentDto commentDto) throws ResourceNotFoundException;
+    void reportComment(CommentDto commentDto) throws ResourceNotFoundException;
 
     void addCommentLike(Long postId, Long commentId);
 

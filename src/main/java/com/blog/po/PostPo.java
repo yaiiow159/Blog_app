@@ -1,7 +1,6 @@
 package com.blog.po;
 
 
-import com.blog.enumClass.PostStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.*;
@@ -36,7 +35,6 @@ public class PostPo extends BasicPo implements java.io.Serializable {
     private String imageName;
 
     @Column(name = "content")
-    @FullTextField(name = "content")
     private String content;
 
     @Column(name = "title", nullable = false)
@@ -46,14 +44,20 @@ public class PostPo extends BasicPo implements java.io.Serializable {
     @Column(name = "description", nullable = false)
     private String description;
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
     private Set<CommentPo> comments = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
     @JoinColumn(name = "category_id", referencedColumnName = "id",
             foreignKey = @ForeignKey(name = "fk_post_category"))
     @ToString.Exclude
     private CategoryPo category;
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "post_tag",
+            joinColumns = @JoinColumn(name = "post_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    private Set<TagPo> tags = new HashSet<>();
 
     //文章作者名稱
     @Column(name = "author_name")
@@ -74,10 +78,9 @@ public class PostPo extends BasicPo implements java.io.Serializable {
     private Long views;
 
     @Column(name = "status")
-    @Enumerated(EnumType.ORDINAL)
-    private PostStatus status;
+    private String status;
 
-    @ManyToMany(mappedBy = "posts", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "posts", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Set<RecentViewPo> recentViews = new HashSet<>();
 
     @Override

@@ -63,13 +63,9 @@ public class JwtAuthenticatePreFilter extends OncePerRequestFilter {
                             ValidateFailedException.DomainErrorStatus.JWT_AUTHENTICATION_TOKEN_EXPIRED,
                             "JWT令牌已失效，請重新登入");
                 }
-                // 生成新的usernamePasswordAuthenticationToken
                 var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                // 將請求驗證的資訊放進WebAuthenticationDetailsSource 如id地址 設備資訊等
                 usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                // 將usernamePasswordAuthenticationToken放進SecurityContextHolder的上下文中 以便後續做授權以及認證判斷用
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-                // 將token存入redis中保存
                 redisTemplate.opsForValue().set(username, jwtToken);
             }
         }

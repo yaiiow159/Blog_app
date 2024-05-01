@@ -2,34 +2,23 @@ package com.blog.service;
 
 import com.blog.dto.PostDto;
 import com.blog.exception.ResourceNotFoundException;
-import com.blog.po.PostPo;
 import org.springframework.data.domain.Page;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public interface PostService {
-    PostDto createPost(Long categoryId,PostDto postDto) throws ResourceNotFoundException, IOException, ExecutionException, InterruptedException;
+    void add(PostDto postDto) throws ResourceNotFoundException, IOException, ExecutionException, InterruptedException;
 
-    PostDto updatePost(Long categoryId,Long postId,PostDto postDto) throws ResourceNotFoundException, IOException, ExecutionException, InterruptedException;
+    void edit(Long postId, PostDto postDto) throws ResourceNotFoundException, IOException, ExecutionException, InterruptedException;
 
-    List<PostDto> getAllPosts();
+    String delete(Long id) throws ResourceNotFoundException;
 
-    PostDto getOnePost(long id);
+    PostDto findPostById(Long id);
 
-    Page<PostDto> getAllPosts(String title,String content,String authorName,int page, int size, String sort, String direction);
-
-    String deletePost(long id) throws ResourceNotFoundException;
-
-    Page<PostDto> findPosts(Long id) throws ResourceNotFoundException;
-
-    PostDto findTheOnePostsByCategory(Long id, Long postId) throws ResourceNotFoundException;
-
-    List<PostPo> findByCreateDateBefore(LocalDateTime nowDate);
-
-    boolean existsByPostId(Long postId);
+    Page<PostDto> findAll(String title, String authorName, Integer page, Integer size);
+    PostDto findPostByCategoryId(Long id, Long postId) throws ResourceNotFoundException;
 
     List<PostDto> getLatestPost();
 
@@ -47,5 +36,5 @@ public interface PostService {
 
     Long getViewCount(String postId);
 
-    PostDto createDraft(PostDto postDto);
+    void createDraft(PostDto postDto);
 }

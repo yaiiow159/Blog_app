@@ -1,9 +1,7 @@
 package com.blog.dto;
 
-import com.blog.enumClass.ReviewLevel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.io.Serializable;
@@ -25,8 +23,6 @@ public class UserGroupDto extends BaseDto implements Serializable {
     String description;
 
     @Schema(description = "覆核權限等級")
-    String reviewLevel;
-
-    @Schema(description = "使用者id")
-    Long userId;
+    @NotBlank(message = "覆核權限等級不得為空")
+    private String reviewLevel;
 }

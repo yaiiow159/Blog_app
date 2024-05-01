@@ -1,6 +1,6 @@
 package com.blog.controller;
 
-import com.alibaba.fastjson2.JSONObject;
+import com.blog.dto.ApiResponse;
 import com.blog.dto.RoleDto;
 import com.blog.dto.UserDto;
 import com.blog.service.RoleService;
@@ -35,50 +35,59 @@ public class RoleController {
 
     @GetMapping
     @Operation(summary = "查詢所有角色", description = "查詢所有角色")
-    public ResponseEntity<Page<RoleDto>> findAll(@Parameter(description = "頁數",example = "1") @RequestParam(name = "page") int page,
-                                                 @Parameter(description = "每頁筆數",example = "10") @RequestParam(name = "size") int size,
-                                                 @Parameter(description = "名稱",example = "role1") @RequestParam(name = "name")String name,
-                                                 @Parameter(description = "排序",example = "id/name") @RequestParam(name = "sort")String sort,
-                                                 @Parameter(description = "排序方向",example = "DESC/ACS")@RequestParam(name = "direction")String direction){
-        Page<RoleDto> roleDtoPage = roleService.findAll(name,page, size, sort,direction);
+    public ApiResponse<Page<RoleDto>> findAll(@Parameter(description = "頁數",example = "1") @RequestParam(name = "page") Integer page,
+                                               @Parameter(description = "每頁筆數",example = "10") @RequestParam(name = "pageSize") Integer pageSize,
+                                               @Parameter(description = "名稱",example = "role1") @RequestParam(name = "name")String name){
+        Page<RoleDto> roleDtoPage = roleService.findAll(name,page,pageSize);
         // 查詢當前權限下的使用者
-
-        if(CollectionUtils.isEmpty(roleDtoPage.getContent()))
-            return ResponseEntity.noContent().build();
-        return ResponseEntity.ok(roleDtoPage);
+        if(roleDtoPage.isEmpty()||CollectionUtils.isEmpty(roleDtoPage.getContent()))
+            return new ApiResponse<>(false, "查無資料", null, HttpStatus.NO_CONTENT);
+        return new ApiResponse<>(true, "查詢成功", roleDtoPage, HttpStatus.OK);
     }
 
-    @PostMapping("/create")
+    @GetMapping("/findList")
+    @Operation(summary = "查詢所有角色", description = "查詢所有角色")
+    public ApiResponse<List<RoleDto>> findAll(){
+        return new ApiResponse<>(true, "查詢成功", roleService.findAll(), HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "查詢使用者角色",description = "查詢使用者角色")
+    public ApiResponse<List<RoleDto>> getRoleByUserId(@Parameter(description = "使用者id",example = "1")@PathVariable long id){
+        return new ApiResponse<>(true, "查詢成功", roleService.getRoleByUserId(id), HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping
     @Operation(summary = "新增角色",description = "新增角色")
-    public ResponseEntity<RoleDto> create(@Validated @RequestBody RoleDto roleDto) {
-        RoleDto roleDto1 = roleService.createRole(roleDto);
-        if(ObjectUtils.isEmpty(roleDto1))
-            return ResponseEntity.noContent().build();
-        return ResponseEntity.ok(roleDto1);
+    public ApiResponse<RoleDto> create(@Validated @RequestBody RoleDto roleDto) {
+        try {
+            roleService.add(roleDto);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "新增失敗", null, HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "新增成功", HttpStatus.CREATED);
     }
 
-    @PostMapping("/update")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping
     @Operation(summary = "更新角色",description = "更新角色")
-    public ResponseEntity<RoleDto> update(@Validated @RequestBody RoleDto roleDto){
-        RoleDto roleDto1 = roleService.updateRole(roleDto);
-        if(ObjectUtils.isEmpty(roleDto1))
-            return ResponseEntity.noContent().build();
-        return ResponseEntity.ok(roleDto1);
+    public ApiResponse<RoleDto> update(@Validated @RequestBody RoleDto roleDto){
+        try {
+            roleService.edit(roleDto);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "更新失敗", null, HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "更新成功", HttpStatus.OK);
     }
 
 
     @GetMapping("/{id}/users")
     @Operation(summary = "使用角色id查詢角色使用者",description = "查詢角色")
-    public ResponseEntity<Object> findByName(@PathVariable long id){
-        JSONObject jsonObject = new JSONObject();
-        // 使用角色名稱 來查詢當前角色下的使用者
+    public ApiResponse<List<UserDto>> findByName(@PathVariable long id){
         List<UserDto> userList = userService.findUsersByRoleName(id);
-        if(CollectionUtils.isEmpty(userList)){
-            jsonObject.put("message", "沒有使用者");
-        } else {
-            jsonObject.put("message", "有使用者");
-            jsonObject.put("users", userList);
-        }
-        return ResponseEntity.ok(jsonObject);
+        if(CollectionUtils.isEmpty(userList))
+            return new ApiResponse<>(false, "查無資料", null, HttpStatus.NO_CONTENT);
+        return new ApiResponse<>(true, "查詢成功", userList, HttpStatus.OK);
     }
 }

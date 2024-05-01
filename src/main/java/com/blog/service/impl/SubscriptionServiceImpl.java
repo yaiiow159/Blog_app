@@ -1,13 +1,17 @@
 package com.blog.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
+import com.blog.dao.PostPoRepository;
 import com.blog.dao.SubscriptionPoRepository;
+import com.blog.dao.UserPoRepository;
 import com.blog.dto.PostDto;
 import com.blog.dto.UserDto;
 import com.blog.exception.ResourceNotFoundException;
 import com.blog.mapper.SubscriptionPoMapper;
 import com.blog.dto.SubscriptionDto;
+import com.blog.po.PostPo;
 import com.blog.po.SubscriptionPo;
+import com.blog.po.UserPo;
 import com.blog.service.PostService;
 import com.blog.service.SubscriptionService;
 import com.blog.service.UserService;
@@ -22,11 +26,12 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class SubscriptionServiceImpl implements SubscriptionService {
 
     private final SubscriptionPoRepository subscriptionPoRepository;
-    private final UserService userService;
-    private final PostService postService;
+    private final UserPoRepository userPoRepository;
+    private final PostPoRepository postPoRepository;
 
     /**
      * 訂閱文章
@@ -36,20 +41,16 @@ public class SubscriptionServiceImpl implements SubscriptionService {
      */
     @Override
     public String subscribe(String username, Long postId, String authorName, String email) throws ResourceNotFoundException {
-        JSONObject jsonObject = new JSONObject();
         SubscriptionDto subscriptionDto = new SubscriptionDto();
-        // 查詢對應的user
-        UserDto userDto = userService.findByUserName(username);
-        subscriptionDto.setUser(userDto);
-        // 查詢對應的post
-        PostDto post = postService.getOnePost(postId);
-        subscriptionDto.setPost(post);
         subscriptionDto.setAuthorName(authorName);
         subscriptionDto.setEmail(email);
         SubscriptionPo subscriptionPo = SubscriptionPoMapper.INSTANCE.toPo(subscriptionDto);
+        UserPo userPo = userPoRepository.findByUserName(username).orElseThrow(() -> new ResourceNotFoundException("找不到使用者"));
+        subscriptionPo.setUser(userPo);
+        PostPo postPo = postPoRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException("找不到文章"));
+        subscriptionPo.setPost(postPo);
         subscriptionPoRepository.saveAndFlush(subscriptionPo);
-        jsonObject.put("message", "訂閱成功");
-        return jsonObject.toJSONString();
+        return "訂閱成功";
     }
 
     /**
@@ -61,14 +62,11 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String unSubscribe(String username, Long postId) {
-        JSONObject jsonObject = new JSONObject();
         subscriptionPoRepository.deleteByUsernameAndPostId(username, postId);
         if(subscriptionPoRepository.existsByUsernameAndPostId(username, postId) > 0){
-            jsonObject.put("message", "取消訂閱失敗");
-            return jsonObject.toJSONString();
+            return "取消訂閱失敗";
         }
-        jsonObject.put("message", "取消訂閱成功");
-        return jsonObject.toJSONString();
+        return "取消訂閱成功";
     }
 
     @Override
@@ -79,12 +77,9 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Override
     public String checkSubscription(String username, Long postId) {
-        JSONObject jsonObject = new JSONObject();
         if(subscriptionPoRepository.existsByUsernameAndPostId(username, postId) > 0){
-            jsonObject.put("message", "已訂閱");
-            return jsonObject.toJSONString();
+           return "已訂閱";
         }
-        jsonObject.put("message", "未訂閱");
-        return jsonObject.toJSONString();
+        return "未訂閱";
     }
 }

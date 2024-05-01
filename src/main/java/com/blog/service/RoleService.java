@@ -9,11 +9,15 @@ public interface RoleService {
 
     RoleDto findByRoleName(String roleName);
 
-    RoleDto createRole(RoleDto roleDto);
+    void add(RoleDto roleDto);
 
-    RoleDto updateRole(RoleDto roleDto);
+    void edit(RoleDto roleDto);
 
-    Page<RoleDto> findAll(String name,int page, int size, String sort, String direction);
+    String delete(Long id);
 
-    void saveAll(List<RoleDto> list);
+    Page<RoleDto> findAll(String name,int page, int size);
+
+    List<RoleDto> findAll();
+
+    List<RoleDto> getRoleByUserId(long id);
 }

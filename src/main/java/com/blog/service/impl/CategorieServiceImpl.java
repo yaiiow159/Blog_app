@@ -1,58 +1,88 @@
 package com.blog.service.impl;
 
-import com.alibaba.fastjson2.JSONObject;
 import com.blog.dao.CategoryPoRepository;
-import com.blog.dao.PostPoRepository;
 import com.blog.dto.CategoryDto;
 import com.blog.exception.ValidateFailedException;
 import com.blog.mapper.CategoryPoMapper;
 import com.blog.po.CategoryPo;
 import com.blog.service.CategorieService;
 
+import com.blog.utils.SpringSecurityUtils;
 import jakarta.annotation.Resource;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 
 @Service
+@Transactional
 public class CategorieServiceImpl implements CategorieService {
     @Resource
     private CategoryPoRepository categoryPoRepository;
 
-    @Resource
-    private PostPoRepository postPoRepository;
-    @Override
-    public Page<CategoryDto> findAllCategories(int page, int size, String sort, String desc) {
-        Page<CategoryPo> categoryPos = categoryPoRepository.findAllByIsDeletedFalse(PageRequest.of(page - 1, size, Sort.by(Sort.Direction.fromString(desc), sort)));
-        if(CollectionUtils.isEmpty(categoryPos.getContent()))
-            return null;
-        return categoryPos.map(CategoryPoMapper.INSTANCE::toDto);
-    }
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
 
     @Override
-    public CategoryDto createCategory(CategoryDto categoryDto) {
+    public void add(CategoryDto categoryDto) {
         CategoryPo categoryPo = CategoryPoMapper.INSTANCE.toPo(categoryDto);
-        CategoryPo po = categoryPoRepository.save(categoryPo);
-        return CategoryPoMapper.INSTANCE.toDto(po);
+        categoryPo.setIsDeleted(false);
+        categoryPo.setCreateDate(LocalDateTime.now());
+        categoryPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
+        categoryPoRepository.saveAndFlush(categoryPo);
     }
 
     @Override
-    public String deleteCategory(Long categoryId) throws ValidateFailedException {
-        JSONObject jsonObject = new JSONObject();
+    public String delete(Long categoryId) throws ValidateFailedException {
         validateCategory(categoryId);
         CategoryPo categoryPo = categoryPoRepository.findById(categoryId).get();
         categoryPo.setIsDeleted(true);
-        categoryPo = categoryPoRepository.save(categoryPo);
-        if (categoryPo.getIsDeleted().equals(Boolean.FALSE)){
-            jsonObject.put("message", "刪除分類失敗");
-            return jsonObject.toJSONString();
-        }
-        jsonObject.put("message", "刪除分類成功");
-        return jsonObject.toJSONString();
+        categoryPo = categoryPoRepository.saveAndFlush(categoryPo);
+       return "刪除成功";
+    }
+    @Override
+    public void edit(long categoryId, CategoryDto categoryDto) throws ValidateFailedException {
+        CategoryPo categoryPo = categoryPoRepository.findById(categoryId).orElseThrow(
+                () -> new ValidateFailedException(ValidateFailedException.DomainErrorStatus.RESOURCE_NOT_FOUND));
+        categoryPo = CategoryPoMapper.INSTANCE.partialUpdate(categoryDto, categoryPo);
+        categoryPoRepository.saveAndFlush(categoryPo);
+    }
+
+    @Override
+    public CategoryDto findById(Long id) {
+        return CategoryPoMapper.INSTANCE.toDto(categoryPoRepository.findById(id).orElse(null));
+    }
+
+    @Override
+    public Page<CategoryDto> findAll(Integer page, Integer size, String name) {
+        PageRequest pageRequest = PageRequest.of(page - 1, size);
+        Specification<CategoryPo> specification = (root, query, criteriaBuilder) -> {
+            Predicate predicate = criteriaBuilder.conjunction();
+            if (!ObjectUtils.isEmpty(name)) {
+                predicate.getExpressions().add(criteriaBuilder.like(root.get("name"), "%" + name + "%"));
+            }
+            predicate.getExpressions().add(criteriaBuilder.equal(root.get("isDeleted"), false));
+            return predicate;
+        };
+        Page<CategoryPo> categoryPos = categoryPoRepository.findAll(specification, pageRequest);
+        return CategoryPoMapper.INSTANCE.toDtoPage(categoryPos);
+    }
+
+    @Override
+    public List<CategoryDto> findAll() {
+        return categoryPoRepository.findAllByIsDeletedFalse()
+                .stream()
+                .map(CategoryPoMapper.INSTANCE::toDto).toList();
     }
 
     private void validateCategory(Long categoryId) throws ValidateFailedException {
@@ -60,20 +90,7 @@ public class CategorieServiceImpl implements CategorieService {
         if(categoryPo == null)
             throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.RESOURCE_NOT_FOUND);
         if(!categoryPo.getPosts().isEmpty())
-            throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.RESOURCE_IS_EMPTY);
+            throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.CATEGORY_HAS_POSTS);
     }
 
-    @Override
-    public CategoryDto updateCategory(long categoryId,CategoryDto categoryDto) throws ValidateFailedException {
-        CategoryPo categoryPo = categoryPoRepository.findById(categoryId).orElseThrow(
-                () -> new ValidateFailedException(ValidateFailedException.DomainErrorStatus.RESOURCE_NOT_FOUND));
-        categoryPo = CategoryPoMapper.INSTANCE.partialUpdate(categoryDto, categoryPo);
-        CategoryPo po = categoryPoRepository.save(categoryPo);
-        return CategoryPoMapper.INSTANCE.toDto(po);
-    }
-
-    @Override
-    public CategoryDto findById(Long id) {
-        return CategoryPoMapper.INSTANCE.toDto(categoryPoRepository.findById(id).orElse(null));
-    }
 }

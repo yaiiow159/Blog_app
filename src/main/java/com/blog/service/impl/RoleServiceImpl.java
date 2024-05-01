@@ -9,19 +9,21 @@ import com.blog.utils.SpringSecurityUtils;
 
 import jakarta.annotation.Resource;
 import jakarta.persistence.criteria.Predicate;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.support.PageableUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
 
 @Service
+@Transactional
 public class RoleServiceImpl implements RoleService {
 
     @Resource
@@ -36,50 +38,60 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public RoleDto createRole(RoleDto roleDto) {
-        if(roleDto.getCreatUser() == null)
-           roleDto.setCreatUser(SpringSecurityUtils.getCurrentUser());
+    public void add(RoleDto roleDto) {
         RolePo po = RolePoMapper.INSTANCE.toPo(roleDto);
-        RolePo po1 = rolePoRepository.save(po);
-        return RolePoMapper.INSTANCE.toDto(po1);
+        po.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
+        po.setCreatUser(SpringSecurityUtils.getCurrentUser());
+        rolePoRepository.saveAndFlush(po);
     }
 
     @Override
-    public RoleDto updateRole(RoleDto roleDto) {
-        if (roleDto.getCreatUser() == null)
-            roleDto.setCreatUser(SpringSecurityUtils.getCurrentUser());
-
+    public void edit(RoleDto roleDto) {
         rolePoRepository.findByName(roleDto.getRoleName()).ifPresent(rolePo -> {
-            rolePo.setRoleName(roleDto.getRoleName());
-            rolePo.setUpdateUser(SpringSecurityUtils.getCurrentUser());
-            RolePo po1 = rolePoRepository.save(rolePo);
-            roleDto.setRoleName(po1.getRoleName());
-            roleDto.setUpdateUser(po1.getUpdateUser());
+            RolePo po = RolePoMapper.INSTANCE.partialUpdate(roleDto, rolePo);
+            po.setUpdDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
+            po.setUpdateUser(SpringSecurityUtils.getCurrentUser());
+            rolePoRepository.saveAndFlush(po);
         });
-        return roleDto;
     }
 
     @Override
-    public Page<RoleDto> findAll(String name,int page, int size, String sort,String direction) {
+    public String delete(Long id) {
+        rolePoRepository.findById(id).ifPresent(rolePo -> {
+            rolePo.setIsDeleted(true);
+            rolePoRepository.saveAndFlush(rolePo);
+        });
+        return "刪除成功";
+    }
+
+    @Override
+    public Page<RoleDto> findAll(String name,int page, int size) {
         Specification<RolePo> specification = (root, query, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            if (!ObjectUtils.isEmpty(name)) {
-                Predicate predicate = criteriaBuilder.like(root.get("roleName"), "%" + name + "%");
-                predicates.add(predicate);
+            List<Predicate> list = new ArrayList<>();
+            if(!ObjectUtils.isEmpty(name)){
+                Predicate predicate = criteriaBuilder.like(root.get("name"), "%" + name + "%");
+                list.add(predicate);
             }
-            return query.where(predicates.toArray(new Predicate[0])).getRestriction();
+            Predicate[] p = new Predicate[list.size()];
+            return criteriaBuilder.and(list.toArray(p));
         };
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(direction.equals("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sort));
+        Pageable pageable = PageRequest.of(page - 1, size);
         Page<RolePo> rolePos = rolePoRepository.findAll(specification, pageable);
-        return rolePos.map(RolePoMapper.INSTANCE::toDto);
+        if(!rolePos.isEmpty()){
+            return new PageImpl<>(RolePoMapper.INSTANCE.toDtoList(rolePos.getContent()), pageable, rolePos.getTotalElements());
+        } else{
+            return Page.empty();
+        }
     }
 
     @Override
-    public void saveAll(List<RoleDto> list) {
-        list.forEach(roleDto -> {
-            if(roleDto.getCreatUser() == null)
-                roleDto.setCreatUser(SpringSecurityUtils.getCurrentUser());
-        });
-        rolePoRepository.saveAll(RolePoMapper.INSTANCE.toPoList(list));
+    public List<RoleDto> findAll() {
+        return rolePoRepository.findAllByIsDeletedFalse().stream().map(RolePoMapper.INSTANCE::toDto).toList();
     }
+
+    @Override
+    public List<RoleDto> getRoleByUserId(long id) {
+        return RolePoMapper.INSTANCE.toDtoList(rolePoRepository.findByUserId(id));
+    }
+
 }

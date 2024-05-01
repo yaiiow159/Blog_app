@@ -1,6 +1,6 @@
 package com.blog.interceptor;
 
-import com.blog.dao.UserJpaRepository;
+import com.blog.dao.UserPoRepository;
 import com.blog.po.UserPo;
 import com.blog.utils.SpringSecurityUtils;
 
@@ -21,7 +21,7 @@ public class UserLockedInterceptor implements HandlerInterceptor {
 
     private final AutowireCapableBeanFactory beanFactory;
     @Resource
-    private UserJpaRepository userJpaRepository;
+    private UserPoRepository userJpaRepository;
 
     public UserLockedInterceptor(AutowireCapableBeanFactory beanFactory) {
         this.beanFactory = beanFactory;
@@ -30,8 +30,8 @@ public class UserLockedInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         // 檢查使用者是否被鎖
-        if(userJpaRepository == null){
-            userJpaRepository = beanFactory.getBean(UserJpaRepository.class);
+        if(null == userJpaRepository) {
+            userJpaRepository = beanFactory.getBean(UserPoRepository.class);
         }
         String currentUserName = SpringSecurityUtils.getCurrentUser();
         Optional<UserPo> user = userJpaRepository.findByUserName(currentUserName);

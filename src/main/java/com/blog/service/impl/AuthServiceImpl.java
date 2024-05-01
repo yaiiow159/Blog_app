@@ -1,6 +1,6 @@
 package com.blog.service.impl;
 
-import com.blog.dao.UserJpaRepository;
+import com.blog.dao.UserPoRepository;
 import com.blog.po.UserPo;
 import com.blog.service.AuthService;
 import com.blog.utils.UUIDUtils;
@@ -19,10 +19,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.Base64;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor
@@ -30,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 public class AuthServiceImpl implements AuthService {
 
     private final StringRedisTemplate stringRedisTemplate;
-    private final UserJpaRepository userJpaRepository;
+    private final UserPoRepository userJpaRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserDetailsService userDetailsService;
     private final JavaMailSender javaMailSender;
@@ -41,7 +38,7 @@ public class AuthServiceImpl implements AuthService {
         String email = stringRedisTemplate.opsForValue().get(token);
         UserPo userPo = userJpaRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("找不到使用者 " + email));
         userPo.setPassword(passwordEncoder.encode(newPassword));
-        userJpaRepository.save(userPo);
+        userJpaRepository.saveAndFlush(userPo);
         // 更新spring-security的數據
         UserDetails userDetails = userDetailsService.loadUserByUsername(userPo.getUserName());
         // 生成新的usernamePasswordAuthenticationToken
@@ -50,28 +47,29 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void forgotPassword(String email) throws MessagingException, NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
-        SecureRandom random = new SecureRandom();
-        byte[] randomBytes = new byte[16];
-        random.nextBytes(randomBytes);
-        String data = email + System.currentTimeMillis();
-        md.update(data.getBytes());
-        md.update(randomBytes);
-        byte[] hash = md.digest();
-        String refreshToken = Base64.getEncoder().encodeToString(hash);
-        // 存入redis
+    public void forgotPassword(String email) throws MessagingException {
+        // 生成隨機四位數字 當作驗證碼
+        Random random = new Random();
+        int validateCode = random.nextInt(9000) + 1000;
+        String validateCodeStr = String.valueOf(validateCode);
+        // 將驗證碼存入redis
+        //生成token當作 url令牌
+        final String refreshToken = UUIDUtils.getUUID32();
+        // 將refreshToken存入redis
+        stringRedisTemplate.opsForValue().set(validateCodeStr, email, 10, TimeUnit.MINUTES);
+        // refreshToken作為一次性令牌驗證
         stringRedisTemplate.opsForValue().set(refreshToken, email, 10, TimeUnit.MINUTES);
         // 發送郵件
         MimeMessage message = javaMailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
-        String content = "重製驗證信件 " + "令牌為:" + refreshToken;
+        String content = "http://localhost:3030/resetPassword?token=" + refreshToken;
         InternetAddress address = new InternetAddress();
         address.setAddress(email);
         helper.setFrom("test123@example.com");
         helper.setTo(address);
-        helper.setSubject("重製驗證");
-        helper.setText(content);
+        helper.setSubject("重置密碼");
+        helper.setText("你的驗證碼為:" + validateCodeStr + ", 驗證碼時效為十分鐘" +
+                "\n" + "<a href=" + content + " style='color:blue; text-decoration:none; font-size:20px border: 1px solid'>" + "點擊驗證" + "</a>");
         javaMailSender.send(message);
     }
 }
