@@ -54,6 +54,7 @@ public class TagServiceImpl implements TagService {
         TagPo tagPo = TagPoMapper.INSTANCE.toPo(tagDto);
         tagPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
         tagPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
+        tagPo.setIsDeleted(false);
         tagPoRepository.saveAndFlush(tagPo);
     }
 
@@ -79,7 +80,7 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public TagDto findById(Long id) {
-        return TagPoMapper.INSTANCE.toDto(tagPoRepository.findById(id).orElse(null));
+        return tagPoRepository.findByIdAndIsDeletedFalse(id).map(TagPoMapper.INSTANCE::toDto).orElse(null);
     }
 
 }

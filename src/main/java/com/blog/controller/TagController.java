@@ -26,7 +26,7 @@ public class TagController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<Page<TagDto>> getTags(@Parameter(description = "頁數",example = "0") @RequestParam(name = "page",defaultValue = "1",required = false) Integer page,
+    public ApiResponse<Page<TagDto>> getTags(@Parameter(description = "頁數",example = "1") @RequestParam(name = "page",defaultValue = "1",required = false) Integer page,
                                              @Parameter(description = "每頁筆數",example = "10") @RequestParam(name = "pageSize",defaultValue = "10",required = false) Integer pageSize,
                                              @Parameter(description = "名稱",example = "name") @RequestParam(name = "name",required = false) String name) {
         Page<TagDto> tagDtoPage = tagService.findAll(page, pageSize, name);

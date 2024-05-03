@@ -74,11 +74,10 @@ public class UserServiceImpl implements UserService {
     }
 
     public String lockUser(Long userId) {
-        var userPo = Optional.of(userJpaRepository.findByIdAndIsDeletedIsFalse(userId))
+        UserPo userPo = userJpaRepository.findByIdAndIsDeletedIsFalse(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("找不到使用者: " + userId));
-        userPo.ifPresent(userPo1 -> userPo1.setLocked(false));
-        UserPo po = userPo.get();
-        userJpaRepository.saveAndFlush(po);
+        userPo.setLocked(true);
+        userJpaRepository.saveAndFlush(userPo);
         return "鎖戶成功";
     }
 
@@ -116,7 +115,18 @@ public class UserServiceImpl implements UserService {
             return criteriaBuilder.and(list.toArray(p));
         };
         Pageable pageable = PageRequest.of(page - 1 , pageSize);
-        return userJpaRepository.findAll(specification, pageable).map(UserPoMapper.INSTANCE::toDto);
+        return userJpaRepository.findAll(specification, pageable).map(UserPoMapper.INSTANCE::toDto).map(
+                userDto -> {
+                    userDto.setRoleNames(userDto.getRoles()
+                            .stream()
+                            .map(RoleDto::getRoleName).collect(Collectors.toSet()));
+                    return userDto;
+                }
+        ).map(userDto -> {
+            userDto.setGroupName(UserGroupPoMapper.INSTANCE.toDto
+                    (userGroupPoRepository.findByUserPoListContaining(userDto.getId())).getGroupName());
+            return userDto;
+        });
     }
 
     public String unlockUser(Long userId) {
@@ -177,7 +187,7 @@ public class UserServiceImpl implements UserService {
         return UserPoMapper.INSTANCE.toDto(userPo);
     }
         @Override
-        public String register(UserDto userDto) throws AuthenticationNotSupportedException {
+        public String register(UserDto userDto) {
             if (userJpaRepository.findByUserName(userDto.getUserName()).isPresent()) {
                 throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.USER_ALREADY_EXISTS);
             }
@@ -188,22 +198,19 @@ public class UserServiceImpl implements UserService {
             userDto.setCreatUser(SpringSecurityUtils.getCurrentUser());
             userDto.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             UserPo userPo = UserPoMapper.INSTANCE.toPo(userDto);
-            UserGroupPo userGroupPo;
+            userPo.setIsDeleted(false);
             // 設置使用者群組
             if (userGroupPoRepository.findByGroupName(userDto.getGroupName()).isPresent()) {
-                userGroupPo = userGroupPoRepository.findByGroupName(userDto.getGroupName()).get();
-                userPo.setUserGroupPo(userGroupPo);
+                userGroupPoRepository.findByGroupName(userDto.getGroupName()).ifPresent(
+                        userPo::setUserGroupPo
+                );
             } else {
-                userGroupPo = new UserGroupPo();
-                userGroupPo.setGroupName(userDto.getGroupName());
-                userGroupPo.setCreatUser(userDto.getUserName());
-                userGroupPo.setUpdateUser(userDto.getUserName());
-                userGroupPoRepository.saveAndFlush(userGroupPo);
-                userPo.setUserGroupPo(userGroupPo);
+                userGroupPoRepository.findByGroupName(UserGroupPo.DEFAULT_GROUP_NAME).ifPresent(
+                        userPo::setUserGroupPo
+                );
             }
-
             Set<RolePo> rolePoSet = new HashSet<>();
-            rolePoSet.add(rolePoRepository.findByRoleName(UserRole.ROLE_USER.toString()).get());
+            rolePoRepository.findByRoleName(UserRole.ROLE_USER.toString()).ifPresent(rolePoSet::add);
             userPo.setRoles(rolePoSet);
             userJpaRepository.saveAndFlush(userPo);
             return "註冊成功";

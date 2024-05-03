@@ -102,31 +102,8 @@ public class PostServiceImpl implements PostService {
         postPo = PostPoMapper.INSTANCE.partialUpdate(postDto, postPo);
         postPo.setCategory(categoryPo);
         // 將multipartFile轉換成lob數據
-        File file = null;
-        if(!ObjectUtils.isEmpty(postDto.getMultipartFile())) {
-            MultipartFile image = postDto.getMultipartFile();
-            file = FileUtils.convertMultipartFileToFile(image);
-            String fileName = FileUtils.generateFileName(image);
-            try {
-                CompletableFuture<String> result = awsS3ClientService.uploadFileToS3Bucket(fileName, file);
-                if(!result.get().equals("文件上傳成功")){
-                    log.error("上傳文章圖片失敗");
-                    throw new ResourceNotFoundException("上傳文章圖片失敗");
-                } else {
-                    postPo.setImageName(fileName);
-                }
-            } catch (Exception e) {
-                log.error("上傳文章圖片失敗", e);
-            }
-        } else if (null != postPo.getImageName() && !postPo.getImageName().isEmpty()) {
-            CompletableFuture<String> result = awsS3ClientService.deleteFileFromS3Bucket(postPo.getImageName());
-            if(!result.get().equals("文件删除成功")) {
-                log.error("上傳文章圖片失敗");
-                throw new ResourceNotFoundException("上傳文章圖片失敗");
-            } else {
-                postPo.setImageName(null);
-            }
-        }
+        uploadFile(postPo, postDto);
+        deleteFile(postPo);
         postPoRepository.saveAndFlush(postPo);
     }
     @Override
@@ -178,22 +155,8 @@ public class PostServiceImpl implements PostService {
     public String delete(Long id) throws ResourceNotFoundException {
         PostPo postPo = postPoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("文章不存在"));
         postPo.setIsDeleted(true);
-        try{
-            if(postPo.getImageName() != null) {
-                CompletableFuture<String> result = awsS3ClientService.deleteFileFromS3Bucket(postPo.getImageName());
-                if(!result.get().equals("文件删除成功")) {
-                    log.error("刪除文章圖片失敗");
-                    throw new ResourceNotFoundException("刪除文章圖片失敗");
-                }
-            }
-        } catch (Exception e) {
-            log.error("刪除文章圖片失敗", e);
-        }
-        postPoRepository.save(postPo);
-        postPo = postPoRepository.findByIdAndIsDeletedFalse(id);
-        if(postPo != null){
-            return "刪除失敗";
-        }
+        deleteFile(postPo);
+        postPoRepository.saveAndFlush(postPo);
         return "刪除成功";
     }
 
@@ -295,6 +258,16 @@ public class PostServiceImpl implements PostService {
         postPoRepository.saveAndFlush(postPo);
     }
 
+    @Override
+    public Long getViewsCount(Long postId) {
+        return postPoRepository.getViewsCountById(postId);
+    }
+
+    @Override
+    public Long getLikesCountById(Long postId) {
+        return postPoRepository.getLikesCountById(postId);
+    }
+
     private PostDto downloadImage(PostPo postPo, CategoryPo categoryPo) {
         PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
         postDto.setCategoryId(categoryPo.getId());
@@ -338,6 +311,16 @@ public class PostServiceImpl implements PostService {
                 }
             } catch (Exception e) {
                 log.error("上傳文章圖片失敗", e);
+            }
+        }
+    }
+
+    private void deleteFile(PostPo postPo) {
+        if(!ObjectUtils.isEmpty(postPo.getImageName()) && postPo.getImageName() != null) {
+            try {
+                awsS3ClientService.deleteFileFromS3Bucket(postPo.getImageName());
+            } catch (Exception e) {
+                log.error("刪除文章圖片失敗", e);
             }
         }
     }

@@ -32,6 +32,9 @@ public class RecentViewPo implements java.io.Serializable {
     @ToString.Exclude
     private UserPo user;
 
+    @Column(name = "title", nullable = false)
+    private String title;
+
     @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinTable(name = "recent_view_post",
             joinColumns = @JoinColumn(name = "recent_view_id"),

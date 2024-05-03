@@ -49,6 +49,12 @@ public class PostController {
         return new ApiResponse<>(true, "查詢成功", postService.findPostById(id), HttpStatus.OK);
     }
 
+    @GetMapping("/{postId}/viewsCount")
+    @Operation(summary = "查詢文章瀏覽次數",description = "查詢文章瀏覽次數")
+    public ApiResponse<Long> getViewsCount(@Parameter(description = "文章id",example = "1") @PathVariable Long postId) {
+        return new ApiResponse<>(true, "查詢成功", postService.getViewsCount(postId), HttpStatus.OK);
+    }
+
     @GetMapping("/searchByKeyword")
     @Operation(summary = "關鍵字查詢文章",description = "關鍵字全文查詢文章")
     public ApiResponse<List<PostDto>> searchByKeyword(@Parameter(description = "關鍵字",example = "關鍵字")@RequestParam(name = "keyword") String keyword) {

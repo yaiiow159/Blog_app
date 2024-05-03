@@ -37,4 +37,8 @@ public interface PostService {
     Long getViewCount(String postId);
 
     void createDraft(PostDto postDto);
+
+    Long getViewsCount(Long postId);
+    
+    Long getLikesCountById(Long postId);
 }

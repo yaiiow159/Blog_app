@@ -24,8 +24,6 @@ import java.util.Set;
 public class JwtUserDetailService implements UserDetailsService {
     @Resource
     private UserService userService;
-    @Resource
-    private RolePoRepository rolePoRepository;
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         log.info("loadUserByUsername: {}", username);

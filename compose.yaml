@@ -1,6 +1,6 @@
 version: '3.7'
 services:
-  app:
+  blog_app:
     build:
       context: .
       dockerfile: Dockerfile
@@ -18,13 +18,8 @@ services:
       - kafka
     networks:
       - blog_network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9090/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
   mysql:
-    image: mysql:8.0
+    image: mysql:8.0.28
     container_name: mysql
     restart: on-failure
     volumes:
@@ -35,6 +30,7 @@ services:
     environment:
       - MYSQL_DATABASE=blog_app
       - MYSQL_ROOT_PASSWORD=Timmy@870728
+      - MYSQL_ROOT_USER=root
       - MYSQL_ROOT_HOST=%
     ports:
       - "3306:3306"
@@ -50,7 +46,6 @@ services:
     image: redis:7.2.1-alpine
     container_name: redis
     restart: on-failure
-    command: redis-server --config /etc/redis/redis.conf
     volumes:
       - redis_conf:/etc/redis/redis.conf
       - redis_data:/var/lib/redis
@@ -110,4 +105,5 @@ volumes:
   redis_conf:
   redis_data:
   zookeeper_data:
+  zookeeper_conf:
   kafka_data:

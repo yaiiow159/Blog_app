@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Component
@@ -42,7 +43,7 @@ public class LogoutHandler extends SecurityContextLogoutHandler {
         } else if (StringUtils.hasText(jwtToken)) {
             CacheUtils.remove(username);
             List<LoginHistoryDto> loginHistoryDos = loginHistoryService.findLoginHistoryByUsername(username);
-            loginHistoryDos.get(0).setLogoutTimestamp(LocalDateTime.now());
+            loginHistoryDos.get(0).setLogoutTimestamp(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             loginHistoryService.addLog(loginHistoryDos.get(0));
             jwtBlackListService.addJwtToBlackList(jwtToken);
             stringRedisTemplate.delete(username);

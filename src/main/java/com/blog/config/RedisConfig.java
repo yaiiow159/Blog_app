@@ -17,43 +17,32 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig {
 
     private final ObjectMapper mapper;
-
-    @Bean(name = "redisConnectionFactory")
-    public LettuceConnectionFactory redisConnectionFactory(
-            @Value("${redis.host}") String redisHost,
-            @Value("${redis.port}") Integer redisPort,
-            @Value("${redis.password}") String redisPassword) {
+    @Bean
+    public LettuceConnectionFactory redisConnectionFactory() {
         LettuceConnectionFactory lettuceConnectionFactory = new LettuceConnectionFactory();
-        lettuceConnectionFactory.setHostName(redisHost);
-        lettuceConnectionFactory.setPort(redisPort);
-        lettuceConnectionFactory.setPassword(redisPassword);
         lettuceConnectionFactory.setDatabase(0);
         return lettuceConnectionFactory;
     }
 
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(
-            @Qualifier("redisConnectionFactory") LettuceConnectionFactory redisConnectionFactory
-    ) {
+    public RedisTemplate<String, Object> redisTemplate() {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory());
         redisTemplate.setEnableTransactionSupport(true);
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer =
                 new Jackson2JsonRedisSerializer<>(mapper,Object.class);
         redisTemplate.setValueSerializer(jackson2JsonRedisSerializer);
-        redisTemplate.setConnectionFactory(redisConnectionFactory);
         return redisTemplate;
     }
 
     @Bean
-    public StringRedisTemplate stringRedisTemplate(
-            @Qualifier("redisConnectionFactory") LettuceConnectionFactory redisConnectionFactory
-    ) {
+    public StringRedisTemplate stringRedisTemplate() {
         StringRedisTemplate stringRedisTemplate = new StringRedisTemplate();
+        stringRedisTemplate.setConnectionFactory(redisConnectionFactory());
         stringRedisTemplate.setEnableTransactionSupport(true);
         stringRedisTemplate.setKeySerializer(new StringRedisSerializer());
         stringRedisTemplate.setValueSerializer(new StringRedisSerializer());
-        stringRedisTemplate.setConnectionFactory(redisConnectionFactory);
         return stringRedisTemplate;
     }
 }

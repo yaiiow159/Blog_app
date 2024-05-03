@@ -51,4 +51,10 @@ public interface PostPoRepository extends JpaRepository<PostPo, Long>, JpaSpecif
 
     @Query("SELECT p.views FROM  PostPo p WHERE p.id = ?1")
     Long getViewCount(long postId);
+
+    @Query("SELECT p.views FROM  PostPo p WHERE p.id = ?1")
+    Long getViewsCountById(Long postId);
+
+    @Query("SELECT p.likes FROM  PostPo p WHERE p.id = ?1")
+    Long getLikesCountById(Long postId);
 }

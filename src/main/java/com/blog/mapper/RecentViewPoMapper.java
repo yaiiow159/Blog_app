@@ -1,7 +1,7 @@
 package com.blog.mapper;
 
+import com.blog.dto.RecentViewDto;
 import com.blog.po.RecentViewPo;
-import com.blog.dto.RecentViewPoDto;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
@@ -9,11 +9,11 @@ import org.mapstruct.factory.Mappers;
 public interface RecentViewPoMapper {
 
     RecentViewPoMapper INSTANCE = Mappers.getMapper(RecentViewPoMapper.class);
-    RecentViewPo toPo(RecentViewPoDto recentViewPoDto);
+    RecentViewPo toPo(RecentViewDto recentViewDto);
 
-    RecentViewPoDto toDto(RecentViewPo recentViewPo);
+    RecentViewDto toDto(RecentViewPo recentViewPo);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    RecentViewPo partialUpdate(RecentViewPoDto recentViewPoDto, @MappingTarget RecentViewPo recentViewPo);
+    RecentViewPo partialUpdate(RecentViewDto recentViewDto, @MappingTarget RecentViewPo recentViewPo);
 
 }

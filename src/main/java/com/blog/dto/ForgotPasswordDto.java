@@ -13,7 +13,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @Setter
 @Getter
-public class ForgotPasswordRequest implements Serializable {
+public class ForgotPasswordDto implements Serializable {
     @Schema(description = "信箱")
     @Email(message = "信箱格式錯誤")
     private String email;

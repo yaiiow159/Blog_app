@@ -64,7 +64,7 @@ public class UserPo extends BasicPo implements Serializable {
     @ToString.Exclude
     private UserGroupPo userGroupPo;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE,CascadeType.PERSIST})
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
     @JoinTable(name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id",
                     referencedColumnName = "id",

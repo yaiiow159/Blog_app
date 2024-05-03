@@ -20,7 +20,7 @@ import java.util.Objects;
 @ToString
 public class UserGroupPo extends BasicPo implements Serializable {
 
-    public static final String DEFAULT_GROUP_NAME = "group1";
+    public static final String DEFAULT_GROUP_NAME = "admin";
     /**
      * 群組名稱
      */

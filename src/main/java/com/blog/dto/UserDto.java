@@ -67,4 +67,7 @@ public class UserDto extends BaseDto implements Serializable {
     @Schema(description = "使用者角色ID")
     List<Long> roleIds;
 
+    @Schema(description = "使用者角色名稱")
+    Set<String> roleNames;
+
 }

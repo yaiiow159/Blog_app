@@ -1,5 +1,6 @@
 package com.blog.dao;
 
+import com.blog.dto.TagDto;
 import com.blog.po.TagPo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -12,4 +13,6 @@ public interface TagPoRepository extends JpaRepository<TagPo, Long>, JpaSpecific
     Optional<TagPo> findByName(String name);
 
     List<TagPo> findAllByIsDeletedFalse();
+
+    Optional<TagPo> findByIdAndIsDeletedFalse(Long id);
 }

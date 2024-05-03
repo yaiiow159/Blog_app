@@ -36,7 +36,7 @@ import java.util.Collections;
 
 
 @Configuration
-@EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
+@EnableMethodSecurity
 @EnableWebSecurity
 public class SecurityConfig {
     @Resource

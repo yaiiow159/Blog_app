@@ -3,7 +3,7 @@ package com.blog.service.impl;
 import com.blog.dao.PostPoRepository;
 import com.blog.dao.RecentViewPoRepository;
 import com.blog.dao.UserPoRepository;
-import com.blog.dto.RecentViewPoDto;
+import com.blog.dto.RecentViewDto;
 import com.blog.exception.ResourceNotFoundException;
 import com.blog.po.PostPo;
 import com.blog.po.RecentViewPo;
@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -54,32 +55,23 @@ public class RecentViewServiceImpl implements RecentViewService {
     }
 
     @Override
-    public String createRecentView(RecentViewPoDto recentViewPoDto) throws ResourceNotFoundException {
+    public void createRecentView(RecentViewDto recentViewDto) throws ResourceNotFoundException {
         // 找出對應使用者
-        String userName = recentViewPoDto.getUserName();
+        String userName = recentViewDto.getUserName();
         if(Strings.isNullOrEmpty(userName)) {
             throw new UsernameNotFoundException("找不到該用戶");
         }
         RecentViewPo recentViewPo = new RecentViewPo();
-        Optional<UserPo> userPo = userJpaRepository.findByUserName(userName);
-        if(userPo.isEmpty()) {
-            throw new UsernameNotFoundException("找不到該用戶");
-        } else {
-            UserPo userPo1 = userPo.get();
-            recentViewPo.setUser(userPo1);
-        }
+        userJpaRepository.findByUserName(userName).ifPresent(recentViewPo::setUser);
         // 找出對應文章
-        Long postId = recentViewPoDto.getPostId();
-        Optional<PostPo> postPo = postPoRepository.findById(postId);
-        if(postPo.isEmpty()) {
-            throw new ResourceNotFoundException("找不到該文章");
-        } else {
-            PostPo postPo1 = postPo.get();
-            Set<PostPo> postPoSet = Collections.singleton(postPo1);
-            recentViewPo.setPosts(postPoSet);
-        }
+        Long postId = recentViewDto.getPostId();
+        postPoRepository.findById(postId).ifPresent(
+                postPo -> {
+                    recentViewPo.setPosts(Collections.singleton(postPo));
+                    recentViewPo.setCreateTime(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
+                }
+        );
         recentViewPoRepository.saveAndFlush(recentViewPo);
-        return "新增瀏覽紀錄成功";
     }
 
     private String transformDateToString(LocalDateTime dateTime) {

@@ -35,6 +35,6 @@ public class TagPo extends BasicPo implements Serializable {
     @ManyToOne(fetch = FetchType.EAGER,optional = false)
     @JoinColumn(name = "category_id",
             foreignKey = @ForeignKey(name = "fk_tag_category"),
-            referencedColumnName = "id")
+            referencedColumnName = "id",nullable = true)
     private CategoryPo category;
 }

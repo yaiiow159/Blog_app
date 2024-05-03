@@ -101,12 +101,12 @@ public class UserController {
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PutMapping(value = "/userProfile",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "使用者個人資料API",description = "使用者個人資料API")
-    public ApiResponse<UserProfileDto> updateUserProfile(@Parameter(description = "使用者圖像",example = "avatar.png") @RequestPart("avatar") MultipartFile avatar,
-                                                         @Parameter(description = "使用者名稱",example = "Timmy") @RequestPart("username") String username,
-                                                         @Parameter(description = "使用者信箱",example = "Timmy123@gmail.com") @RequestPart("email") String email ,
-                                                         @Parameter(description = "使用者暱稱",example = "Timmy") @RequestPart("nickname") String nickname,
-                                                         @Parameter(description = "使用者生日",example = "2020/01/01") @RequestPart("birthday") @DateTimeFormat(pattern = "yyyy/MM/dd") String birthday,
-                                                         @Parameter(description = "使用者地址",example = "台北市") @RequestPart("address") String address) throws IOException, ExecutionException, InterruptedException, TimeoutException {
+    public ApiResponse<UserProfileDto> updateUserProfile(@Parameter(description = "使用者圖像",example = "avatar.png") @RequestPart(name = "avatar") MultipartFile avatar,
+                                                         @Parameter(description = "使用者名稱",example = "Timmy") @RequestPart(name = "username") String username,
+                                                         @Parameter(description = "使用者信箱",example = "Timmy123@gmail.com") @RequestPart(name = "email") String email ,
+                                                         @Parameter(description = "使用者暱稱",example = "Timmy") @RequestPart(name = "nickname") String nickname,
+                                                         @Parameter(description = "使用者生日",example = "2020/01/01") @RequestPart(name = "birthday") @DateTimeFormat(pattern = "yyyy/MM/dd") String birthday,
+                                                         @Parameter(description = "使用者地址",example = "台北市") @RequestPart(name = "address") String address) throws IOException, ExecutionException, InterruptedException, TimeoutException {
 
         UserProfileRequestBody userProfileRequestBody = new UserProfileRequestBody();
         userProfileRequestBody.setAvatar(avatar);

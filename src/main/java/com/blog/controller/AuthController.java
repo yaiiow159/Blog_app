@@ -1,21 +1,19 @@
 package com.blog.controller;
 
 import com.blog.dto.ApiResponse;
-import com.blog.dto.ForgotPasswordRequest;
+import com.blog.dto.ForgotPasswordDto;
 import com.blog.dto.ResetPasswordRequest;
 import com.blog.dto.UserDto;
 import com.blog.exception.ValidateFailedException;
 import com.blog.jwt.JwtRequestBody;
 import com.blog.jwt.JwtResponseBody;
 import com.blog.service.AuthService;
-import com.blog.service.CapchaService;
 import com.blog.service.UserService;
 import com.blog.utils.JwtTokenUtil;
 
 import com.blog.utils.SpringSecurityUtils;
 import com.google.code.kaptcha.Constants;
 import com.google.code.kaptcha.Producer;
-import com.google.code.kaptcha.impl.DefaultKaptcha;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,37 +21,27 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.util.FastByteArrayOutputStream;
-import org.springframework.util.MultiValueMap;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.imageio.ImageIO;
 import javax.naming.AuthenticationNotSupportedException;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 
 @Tag(name = "JWT認證相關功能", description = "JWT 認證")
@@ -129,7 +117,7 @@ public class AuthController {
 
     @PostMapping("/forgetPassword")
     @Operation(summary = "忘記密碼", description = "忘記密碼並發送電子郵件", tags = {"JWT認證相關功能"})
-    public ApiResponse<String> forgotPassword(@Validated @RequestBody ForgotPasswordRequest request) throws MessagingException, NoSuchAlgorithmException {
+    public ApiResponse<String> forgotPassword(@Validated @RequestBody ForgotPasswordDto request) throws MessagingException, NoSuchAlgorithmException {
         authService.forgotPassword(request.getEmail());
         return new ApiResponse<>(true, "發送電子郵件成功", HttpStatus.OK);
     }
@@ -144,11 +132,11 @@ public class AuthController {
     @PostMapping("/register")
     @Operation(summary = "註冊使用者", description = "註冊使用者並將使用者訊息返回給前端")
     public ApiResponse<String> register(@Parameter(description = "帳號與密碼") @Validated @RequestBody UserDto userDto) throws AuthenticationNotSupportedException {
-        String id = userService.register(userDto);
-        if(null == id){
+        String result = userService.register(userDto);
+        if(!result.equals("註冊成功")) {
             return new ApiResponse<>(false, "註冊失敗", HttpStatus.BAD_REQUEST);
         }
-        return new ApiResponse<>(true, "註冊成功", id, HttpStatus.OK);
+        return new ApiResponse<>(true, "註冊成功", HttpStatus.OK);
     }
 
     @PostMapping("/logout")

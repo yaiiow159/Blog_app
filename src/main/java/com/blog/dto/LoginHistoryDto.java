@@ -16,7 +16,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class LoginHistoryDto implements Serializable {
+public class    LoginHistoryDto implements Serializable {
+    @Schema(description = "ID")
+    private Long id;
     @Schema(description = "使用者名稱")
     private String username;
     @Schema(description = "登入IP位址")

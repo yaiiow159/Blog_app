@@ -1,7 +1,7 @@
 package com.blog.controller;
 
 import com.blog.dto.ApiResponse;
-import com.blog.dto.RecentViewPoDto;
+import com.blog.dto.RecentViewDto;
 import com.blog.exception.ResourceNotFoundException;
 import com.blog.service.RecentViewService;
 import com.blog.vo.PostVo;
@@ -11,12 +11,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Tag(name = "瀏覽紀錄", description = "瀏覽紀錄相關API")
 @RestController
@@ -43,7 +40,12 @@ public class RecentViewController {
 
     @Operation(summary = "新增最近瀏覽紀錄", description = "新增最近瀏覽紀錄", tags = {"瀏覽紀錄"})
     @PostMapping
-    public ResponseEntity<String> createRecentView (@Validated @RequestBody RecentViewPoDto recentViewPoDto) throws ResourceNotFoundException {
-        return ResponseEntity.ok(recentViewService.createRecentView(recentViewPoDto));
+    public ApiResponse<String> createRecentView (@Validated @RequestBody RecentViewDto recentViewDto) throws ResourceNotFoundException {
+        try {
+            recentViewService.createRecentView(recentViewDto);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, e.getMessage(), null, HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "新增成功", null, HttpStatus.CREATED);
     }
 }
