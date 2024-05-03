@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,7 +46,7 @@ public class PostController {
     }
     @GetMapping("/{id}")
     @Operation(summary = "查詢文章",description = "利用id查詢文章")
-    public ApiResponse<PostDto> getPost(@Parameter(description = "文章id",example = "1") @PathVariable Long id) {
+    public ApiResponse<PostDto> getPost(@Parameter(description = "文章id",example = "1") @PathVariable Long id) throws ResourceNotFoundException {
         return new ApiResponse<>(true, "查詢成功", postService.findPostById(id), HttpStatus.OK);
     }
 
@@ -69,6 +70,7 @@ public class PostController {
     @Operation(summary = "查詢文章",description = "查詢文章")
     public ApiResponse<Page<PostDto>> getPostByPage(@Parameter(description = "標題",example = "這是一個標題")@RequestParam(name = "title",required = false) String title,
                                                        @Parameter(description = "作者",example = "Timmy") @RequestParam(name = "authorName",required = false) String authorName,
+                                                       @Parameter(description = "標籤Id") @RequestParam(name = "tagId",required = false) Long tagId,
                                                        @Parameter(description = "頁數") @RequestParam(name = "page", defaultValue = "1",required = false) Integer page,
                                                        @Parameter(description = "大小",example = "10" ) @RequestParam(name = "pageSize",defaultValue = "10",required = false) Integer pageSize) {
         Page<PostDto> posts = postService.findAll(title, authorName, page, pageSize);
@@ -82,7 +84,8 @@ public class PostController {
     @PostMapping(value = "/draft", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "創建草稿API",description = "創建草稿API")
     public ApiResponse<PostDto> createDraft(
-                    @Parameter(description = "圖片",example = "圖片") @RequestPart(required = false) MultipartFile multipartFile,
+                    @Parameter(description = "圖片",example = "圖片") @RequestPart(required = false) String imageUrl,
+                    @Parameter(description = "圖片名稱",example = "圖片") @RequestPart String imageName,
                     @Parameter(description = "標題",example = "標題") @RequestPart String title,
                     @Parameter(description = "內容",example = "內容") @RequestPart(required = false) String content,
                     @Parameter(description = "說明",example = "說明") @RequestPart(required = false) String description,
@@ -96,7 +99,8 @@ public class PostController {
         postDto.setDescription(description);
         postDto.setAuthorName(authorName);
         postDto.setAuthorEmail(authorEmail);
-        postDto.setMultipartFile(multipartFile);
+        postDto.setImageUrl(imageUrl);
+        postDto.setImageName(imageName);
         postDto.setStatus("草稿");
         try {
             postService.createDraft(postDto);

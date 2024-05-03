@@ -28,7 +28,10 @@ public class UserProfileRequestBody implements Serializable {
     private String password;
 
     @Schema(description = "圖片")
-    private MultipartFile avatar;
+    private String avatar;
+
+    @Schema(description = "圖片名稱")
+    private String imageName;
 
     @Schema(description = "生日")
     @JsonFormat(pattern = "yyyy/MM/dd")

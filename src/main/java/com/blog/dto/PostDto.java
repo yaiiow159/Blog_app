@@ -29,13 +29,16 @@ public class PostDto extends BaseDto implements Serializable {
     private String content;
 
     @Schema(description = "文章圖片(請求)")
-    private MultipartFile multipartFile;
+    private String imageUrl;
+
+    @Schema(description = "文章圖片名稱(請求)")
+    private String imageName;
 
     @Schema(description = "文章圖片(回傳)")
     private byte[] image;
 
-    @Schema(description = "標籤")
-    private String[] tagIds;
+    @Schema(description = "標籤IDS")
+    private List<Long> tagIds;
 
     @NotBlank(message = "文章標題不得為空")
     @Schema(description = "文章標題",requiredMode = Schema.RequiredMode.REQUIRED)
@@ -64,7 +67,7 @@ public class PostDto extends BaseDto implements Serializable {
     @Schema(description = "文章瀏覽數")
     private Long viewCount;
 
-    @Schema(description = "文章狀態")
+    @Schema(description = "文章狀態",requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "文章狀態不得為空")
     private String status;
 

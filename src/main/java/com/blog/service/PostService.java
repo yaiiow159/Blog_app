@@ -15,7 +15,7 @@ public interface PostService {
 
     String delete(Long id) throws ResourceNotFoundException;
 
-    PostDto findPostById(Long id);
+    PostDto findPostById(Long id) throws ResourceNotFoundException;
 
     Page<PostDto> findAll(String title, String authorName, Integer page, Integer size);
     PostDto findPostByCategoryId(Long id, Long postId) throws ResourceNotFoundException;
@@ -36,7 +36,7 @@ public interface PostService {
 
     Long getViewCount(String postId);
 
-    void createDraft(PostDto postDto);
+    void createDraft(PostDto postDto) throws ExecutionException, InterruptedException;
 
     Long getViewsCount(Long postId);
     

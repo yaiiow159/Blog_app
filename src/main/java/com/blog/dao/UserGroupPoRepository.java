@@ -11,12 +11,7 @@ import java.util.Optional;
 
 public interface UserGroupPoRepository extends JpaRepository<UserGroupPo, Long>, JpaSpecificationExecutor<UserGroupPo> {
     Optional<UserGroupPo> findByGroupName(String groupName);
-    Optional<UserGroupPo> findByIdAndIsDeletedFalse(Long id);
 
-    List<UserGroupPo> findByIsDeletedFalse();
-
-    List<UserGroupPo> findAllByIsDeletedFalse();
-
-    @Query("select ug from UserGroupPo ug where ug.userPoList = ?1 and ug.isDeleted = false")
+    @Query("select ug from UserGroupPo ug join ug.userPoList u on u.id = ?1 and u.userGroupPo = ug")
     UserGroupPo findByUserPoListContaining(Long id);
 }

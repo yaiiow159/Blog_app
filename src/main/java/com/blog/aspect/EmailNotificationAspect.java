@@ -1,7 +1,8 @@
 package com.blog.aspect;
 
-import com.blog.annotation.NotifyByEmail;
+import com.blog.annotation.SendMail;
 import com.blog.dao.PostPoRepository;
+import com.blog.dto.CommentDto;
 import com.blog.dto.EmailNotification;
 import com.blog.dto.PostDto;
 import com.blog.dto.SubscriptionDto;
@@ -9,16 +10,14 @@ import com.blog.exception.ResourceNotFoundException;
 import com.blog.mapper.PostPoMapper;
 import com.blog.po.PostPo;
 import com.blog.producer.EmailNotificationProducer;
-import com.blog.service.PostService;
 import com.blog.service.SubscriptionService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.annotation.AfterReturning;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.annotation.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.util.List;
 
@@ -34,60 +33,76 @@ public class EmailNotificationAspect {
     @Resource
     private PostPoRepository postPoRepository;
 
-    @Pointcut("@annotation(notifyByEmail)")
-    public void notifyByEmailPointcut(NotifyByEmail notifyByEmail) {}
-    @AfterReturning(value = "notifyByEmailPointcut(notifyByEmail)", returning = "result", argNames = "joinPoint,notifyByEmail,result")
-    public void afterReturning(JoinPoint joinPoint, NotifyByEmail notifyByEmail, Object result) throws ResourceNotFoundException {
-        final String action = notifyByEmail.value();
-        Object[] args = joinPoint.getArgs();
+    @Pointcut("@annotation(sendMail)")
+    public void notifyByEmailPointcut(SendMail sendMail) {}
+    @After(value = "notifyByEmailPointcut(sendMail)")
+    public void after(JoinPoint joinPoint, SendMail sendMail) throws ResourceNotFoundException {
+        final String type = sendMail.type();
+        final String operation = sendMail.operation();
         log.info("notifyEmail afterReturning starting...");
-        if(action.equals("post")) {
-            for (Object arg : args) {
-                if (arg instanceof PostDto postDto) {
-                    String authorName = postDto.getAuthorName();
-                    String authorEmail = postDto.getAuthorEmail();
-                    // 如果該篇作者有被目前使用者收藏 則發送通知給使用者
-                    List<SubscriptionDto> subscriptionDtoList = subscriptionService.findByAuthorNameOrAuthorEmail(authorName, authorEmail);
-                    if (CollectionUtils.isEmpty(subscriptionDtoList)) {
-                        return;
-                    }
-                    emailNotificationProducer.sendMailNotification(getEmailNotification(postDto, joinPoint.getSignature().getName()));
+
+        Object[] args = joinPoint.getArgs();
+        if(ObjectUtils.isEmpty(args)) {
+            return;
+        }
+        for (Object arg : args) {
+            if (arg instanceof PostDto postDto) {
+                EmailNotification emailNotification = getEmailNotification(postDto, operation, type);
+                if(!ObjectUtils.isEmpty(emailNotification)) {
+                    emailNotificationProducer.sendMailNotification(emailNotification);
                 }
             }
-        }
-        if(action.equals("comment")) {
-            for (Object arg : args) {
-                // 取得方法參數
-                if(arg instanceof Long postId) {
-                    PostPo postPo = postPoRepository.findById(postId).orElseThrow(ResourceNotFoundException::new);
-                    PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
-                    emailNotificationProducer.sendMailNotification(getEmailNotification(postDto, joinPoint.getSignature().getName()));
+            if(arg instanceof CommentDto commentDto) {
+                EmailNotification emailNotification = getEmailNotification(commentDto, operation, type);
+                if(!ObjectUtils.isEmpty(emailNotification)) {
+                    emailNotificationProducer.sendMailNotification(emailNotification);
                 }
             }
         }
         log.info("notifyEmail afterReturning ending...");
     }
-
-    private static EmailNotification getEmailNotification(PostDto postDto, String methodName) {
+    private EmailNotification getEmailNotification(PostDto postDto, String operation, String type) {
         EmailNotification emailNotification = new EmailNotification();
-        emailNotification.setConsumer(postDto.getAuthorName());
-        emailNotification.setEmailAddress(postDto.getAuthorEmail());
-        if (methodName.contains("create")) {
-            if(methodName.contains("comment")) {
-                emailNotification.setAction("的文章有了新評論");
-                emailNotification.setSubObject(postDto.getTitle() + "的有新動態");
-            } else {
-                emailNotification.setAction("發布了文章");
-                emailNotification.setSubObject(postDto.getTitle());
+        emailNotification.setSendTo(postDto.getAuthorEmail());
+        emailNotification.setSubject("文章通知");
+        emailNotification.setSendBy(postDto.getAuthorName());
+        emailNotification.setOperation(operation);
+
+        // 如果文章被收藏才需要通知
+        List<SubscriptionDto> subscriptionDtos = subscriptionService.findByAuthorNameOrAuthorEmail(postDto.getAuthorName(), postDto.getAuthorEmail());
+        if(!CollectionUtils.isEmpty(subscriptionDtos)) {
+            if("add".equals(operation)) {
+                // 新增文章通知
+                emailNotification.setMessage("您的訂閱作者新增了一篇文章，請前往查看");
             }
-        } else if (methodName.contains("update")) {
-            emailNotification.setAction("更新了文章");
-            emailNotification.setSubObject(postDto.getTitle());
+            if("edit".equals(operation)) {
+                emailNotification.setMessage("您的訂閱文章已經更新，請前往查看");
+            }
         }
-        if(methodName.contains("Post")){
-            emailNotification.setContent(postDto.getContent());
-        } else if (methodName.contains("Comment")) {
-            emailNotification.setContent("有人留了新評論，快去看看");
+        return emailNotification;
+    }
+
+    private EmailNotification getEmailNotification(CommentDto commentDto, String operation, String type) throws ResourceNotFoundException {
+        PostPo postPo = postPoRepository.findById(commentDto.getPostId()).orElseThrow(ResourceNotFoundException::new);
+
+        EmailNotification emailNotification = new EmailNotification();
+        // 如果文章被收藏才需要通知
+        List<SubscriptionDto> subscriptionDtos = subscriptionService.findByAuthorNameOrAuthorEmail(postPo.getAuthorName(), postPo.getAuthorEmail());
+        if(!CollectionUtils.isEmpty(subscriptionDtos)) {
+            if("comment".equals(type) && "add".equals(operation)) {
+                // 新增留言通知
+                emailNotification.setSendTo(postPo.getAuthorEmail());
+                emailNotification.setSubject("留言通知");
+                emailNotification.setSendBy(commentDto.getName());
+                emailNotification.setOperation(operation);
+                if ("add".equals(operation)) {
+                    // 新增留言通知
+                    emailNotification.setMessage("您的文章 " + postPo.getTitle() + "新增了一則留言，請前往查看");
+                }
+                if ("edit".equals(operation)) {
+                    emailNotification.setMessage("您的文章" + postPo.getTitle() + "留言已經更新" + "請前往查看");
+                }
+            }
         }
         return emailNotification;
     }

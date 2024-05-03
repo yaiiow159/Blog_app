@@ -28,8 +28,6 @@ public interface UserPoRepository extends JpaRepository<UserPo, Long>, JpaSpecif
     @Query(value = "SELECT * FROM users WHERE email = ?1", nativeQuery = true)
     Optional<UserPo> findByEmail(String email);
 
-    @Query(value = "SELECT * FROM users WHERE id = :id AND is_deleted = false", nativeQuery = true)
-    Optional<UserPo> findByIdAndIsDeletedIsFalse(Long id);
 
     @Query(value = "SELECT * FROM users INNER JOIN user_roles ON users.id = user_roles.user_id WHERE user_roles.role_id = :id", nativeQuery = true)
     List<UserPo> findUsersByRoleName(@Param("id") long id);
@@ -38,17 +36,17 @@ public interface UserPoRepository extends JpaRepository<UserPo, Long>, JpaSpecif
     List<UserPo> findByLocked(@Param("locked") boolean locked);
 
     @Query(value = "SELECT NEW com.blog.vo.UserCommentLikeVo(SUM(c.likes),COUNT(c)) FROM CommentPo c "
-            + "WHERE c.name = :username AND c.isDeleted = false")
+            + "WHERE c.name = :username")
     UserCommentLikeVo getCommentLikeCount(@Param("username") String username);
 
     @Query(value = "SELECT NEW com.blog.vo.UserPostLikeCountVo(SUM(p.likes),COUNT(p)) FROM PostPo p "
-            + "WHERE p.authorName = :username AND p.isDeleted = false")
+            + "WHERE p.authorName = :username")
     UserPostLikeCountVo getPostLikeCount(@Param("username") String username);
 
-    @Query(value = "SELECT NEW com.blog.vo.CommentVo(c.id,c.content,c.name,c.email,c.createDate) FROM CommentPo c WHERE c.name = :username AND c.isDeleted = false")
+    @Query(value = "SELECT NEW com.blog.vo.CommentVo(c.id,c.content,c.name,c.email,c.createDate) FROM CommentPo c WHERE c.name = :username")
     Set<CommentVo> getComments(@Param("username") String username);
 
-    @Query(value = "SELECT NEW com.blog.vo.PostVo(p.id,p.title,p.authorName,p.authorEmail,p.content,p.createDate) FROM PostPo p WHERE p.authorName = :username AND p.isDeleted = false")
+    @Query(value = "SELECT NEW com.blog.vo.PostVo(p.id,p.title,p.authorName,p.authorEmail,p.content,p.createDate) FROM PostPo p WHERE p.authorName = :username")
     Set<PostVo> getPosts(@Param("username") String username);
 
     @Modifying

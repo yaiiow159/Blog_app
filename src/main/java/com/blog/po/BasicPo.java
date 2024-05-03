@@ -21,10 +21,6 @@ import java.time.LocalDateTime;
 @Setter
 @MappedSuperclass
 public class BasicPo implements Serializable {
-    public BasicPo() {
-        // 設置預設值
-        this.isDeleted = false;
-    }
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -45,9 +41,6 @@ public class BasicPo implements Serializable {
 
     @Column(name = "update_user")
     String updateUser;// VARCHAR2(16)
-
-    @Column(name = "is_deleted",columnDefinition = "boolean default false", nullable = false)
-    Boolean isDeleted;// boolean(1)
 
     @Column(name = "update_date")
     @JsonSerialize(using = LocalDateTimeSerializer.class)

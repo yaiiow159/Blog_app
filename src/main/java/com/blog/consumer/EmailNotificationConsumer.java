@@ -4,7 +4,6 @@ import com.alibaba.fastjson2.JSON;
 import com.blog.dao.MailNotificationPoRepository;
 import com.blog.dto.EmailNotification;
 import com.blog.po.MailNotificationPo;
-import com.blog.service.MailNotificationService;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.concurrent.ThreadPoolExecutor;
 
 @Component
 @RequiredArgsConstructor
@@ -37,10 +35,10 @@ public class EmailNotificationConsumer {
         StringBuilder sb = new StringBuilder();
         sb.append("<html><body>");
         sb.append("<p style='color: #333; font-size: 18px; font-family: Arial, sans-serif;'>");
-        sb.append("你的訂閱作者").append(emailNotification.getConsumer()).append(emailNotification.getAction()).append("：<strong>").append(emailNotification.getSubObject()).append("</strong>");
+        sb.append("你的訂閱作者").append(emailNotification.getSendTo()).append(emailNotification.getOperation()).append("：<strong>").append(emailNotification.getSubject()).append("</strong>");
         sb.append("</p>");
         sb.append("<p style='color: #666; font-size: 14px; font-family: Arial, sans-serif;'>");
-        sb.append("寄件內容：").append(emailNotification.getContent());
+        sb.append("寄件內容：").append(emailNotification.getMessage());
         sb.append("</p>");
         sb.append("<p style='color: #666; font-size: 14px; font-family: Arial, sans-serif;'>");
         sb.append("感謝你的訪問！");
@@ -49,21 +47,20 @@ public class EmailNotificationConsumer {
 
         try {
             helper.setFrom(EMAIL_SENDER);
-            helper.setSubject(emailNotification.getSubObject());
+            helper.setSubject(emailNotification.getSubject());
             helper.setText(sb.toString(), true);
             helper.setTo(emailNotification.getEmailAddress());
             javaMailSender.send(message);
-            log.info("Sending email notification: {}", message);
-
             // 寄送郵件成功後 紀錄郵件訊息至資料庫
             MailNotificationPo mailNotificationPo = new MailNotificationPo();
             mailNotificationPo.setEmail(emailNotification.getEmailAddress());
-            mailNotificationPo.setSubject(emailNotification.getSubObject());
-            mailNotificationPo.setName(emailNotification.getConsumer());
-            mailNotificationPo.setAction(emailNotification.getAction());
-            mailNotificationPo.setContent(emailNotification.getContent());
+            mailNotificationPo.setSubject(emailNotification.getSubject());
+            mailNotificationPo.setName(emailNotification.getSendTo());
+            mailNotificationPo.setSendBy(emailNotification.getSendBy());
+            mailNotificationPo.setAction(emailNotification.getOperation());
+            mailNotificationPo.setContent(emailNotification.getMessage());
             mailNotificationPo.setSendTime(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-            mailNotificationPoRepository.save(mailNotificationPo);
+            mailNotificationPoRepository.saveAndFlush(mailNotificationPo);
 
         } catch (Exception e) {
             log.error("Failed to send email notification: {}", e.getMessage());
@@ -82,13 +79,13 @@ public class EmailNotificationConsumer {
         StringBuilder sb = new StringBuilder();
         sb.append("<html><body>");
         sb.append("<p style='color: #333; font-size: 18px; font-family: Arial, sans-serif;'>");
-        sb.append("你的手機驗證碼為: <strong style='color: #f00; font-weight: bold'>").append(emailNotification.getContent()).append("</strong>");
+        sb.append("你的手機驗證碼為: <strong style='color: #f00; font-weight: bold'>").append(emailNotification.getMessage()).append("</strong>");
         sb.append("</p>");
         sb.append("</body></html>");
 
         try {
             helper.setFrom(EMAIL_SENDER);
-            helper.setSubject(emailNotification.getSubObject());
+            helper.setSubject(emailNotification.getSubject());
             helper.setText(sb.toString(), true);
             helper.setTo(emailNotification.getEmailAddress());
             javaMailSender.send(message);
@@ -96,10 +93,10 @@ public class EmailNotificationConsumer {
             // 寄送郵件成功後 紀錄郵件訊息至資料庫
             MailNotificationPo mailNotificationPo = new MailNotificationPo();
             mailNotificationPo.setEmail(emailNotification.getEmailAddress());
-            mailNotificationPo.setSubject(emailNotification.getSubObject());
-            mailNotificationPo.setName(emailNotification.getConsumer());
-            mailNotificationPo.setAction(emailNotification.getAction());
-            mailNotificationPo.setContent(emailNotification.getContent());
+            mailNotificationPo.setSubject(emailNotification.getSubject());
+            mailNotificationPo.setName(emailNotification.getSendTo());
+            mailNotificationPo.setAction(emailNotification.getOperation());
+            mailNotificationPo.setContent(emailNotification.getMessage());
             mailNotificationPo.setSendTime(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             mailNotificationPoRepository.save(mailNotificationPo);
             log.info("Sending email notification: {}", message);

@@ -16,9 +16,6 @@ public class BaseDto implements Serializable {
     @Schema(description = "創建物件id",example = "1")
     Long id;
 
-    @Schema(description = "創建物件名稱",example = "true/false")
-    Boolean isDeleted;
-
     @Schema(description = "創建物件者",example = "admin")
     String creatUser;
 

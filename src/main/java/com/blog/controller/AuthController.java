@@ -58,11 +58,7 @@ public class AuthController {
     private final StringRedisTemplate stringRedisTemplate;
     private static final String JWT_TYPE = "Bearer";
 
-    /**
-     * 取得圖驗證碼
-     * @return
-     * @throws IOException
-     */
+
     @Operation(summary = "取得驗證碼", description = "取得驗證碼", tags = {"驗證碼"})
     @GetMapping(value = "/captchaCode")
     public void getCaptcha(HttpServletRequest request, HttpServletResponse response) throws IOException {

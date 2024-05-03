@@ -57,10 +57,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public String delete(Long id) {
-        rolePoRepository.findById(id).ifPresent(rolePo -> {
-            rolePo.setIsDeleted(true);
-            rolePoRepository.saveAndFlush(rolePo);
-        });
+        rolePoRepository.deleteById(id);
         return "刪除成功";
     }
 
@@ -86,7 +83,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public List<RoleDto> findAll() {
-        return rolePoRepository.findAllByIsDeletedFalse().stream().map(RolePoMapper.INSTANCE::toDto).toList();
+        return rolePoRepository.findAll().stream().map(RolePoMapper.INSTANCE::toDto).toList();
     }
 
     @Override

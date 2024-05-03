@@ -36,7 +36,6 @@ public class CategorieServiceImpl implements CategorieService {
     @Override
     public void add(CategoryDto categoryDto) {
         CategoryPo categoryPo = CategoryPoMapper.INSTANCE.toPo(categoryDto);
-        categoryPo.setIsDeleted(false);
         categoryPo.setCreateDate(LocalDateTime.now());
         categoryPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
         categoryPoRepository.saveAndFlush(categoryPo);
@@ -45,10 +44,8 @@ public class CategorieServiceImpl implements CategorieService {
     @Override
     public String delete(Long categoryId) throws ValidateFailedException {
         validateCategory(categoryId);
-        CategoryPo categoryPo = categoryPoRepository.findById(categoryId).get();
-        categoryPo.setIsDeleted(true);
-        categoryPo = categoryPoRepository.saveAndFlush(categoryPo);
-       return "刪除成功";
+        categoryPoRepository.deleteById(categoryId);
+        return "刪除成功";
     }
     @Override
     public void edit(long categoryId, CategoryDto categoryDto) throws ValidateFailedException {
@@ -71,7 +68,6 @@ public class CategorieServiceImpl implements CategorieService {
             if (!ObjectUtils.isEmpty(name)) {
                 predicate.getExpressions().add(criteriaBuilder.like(root.get("name"), "%" + name + "%"));
             }
-            predicate.getExpressions().add(criteriaBuilder.equal(root.get("isDeleted"), false));
             return predicate;
         };
         Page<CategoryPo> categoryPos = categoryPoRepository.findAll(specification, pageRequest);
@@ -80,7 +76,7 @@ public class CategorieServiceImpl implements CategorieService {
 
     @Override
     public List<CategoryDto> findAll() {
-        return categoryPoRepository.findAllByIsDeletedFalse()
+        return categoryPoRepository.findAll()
                 .stream()
                 .map(CategoryPoMapper.INSTANCE::toDto).toList();
     }

@@ -8,8 +8,8 @@ import java.util.concurrent.CompletableFuture;
 
 public interface AwsS3ClientService {
 
-    CompletableFuture<String> uploadFileToS3Bucket(String fileName, File file);
-    byte[] downloadFileFromS3Bucket(String fileName) throws ResourceNotFoundException, IOException;
+    CompletableFuture<String> uploadFile(String imageUrl, String imageName);
+    byte[] downloadFile(String fileName) throws ResourceNotFoundException, IOException;
 
-    CompletableFuture<String> deleteFileFromS3Bucket(String fileName);
+    CompletableFuture<String> deleteFile(String fileName);
 }

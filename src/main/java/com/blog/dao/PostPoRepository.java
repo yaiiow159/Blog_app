@@ -16,20 +16,12 @@ import java.util.Optional;
 
 public interface PostPoRepository extends JpaRepository<PostPo, Long>, JpaSpecificationExecutor<PostPo> {
 
-    @Query("SELECT p FROM PostPo p WHERE p.id = ?1 AND p.isDeleted = false")
-    PostPo findByIdAndIsDeletedFalse(long id);
 
 
     // 查詢創建時間最新的前五筆文章
-    @Query("SELECT p FROM PostPo p WHERE p.isDeleted = false ORDER BY p.createDate DESC LIMIT 5")
-    List<PostPo> findTop5ByIsDeletedFalseAndAndCreateDate();
-
-    @Query("SELECT p FROM PostPo p INNER JOIN CategoryPo c ON p.category.id = c.id WHERE p.id = ?1 AND p.isDeleted = false")
-    Optional<PostPo> findByPostIdAndIsDeletedFalseAndCategoryId(Long postId, Long categoryId);
-
     @Query(" SELECT p FROM PostPo p " +
            " LEFT JOIN SubscriptionPo s ON p.id = s.post.id " +
-           " WHERE p.isDeleted = false GROUP BY p.id ORDER BY COUNT(s.id) DESC LIMIT 5 ")
+           " GROUP BY p.id ORDER BY COUNT(s.id) DESC LIMIT 5 ")
     List<PostPo> findTop5Posts();
 
     // 增加讚數 + 1
@@ -57,4 +49,7 @@ public interface PostPoRepository extends JpaRepository<PostPo, Long>, JpaSpecif
 
     @Query("SELECT p.likes FROM  PostPo p WHERE p.id = ?1")
     Long getLikesCountById(Long postId);
+
+    @Query("SELECT p FROM PostPo p ORDER BY p.createDate DESC limit 5")
+    List<PostPo> findTop5ByOrderByIdDesc();
 }

@@ -33,7 +33,6 @@ public class TagServiceImpl implements TagService {
             if (!ObjectUtils.isEmpty(name)) {
                 predicate.getExpressions().add(criteriaBuilder.like(root.get("name"), "%" + name + "%"));
             }
-            predicate.getExpressions().add(criteriaBuilder.equal(root.get("isDeleted"), false));
             return predicate;
         };
         Page<TagPo> tagPos = tagPoRepository.findAll(specification, pageRequest);
@@ -42,7 +41,7 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public List<TagDto> findAll() {
-        return tagPoRepository.findAllByIsDeletedFalse()
+        return tagPoRepository.findAll()
                 .stream()
                 .map(TagPoMapper.INSTANCE::toDto).toList();
     }
@@ -54,7 +53,6 @@ public class TagServiceImpl implements TagService {
         TagPo tagPo = TagPoMapper.INSTANCE.toPo(tagDto);
         tagPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
         tagPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
-        tagPo.setIsDeleted(false);
         tagPoRepository.saveAndFlush(tagPo);
     }
 
@@ -71,16 +69,13 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public String delete(Long id) {
-        tagPoRepository.findById(id).ifPresent(tagPo -> {
-            tagPo.setIsDeleted(true);
-            tagPoRepository.saveAndFlush(tagPo);
-        });
+        tagPoRepository.deleteById(id);
         return "刪除成功";
     }
 
     @Override
     public TagDto findById(Long id) {
-        return tagPoRepository.findByIdAndIsDeletedFalse(id).map(TagPoMapper.INSTANCE::toDto).orElse(null);
+       return tagPoRepository.findById(id).map(TagPoMapper.INSTANCE::toDto).orElse(null);
     }
 
 }

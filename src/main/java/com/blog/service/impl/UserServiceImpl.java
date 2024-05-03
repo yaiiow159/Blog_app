@@ -8,7 +8,6 @@ import com.blog.exception.JwtDomainException;
 import com.blog.mapper.*;
 import com.blog.po.*;
 import com.blog.service.UserService;
-import com.blog.utils.FileUtils;
 import com.blog.utils.SpringSecurityUtils;
 
 import jakarta.annotation.Resource;
@@ -31,7 +30,6 @@ import org.springframework.util.FileCopyUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.naming.AuthenticationNotSupportedException;
-import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -47,7 +45,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Transactional
 public class UserServiceImpl implements UserService {
-    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
     @Resource
     private UserGroupPoRepository userGroupPoRepository;
     @Resource
@@ -65,7 +63,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto findByUserId(Long userId) {
-        var optionalUserPo  = Optional.of(userJpaRepository.findByIdAndIsDeletedIsFalse(userId))
+        var optionalUserPo  = Optional.of(userJpaRepository.findById(userId))
                 .orElseThrow(() -> new UsernameNotFoundException("找不到使用者: " + userId));
         UserDto userDto = optionalUserPo.map(UserPoMapper.INSTANCE::toDto).orElse(null);
         assert userDto != null;
@@ -74,7 +72,7 @@ public class UserServiceImpl implements UserService {
     }
 
     public String lockUser(Long userId) {
-        UserPo userPo = userJpaRepository.findByIdAndIsDeletedIsFalse(userId)
+        UserPo userPo = userJpaRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("找不到使用者: " + userId));
         userPo.setLocked(true);
         userJpaRepository.saveAndFlush(userPo);
@@ -83,9 +81,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void changePassword(String oldPassword, String newPassword) {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (!passwordEncoder.matches(oldPassword, userDetails.getPassword())) {
-            throw new JwtDomainException("原密碼錯誤");
+            throw new ValidateFailedException("原密碼錯誤");
         }
         userJpaRepository.changePassword(passwordEncoder.encode(newPassword), userDetails.getUsername());
         // 查詢新使用者密碼
@@ -95,7 +93,7 @@ public class UserServiceImpl implements UserService {
         }
         // 更新spring-security的數據
         userDetails = userDetailsService.loadUserByUsername(userNameOption.get().getUserName());
-        var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null,userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
     }
 
@@ -130,11 +128,13 @@ public class UserServiceImpl implements UserService {
     }
 
     public String unlockUser(Long userId) {
-        var userPo = Optional.of(userJpaRepository.findByIdAndIsDeletedIsFalse(userId))
+        return userJpaRepository.findById(userId)
+                .map(userPo -> {
+                    userPo.setLocked(true);
+                    userJpaRepository.saveAndFlush(userPo);
+                    return "解鎖成功";
+                })
                 .orElseThrow(() -> new UsernameNotFoundException("找不到使用者: " + userId));
-        userPo.ifPresent(userPo1 -> userPo1.setLocked(true));
-        userJpaRepository.saveAndFlush(userPo.get());
-        return "解鎖成功";
     }
 
     @Override
@@ -154,7 +154,6 @@ public class UserServiceImpl implements UserService {
         UserPo userPo = UserPoMapper.INSTANCE.toPo(userDto);
         userPo.setUserGroupPo(userGroupPoRepository.findById(userDto.getGroupId()).orElseThrow(() -> new ValidateFailedException("找不到群組")));
         rolePoRepository.findAllById(userDto.getRoleIds()).forEach(userPo.getRoles()::add);
-        userPo.setIsDeleted(false);
         userJpaRepository.saveAndFlush(userPo);
     }
 
@@ -174,10 +173,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String delete(Long id) {
-        userJpaRepository.findById(id).ifPresent(userPo -> {
-            userPo.setIsDeleted(true);
-            userJpaRepository.saveAndFlush(userPo);
-        });
+        userJpaRepository.deleteById(id);
         return "刪除成功";
     }
 
@@ -198,7 +194,6 @@ public class UserServiceImpl implements UserService {
             userDto.setCreatUser(SpringSecurityUtils.getCurrentUser());
             userDto.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             UserPo userPo = UserPoMapper.INSTANCE.toPo(userDto);
-            userPo.setIsDeleted(false);
             // 設置使用者群組
             if (userGroupPoRepository.findByGroupName(userDto.getGroupName()).isPresent()) {
                 userGroupPoRepository.findByGroupName(userDto.getGroupName()).ifPresent(
@@ -229,19 +224,16 @@ public class UserServiceImpl implements UserService {
         IOException, ExecutionException, InterruptedException {
             UserPo userPo = userJpaRepository.findByUserName(userProfileRequestBody.getName())
                     .orElseThrow(() -> new UsernameNotFoundException("找不到使用者 " + userProfileRequestBody.getName()));
-            File file = null;
-            final String fileName;
             if (null != userProfileRequestBody.getAvatar()) {
-                // 存儲到aws s3當中
-                file = FileUtils.convertMultipartFileToFile(userProfileRequestBody.getAvatar());
-                fileName = FileUtils.generateFileName(userProfileRequestBody.getAvatar());
-                CompletableFuture<String> result = amazonS3ClientService.uploadFileToS3Bucket(fileName, file);
+                CompletableFuture<String> result = amazonS3ClientService.uploadFile(
+                        userProfileRequestBody.getAvatar(),
+                        userProfileRequestBody.getImageName());
                 if (!result.get().equals("文件上傳成功")) {
                     throw new IOException("文件上傳失敗");
                 }
-                userPo.setAvatarName(fileName);
+                userPo.setAvatarName(userProfileRequestBody.getImageName());
             } else if (null != userPo.getAvatarName() && !userPo.getAvatarName().isEmpty()) {
-                CompletableFuture<String> result = amazonS3ClientService.deleteFileFromS3Bucket(userPo.getAvatarName());
+                CompletableFuture<String> result = amazonS3ClientService.deleteFile(userPo.getAvatarName());
                 if (!result.get().equals("文件删除成功")) {
                     throw new IOException("文件删除失敗");
                 }
@@ -262,9 +254,8 @@ public class UserServiceImpl implements UserService {
             userProfileDto.setAddress(userPo.getAddress());
             userProfileDto.setNickname(userPo.getNickName());
             userProfileDto.setBirthday(userPo.getBirthday());
-            if (null != file) {
-                userProfileDto.setAvatar(FileCopyUtils.copyToByteArray(file));
-            }
+            // 從s3 取回圖片
+            amazonS3ClientService.downloadFile(userPo.getAvatarName());
             return userProfileDto;
         }
 
@@ -276,7 +267,7 @@ public class UserServiceImpl implements UserService {
             UserProfileDto userProfileDto = new UserProfileDto();
             if (avatarName != null) {
                 try {
-                    byte[] image = amazonS3ClientService.downloadFileFromS3Bucket(avatarName);
+                    byte[] image = amazonS3ClientService.downloadFile(avatarName);
                     if (null != image) {
                         userProfileDto.setAvatar(image);
                     }
@@ -297,12 +288,6 @@ public class UserServiceImpl implements UserService {
         public List<UserDto> findUsersByRoleName (long id){
             List<UserPo> userPos = userJpaRepository.findUsersByRoleName(id);
             return userPos.stream().map(UserPoMapper.INSTANCE::toDto).toList();
-        }
-
-        private List<Long> checkRoleIds(Set <Long> roleIds) {
-            return roleIds.stream()
-                    .filter(roleId -> rolePoRepository.findById(roleId).isEmpty())
-                    .collect(Collectors.toList());
         }
 
         private void validateUser (UserDto userDto) throws AuthenticationNotSupportedException {

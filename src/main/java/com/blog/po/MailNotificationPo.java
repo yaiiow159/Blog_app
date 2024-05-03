@@ -41,6 +41,10 @@ public class MailNotificationPo implements Serializable {
     @NotBlank(message = "名稱不得為空")
     private String name;
 
+    @Column(name = "send_by")
+    @NotBlank(message = "發送人不得為空")
+    private String sendBy;
+
     @Column(name = "email")
     @NotBlank(message = "電子郵件不得為空")
     @Email(message = "電子郵件格式錯誤")

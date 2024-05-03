@@ -7,6 +7,7 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface NotifyByEmail {
-    String value() default "post";
+public @interface SendMail {
+    String type() default "post";
+    String operation() default "add";
 }

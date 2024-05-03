@@ -20,5 +20,5 @@ public interface RolePoRepository extends JpaRepository<RolePo, Long>, JpaSpecif
 
     Optional<RolePo> findByRoleName(String string);
 
-    List<RolePo> findAllByIsDeletedFalse();
+
 }

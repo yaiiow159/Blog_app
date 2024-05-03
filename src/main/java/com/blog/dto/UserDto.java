@@ -42,6 +42,9 @@ public class UserDto extends BaseDto implements Serializable {
     @Email(message = "電子郵件格式錯誤")
     String email;
 
+    @Schema(description = "是否鎖定",example = "false")
+    Boolean isLocked;
+
     @Schema(description = "使用者名稱",example = "admin")
     private String userName;
 

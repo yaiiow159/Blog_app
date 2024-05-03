@@ -12,7 +12,4 @@ import java.util.Optional;
 public interface TagPoRepository extends JpaRepository<TagPo, Long>, JpaSpecificationExecutor<TagPo> {
     Optional<TagPo> findByName(String name);
 
-    List<TagPo> findAllByIsDeletedFalse();
-
-    Optional<TagPo> findByIdAndIsDeletedFalse(Long id);
 }

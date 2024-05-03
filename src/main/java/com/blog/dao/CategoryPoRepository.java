@@ -13,7 +13,4 @@ import java.util.Optional;
 public interface CategoryPoRepository extends JpaRepository<CategoryPo, Long>, JpaSpecificationExecutor<CategoryPo> {
     CategoryPo findByName(String name);
 
-    List<CategoryPo> findAllByIsDeletedFalse();
-
-    Optional<CategoryPo> findByIdAndIsDeletedFalse(Long categoryId);
 }

@@ -17,8 +17,8 @@ public class LoginRecordController {
 
     private final LongRecordService longRecordService;
 
-    @GetMapping
-    public ApiResponse<Page<LoginHistoryDto>> getLoginRecords(@Parameter(name = "username") @RequestParam(name = "username" ,required = false) String username,
+    @GetMapping("{username}")
+    public ApiResponse<Page<LoginHistoryDto>> getLoginRecords(@PathVariable(name = "username") String username,
                                                               @Parameter(name = "ipAddress") @RequestParam(name = "ipAddress" ,required = false) String ipAddress,
                                                               @Parameter(name = "action") @RequestParam(name = "action" ,required = false) String action,
                                                               @Parameter(name = "page") @RequestParam(name = "page" ,required = false) Integer page,
@@ -30,8 +30,10 @@ public class LoginRecordController {
         return new ApiResponse<>(true,"查詢成功",loginRecords,HttpStatus.OK);
     }
 
-    @GetMapping("/{id}")
-    public ApiResponse<LoginHistoryDto> getLoginRecord(@PathVariable Long id) {
+    @GetMapping("{username}/{id}")
+    public ApiResponse<LoginHistoryDto> getLoginRecord(
+            @PathVariable(name = "username") String username,
+            @PathVariable Long id) {
         LoginHistoryDto loginRecord = longRecordService.getLoginRecord(id);
         if(ObjectUtils.isEmpty(loginRecord)) {
             return new ApiResponse<>(false,"查無資料",HttpStatus.NO_CONTENT);

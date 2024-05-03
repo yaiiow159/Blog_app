@@ -56,7 +56,7 @@ public class UserGroupServiceImpl implements UserGroupService {
 
     @Override
     public List<UserGroupDto> findAll() {
-        return userGroupRepository.findAllByIsDeletedFalse()
+        return userGroupRepository.findAll()
                 .stream()
                 .map(UserGroupPoMapper.INSTANCE::toDto)
                 .toList();
@@ -74,7 +74,7 @@ public class UserGroupServiceImpl implements UserGroupService {
     @Override
     public void edit(UserGroupDto userGroupDto) throws ValidateFailedException {
         validateUserGroup(userGroupDto);
-        userGroupRepository.findByIdAndIsDeletedFalse(userGroupDto.getId()).ifPresent(userGroupPo -> {
+        userGroupRepository.findById(userGroupDto.getId()).ifPresent(userGroupPo -> {
             UserGroupPoMapper.INSTANCE.partialUpdate(userGroupDto, userGroupPo);
             userGroupPo.setUpdDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             userGroupPo.setUpdateUser(SpringSecurityUtils.getCurrentUser());
@@ -90,8 +90,7 @@ public class UserGroupServiceImpl implements UserGroupService {
         if(!userGroupPo.getUserPoList().isEmpty()){
             throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.RESOURCE_CANNOT_DELETE);
         }
-        optional.get().setIsDeleted(true);
-        userGroupRepository.saveAndFlush(optional.get());
+        userGroupRepository.deleteById(userGroupId);
         return "群組刪除成功";
     }
 

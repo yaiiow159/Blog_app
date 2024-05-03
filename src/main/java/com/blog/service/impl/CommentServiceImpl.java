@@ -1,6 +1,6 @@
 package com.blog.service.impl;
 
-import com.blog.annotation.NotifyByEmail;
+import com.blog.annotation.SendMail;
 import com.blog.dao.CommentPoRepository;
 import com.blog.dao.PostPoRepository;
 import com.blog.dao.UserPoRepository;
@@ -44,7 +44,7 @@ public class CommentServiceImpl implements CommentService {
     private JavaMailSender javaMailSender;
     // 每當有人創建新評論，通知該作者 該文章有新評論了
     @Override
-    @NotifyByEmail("comment")
+    @SendMail(type = "comment",operation = "add")
     public void add(Long postId, CommentDto commentDto) throws ResourceNotFoundException {
         PostPo postPo = postPoRepository.findById(postId)
                 .orElseThrow(() -> new ResourceNotFoundException("找不到該文章"));
@@ -56,7 +56,6 @@ public class CommentServiceImpl implements CommentService {
         CommentPo commentPo = CommentPoMapper.INSTANCE.toPo(commentDto);
         commentPo.setPost(postPo);
         commentPo.setUser(userPo);
-        commentPo.setIsDeleted(false);
         commentPoRepository.saveAndFlush(commentPo);
     }
 
@@ -68,9 +67,10 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @SendMail(type = "comment",operation = "edit")
     public void edit(Long postId, Long id, CommentDto commentDto) throws ResourceNotFoundException {
-        PostPo postPo = postPoRepository.findByIdAndIsDeletedFalse(postId);
-        CommentPo commentPo = commentPoRepository.findByIdAndIsDeletedFalse(id).orElseThrow(() -> new ResourceNotFoundException("找不到該留言"));
+        PostPo postPo = postPoRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException("找不到該文章"));
+        CommentPo commentPo = commentPoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("找不到該留言"));
         commentPo = CommentPoMapper.INSTANCE.partialUpdate(commentDto, commentPo);
         commentPo.setUpdDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
         commentPo.setUpdateUser(SpringSecurityUtils.getCurrentUser());
@@ -80,17 +80,14 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public void delete(Long postId, Long id) throws ResourceNotFoundException {
-        CommentPo commentPo = commentPoRepository.findByPostIdAndId(postId,id)
-                .orElseThrow(() -> new ResourceNotFoundException("找不到該留言"));
-        commentPo.setIsDeleted(true);
-        commentPoRepository.saveAndFlush(commentPo);
+        commentPoRepository.deleteById(id);
     }
 
     @Override
     public List<CommentDto> findAllComments(Long postId) throws ResourceNotFoundException {
         postPoRepository.findById(postId)
                 .orElseThrow(() -> new ResourceNotFoundException("找不到該文章"));
-        List<CommentPo> commentPoList = commentPoRepository.findAllByPostIdAndIsDeletedFalse(postId);
+        List<CommentPo> commentPoList = commentPoRepository.findAllByPostId(postId);
         if(CollectionUtils.isEmpty(commentPoList))
             return null;
         return CommentPoMapper.INSTANCE.toDtoList(commentPoList);

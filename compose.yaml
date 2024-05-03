@@ -6,6 +6,11 @@ services:
       dockerfile: Dockerfile
     container_name: blog_app
     restart: on-failure
+    extra_hosts:
+      - "mysql:172.16.0.1"
+      - "redis:172.16.0.2"
+      - "zookeeper:172.16.0.3"
+      - "kafka:172.16.0.4"
     deploy:
       replicas: 1
     ports:
@@ -99,6 +104,9 @@ services:
 networks:
   blog_network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.0.0/24
 volumes:
   mysql_data:
   mysql_conf:
