@@ -4,6 +4,11 @@
 利用spring aop 以及kafak搭配 當使用者收藏其他作者的文章時 若該作者更改其文章內容或發佈新文章時，可從注冊mail中收到通知 <br>
 功能還在持續擴充中
 
+擴充功能
+- 作者追蹤
+- 統計分析: 依照使用者權限顯示不同統計分析紀錄
+- 
+
 <hr>
 
 ## 系統介紹：
@@ -12,9 +17,9 @@
 後端使用springboot搭建spring項目、使用restful建置controller功能項，並且統一管理錯誤處理、回應物件處理等增加統一性 <br>
 搭配docker、dockerfile、docker-compos 進行容器化處理 以及maven-plugin 進行docker-build push等處理 上傳項目至docker-hub <br>
 
-前端項目網址: 
+前端項目網址: https://github.com/yaiiow159/blog-frontend
 
-目前正在進行: 撰寫前端後端的CI/CD流程、部屬至AWS-EC2上 <br>
+目前正在進行: 撰寫前端後端的CI/CD流程、部屬GCP上 <br>
 
 ## 系統流程說明 (構思說明)
 前端使用axios來傳遞前端資料至後端，後端使用dto接收資料，並使用mapstructer來轉換dto至po物件並在dao層進行crud操作<br>
@@ -29,12 +34,13 @@
 ## 使用技術介紹:
 <hr>
 
-前端使用技術: vue3 + pinia(全局狀態管理) + tainwindcss(css樣式) + axios(前後端資料傳遞) <br>
-後端使用技術: springboot3 (spring配置框架) + spring-security(權限控制) + spring-data-jpa(dao層操作) <br>
+前端使用技術: vue3 + pinia(全局狀態管理) + sass + router(路由管理) + axios(前後端資料傳遞) <br>
+後端使用技術: springboot3 (spring配置框架) + spring-security(權限控制) + spring-data-jpa(dao層操作) + spring-scheduled(定時任務) + springboot-mail(郵件發送)<br>
 消息隊列: kafka + zookeeper <br>
 資料庫:mysql <br>
 非關係型資料庫:redis <br>
-文檔生成以及測試: openApi
+文檔生成以及測試: openApi3
 容器化: docker、docker-compose <br>
-雲服務技術: AWS(s3、ec2)
+容器化管理平台: portainer <br>
+雲服務技術: GCP(google-storage、computer-engine、gcloud-sql)
 
