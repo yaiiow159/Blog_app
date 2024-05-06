@@ -130,4 +130,14 @@ public class CommentServiceImpl implements CommentService {
         return commentPoRepository.getCommentDisLike(commentId);
     }
 
+    @Override
+    public void likeComment(Long postId, Long id) {
+
+    }
+
+    @Override
+    public void cancelLikeComment(Long postId, Long id) {
+
+    }
+
 }

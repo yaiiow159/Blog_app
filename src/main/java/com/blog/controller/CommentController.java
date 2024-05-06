@@ -77,7 +77,11 @@ public class CommentController {
     public ApiResponse<String> deleteComment(
             @Parameter(description = "文章id",example = "1")@PathVariable Long postId,
             @Parameter(description = "評論id",example = "1")@PathVariable Long id) throws ResourceNotFoundException {
-        commentService.delete(postId, id);
+        try {
+            commentService.delete(postId, id);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "刪除失敗", HttpStatus.BAD_REQUEST);
+        }
         return new ApiResponse<>(true, "刪除成功",HttpStatus.OK);
     }
 
@@ -86,9 +90,39 @@ public class CommentController {
     @Operation(summary = "檢舉評論",description = "檢舉一篇文章底下的評論")
     public ApiResponse<String> reportComment(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "被檢舉評論")@Validated @RequestBody
-            CommentDto commentDto) throws ResourceNotFoundException {
-        commentService.reportComment(commentDto);
+            CommentDto commentDto) {
+        try {
+            commentService.reportComment(commentDto);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "檢舉失敗", HttpStatus.BAD_REQUEST);
+        }
         return new ApiResponse<>(true, "檢舉成功",HttpStatus.OK);
+    }
+
+    @PostMapping("/posts/{postId}/comments/{id}/like")
+    @Operation(summary = "按讚評論",description = "按讚一篇文章底下的評論")
+    public ApiResponse<String> likeComment(
+            @Parameter(description = "文章id",example = "1")@PathVariable Long postId,
+            @Parameter(description = "評論id",example = "1")@PathVariable Long id){
+        try {
+            commentService.likeComment(postId, id);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "按讚失敗", HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "按讚成功",HttpStatus.OK);
+    }
+
+    @DeleteMapping("/posts/{postId}/comments/{id}/like")
+    @Operation(summary = "取消按讚評論",description = "取消按讚一篇文章底下的評論")
+    public ApiResponse<String> cancelLikeComment(
+            @Parameter(description = "文章id",example = "1")@PathVariable Long postId,
+            @Parameter(description = "評論id",example = "1")@PathVariable Long id){
+        try {
+            commentService.cancelLikeComment(postId, id);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "取消按讚失敗", HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "取消按讚成功",HttpStatus.OK);
     }
 
 }

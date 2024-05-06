@@ -28,7 +28,7 @@ public class BasicPo implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    Long id;// VARCHAR2(36)
+    Long id;
 
     @Column(name = "create_user")
     String creatUser;// VARCHAR2(16)

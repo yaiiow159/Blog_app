@@ -17,9 +17,17 @@ import java.io.Serializable;
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TagDto extends BaseDto implements Serializable {
+
     @Schema(description = "標籤名稱",requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "標籤名稱不可為空")
-    String name;
+    private String name;
+
     @Schema(description = "標籤描述")
-    String description;
+    private String description;
+
+    @Schema(description = "標籤分類")
+    private CategoryDto category;
+
+    @Schema(description = "標籤分類ID")
+    private Long categoryId;
 }

@@ -20,4 +20,6 @@ public interface RoleService {
     List<RoleDto> findAll();
 
     List<RoleDto> getRoleByUserId(long id);
+
+    RoleDto findById(Long id);
 }

@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * DTO for {@link RecentViewPo}
@@ -37,9 +38,9 @@ public class RecentViewDto implements Serializable {
     @NotBlank(message = "文章標題不可為空")
     String title;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Schema(description = "創建時間", example = "2022-01-01 00:00:00")
-    String createTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",shape = JsonFormat.Shape.STRING)
+    LocalDateTime createTime;
 
     @Schema(description = "使用者ID")
     Long userId;

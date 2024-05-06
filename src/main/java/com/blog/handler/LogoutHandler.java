@@ -18,6 +18,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Comparator;
 import java.util.List;
 
 @Component
@@ -43,6 +44,9 @@ public class LogoutHandler extends SecurityContextLogoutHandler {
         } else if (StringUtils.hasText(jwtToken)) {
             CacheUtils.remove(username);
             List<LoginHistoryDto> loginHistoryDos = loginHistoryService.findLoginHistoryByUsername(username);
+            // 按照登入時間排序 取最新的一筆
+            loginHistoryDos.sort(Comparator.comparing(LoginHistoryDto::getLoginTimestamp).reversed());
+            loginHistoryDos.get(0).setAction("logout");
             loginHistoryDos.get(0).setLogoutTimestamp(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             loginHistoryService.addLog(loginHistoryDos.get(0));
             jwtBlackListService.addJwtToBlackList(jwtToken);

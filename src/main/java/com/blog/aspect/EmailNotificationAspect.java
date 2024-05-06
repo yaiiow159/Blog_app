@@ -35,7 +35,7 @@ public class EmailNotificationAspect {
 
     @Pointcut("@annotation(sendMail)")
     public void notifyByEmailPointcut(SendMail sendMail) {}
-    @After(value = "notifyByEmailPointcut(sendMail)")
+    @After(value = "notifyByEmailPointcut(sendMail)", argNames = "joinPoint,sendMail")
     public void after(JoinPoint joinPoint, SendMail sendMail) throws ResourceNotFoundException {
         final String type = sendMail.type();
         final String operation = sendMail.operation();

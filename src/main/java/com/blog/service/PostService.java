@@ -3,6 +3,7 @@ package com.blog.service;
 import com.blog.dto.PostDto;
 import com.blog.exception.ResourceNotFoundException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 
 import java.io.IOException;
 import java.util.List;
@@ -36,7 +37,7 @@ public interface PostService {
 
     Long getViewCount(String postId);
 
-    void createDraft(PostDto postDto) throws ExecutionException, InterruptedException;
+    void createDraft(PostDto postDto) throws ExecutionException, InterruptedException, IOException;
 
     Long getViewsCount(Long postId);
     

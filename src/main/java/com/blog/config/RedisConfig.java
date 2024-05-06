@@ -17,17 +17,28 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig {
 
     private final ObjectMapper mapper;
-    @Bean
+
+    @Value("${redis.host}")
+    private String hostName;
+
+    @Value("${spring.data.redis.port}")
+    private Integer port;
+
+    @Bean(name = "redisConnectionFactory")
     public LettuceConnectionFactory redisConnectionFactory() {
         LettuceConnectionFactory lettuceConnectionFactory = new LettuceConnectionFactory();
+        lettuceConnectionFactory.setHostName(hostName);
+        lettuceConnectionFactory.setPort(port);
         lettuceConnectionFactory.setDatabase(0);
         return lettuceConnectionFactory;
     }
 
     @Bean
-    public RedisTemplate<String, Object> redisTemplate() {
+    public RedisTemplate<String, Object> redisTemplate(
+            @Qualifier("redisConnectionFactory") LettuceConnectionFactory redisConnectionFactory
+    ) {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory(redisConnectionFactory());
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
         redisTemplate.setEnableTransactionSupport(true);
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer =
@@ -37,9 +48,11 @@ public class RedisConfig {
     }
 
     @Bean
-    public StringRedisTemplate stringRedisTemplate() {
+    public StringRedisTemplate stringRedisTemplate(
+            @Qualifier("redisConnectionFactory") LettuceConnectionFactory redisConnectionFactory
+    ) {
         StringRedisTemplate stringRedisTemplate = new StringRedisTemplate();
-        stringRedisTemplate.setConnectionFactory(redisConnectionFactory());
+        stringRedisTemplate.setConnectionFactory(redisConnectionFactory);
         stringRedisTemplate.setEnableTransactionSupport(true);
         stringRedisTemplate.setKeySerializer(new StringRedisSerializer());
         stringRedisTemplate.setValueSerializer(new StringRedisSerializer());

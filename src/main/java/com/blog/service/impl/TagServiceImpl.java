@@ -1,5 +1,6 @@
 package com.blog.service.impl;
 
+import com.blog.dao.CategoryPoRepository;
 import com.blog.dao.TagPoRepository;
 import com.blog.dto.TagDto;
 import com.blog.mapper.TagPoMapper;
@@ -18,12 +19,17 @@ import org.springframework.util.ObjectUtils;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 @Service
 public class TagServiceImpl implements TagService {
 
     @Resource
     private TagPoRepository tagPoRepository;
+
+    @Resource
+    private CategoryPoRepository categoryPoRepository;
 
     @Override
     public Page<TagDto> findAll(Integer page, Integer size, String name) {
@@ -53,6 +59,7 @@ public class TagServiceImpl implements TagService {
         TagPo tagPo = TagPoMapper.INSTANCE.toPo(tagDto);
         tagPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
         tagPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
+        tagPo.setCategory(categoryPoRepository.findById(tagDto.getCategoryId()).orElse(null));
         tagPoRepository.saveAndFlush(tagPo);
     }
 
@@ -61,6 +68,7 @@ public class TagServiceImpl implements TagService {
         tagPoRepository.findById(tagDto.getId()).ifPresent(tagPo -> {
             tagPo.setName(tagDto.getName());
             tagPo.setDescription(tagDto.getDescription());
+            tagPo.setCategory(categoryPoRepository.findById(tagDto.getCategoryId()).orElse(null));
             tagPo.setUpdDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             tagPo.setUpdateUser(SpringSecurityUtils.getCurrentUser());
             tagPoRepository.saveAndFlush(tagPo);
@@ -75,7 +83,7 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public TagDto findById(Long id) {
-       return tagPoRepository.findById(id).map(TagPoMapper.INSTANCE::toDto).orElse(null);
+        return tagPoRepository.findById(id).map(TagPoMapper.INSTANCE::toDto).orElse(null);
     }
 
 }

@@ -22,4 +22,8 @@ public interface CommentService {
     Long getCommentLikeCount(Long commentId);
 
     Long getCommentDisLikeCount(Long commentId);
+
+    void likeComment(Long postId, Long id);
+
+    void cancelLikeComment(Long postId, Long id);
 }

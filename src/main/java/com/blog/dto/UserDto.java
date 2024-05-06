@@ -49,8 +49,8 @@ public class UserDto extends BaseDto implements Serializable {
     private String userName;
 
     @Schema(description = "生日",example = "2022-01-01 00:00:00")
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate birthday;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime birthday;
 
     @Schema(description = "使用者暱稱",example = "admin")
     private String nickName;

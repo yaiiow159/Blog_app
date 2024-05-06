@@ -1,5 +1,6 @@
 package com.blog.po;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
@@ -13,6 +14,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Set;
 
@@ -45,10 +47,12 @@ public class UserPo extends BasicPo implements Serializable {
     @Email(message = "Email格式錯誤")
     private String email;
 
+    @Column(name = "phone")
+    private String phone;
+
     @Column(name = "birthday")
-    @JsonSerialize(using = LocalDateSerializer.class)
-    @JsonDeserialize(using = LocalDateDeserializer.class)
-    private LocalDate birthday;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime birthday;
 
     @Column(name = "address")
     private String address;
@@ -71,6 +75,7 @@ public class UserPo extends BasicPo implements Serializable {
                     foreignKey = @ForeignKey(name = "fk_user_role_user")),
             inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id",
                     foreignKey = @ForeignKey(name = "fk_user_role_role")))
+    @ToString.Exclude
     private Set<RolePo> roles;
 
     @Column(name = "locked",nullable = false ,columnDefinition = "tinyint(1) default 0")

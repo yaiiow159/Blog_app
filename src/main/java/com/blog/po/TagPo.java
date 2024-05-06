@@ -1,6 +1,7 @@
 package com.blog.po;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.io.Serial;
@@ -12,13 +13,14 @@ import java.util.List;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "tag", schema = "blog_app", catalog = "blog_app")
+@Table(name = "tag")
 public class TagPo extends BasicPo implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     @Column(name = "name")
+    @NotBlank(message = "標籤名稱不能為空")
     private String name;
 
     @Column(name = "description")
@@ -30,6 +32,6 @@ public class TagPo extends BasicPo implements Serializable {
     @ManyToOne(fetch = FetchType.EAGER,optional = false)
     @JoinColumn(name = "category_id",
             foreignKey = @ForeignKey(name = "fk_tag_category"),
-            referencedColumnName = "id",nullable = true)
+            referencedColumnName = "id")
     private CategoryPo category;
 }

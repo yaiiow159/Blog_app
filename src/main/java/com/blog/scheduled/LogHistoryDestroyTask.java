@@ -15,7 +15,7 @@ public class LogHistoryDestroyTask {
     private final LoginHistoryService loginHistoryService;
 
     // 每一小時執行一次
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 0 */1 * * *")
     public void executeLogHistoryDestroyTask() {
         // 清除一小時前的紀錄
         log.info("executeLogHistoryDestroyTask start");

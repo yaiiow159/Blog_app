@@ -16,6 +16,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.util.Arrays;
+import java.util.Date;
 
 /**
  * 紀錄Request日誌訊息
@@ -25,54 +27,46 @@ import java.lang.reflect.Parameter;
 @Slf4j
 public class LogAspect {
 
-    @Pointcut("within(com.blog.controller..*)")
-    public void logPointcut() {}
-
     @Around("logPointcut()")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         long startTime = System.currentTimeMillis();
-        ServletRequestAttributes attributes =
-                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        assert attributes != null;
-        HttpServletRequest request = attributes.getRequest();
+        HttpServletRequest request = getCurrentHttpRequest();
+        Object result = joinPoint.proceed();
         long endTime = System.currentTimeMillis();
-        Signature signature = joinPoint.getSignature();
-        MethodSignature methodSignature = (MethodSignature) signature;
-        Method method = methodSignature.getMethod();
-        // 紀錄訊息
-        LogInfoBody logInfoBody = new LogInfoBody();
-        logInfoBody.setIp(request.getRemoteAddr());
-        if(request.getHeader("X-Forwarded-For") != null) {
-            logInfoBody.setIp(request.getHeader("X-Forwarded-For"));
-        }
-        logInfoBody.setUserAgent(request.getHeader("User-Agent"));
-        logInfoBody.setStartTime(transformTime(startTime));
-        logInfoBody.setUrl(request.getRequestURI());
-        logInfoBody.setBasePath(UrlUtils.buildRequestUrl(request));
-        logInfoBody.setParameter(getParameter(method.getParameters()));
-        logInfoBody.setSpendTime(endTime - startTime + "ms");
-        log.info("request: {}", logInfoBody);
-        return joinPoint.proceed();
-    }
-    private String[] getParameter(Parameter[] parameters) {
-        String[] result = new String[parameters.length];
-        int index = 0;
-        for (Parameter parameter : parameters) {
-            if (parameter.isNamePresent()) {
-                result[index++] = parameter.getName();
-            }
-        }
+
+        logRequestInfo(joinPoint, request, startTime, endTime);
         return result;
     }
 
-    /**
-     * 將系統時間轉換成yyyy-MM-dd HH:mm:ss
-     *
-     * @param time 系統時間
-     * @return 返回字串時間格式
-     */
+    private HttpServletRequest getCurrentHttpRequest() {
+        ServletRequestAttributes attributes =
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        assert attributes != null;
+        return attributes.getRequest();
+    }
+
+    private void logRequestInfo(ProceedingJoinPoint joinPoint, HttpServletRequest request, long startTime, long endTime) {
+        Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
+        LogInfoBody logInfoBody = new LogInfoBody();
+        logInfoBody.setIp(request.getHeader("X-Forwarded-For") != null ? request.getHeader("X-Forwarded-For") : request.getRemoteAddr());
+        logInfoBody.setUserAgent(request.getHeader("User-Agent"));
+        logInfoBody.setStartTime(transformTime(startTime));
+        logInfoBody.setUrl(request.getRequestURI());
+        logInfoBody.setBasePath(request.getRequestURL().toString());
+        logInfoBody.setParameter(getParameter(method.getParameters()));
+        logInfoBody.setSpendTime((endTime - startTime) + "ms");
+
+        log.info("Request Info: {}", logInfoBody);
+    }
+
+    private String[] getParameter(Parameter[] parameters) {
+        return Arrays.stream(parameters)
+                .map(Parameter::getName)
+                .toArray(String[]::new);
+    }
+
     private String transformTime(long time) {
-        return new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(time);
+        return new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(time));
     }
 }
 

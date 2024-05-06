@@ -32,8 +32,8 @@ public class UserProfileDto implements Serializable {
     private String nickname;
 
     @Schema(description = "生日")
-    @JsonFormat(pattern = "yyyy/MM/dd")
-    private LocalDate birthday;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime birthday;
 
     @Schema(description = "地址")
     private String address;

@@ -26,6 +26,7 @@
 
 
     import java.io.IOException;
+    import java.time.LocalDateTime;
     import java.util.concurrent.ExecutionException;
     import java.util.concurrent.TimeoutException;
 
@@ -105,7 +106,7 @@ public class UserController {
                                                          @Parameter(description = "使用者名稱",example = "Timmy") @RequestPart(name = "username") String username,
                                                          @Parameter(description = "使用者信箱",example = "Timmy123@gmail.com") @RequestPart(name = "email") String email ,
                                                          @Parameter(description = "使用者暱稱",example = "Timmy") @RequestPart(name = "nickname") String nickname,
-                                                         @Parameter(description = "使用者生日",example = "2020/01/01") @RequestPart(name = "birthday") @DateTimeFormat(pattern = "yyyy/MM/dd") String birthday,
+                                                         @Parameter(description = "使用者生日",example = "2020/01/01") @RequestPart(name = "birthday") @DateTimeFormat(pattern = "yyyy/MM/dd:HH:mm:ss") String birthday,
                                                          @Parameter(description = "使用者地址",example = "台北市") @RequestPart(name = "address") String address) throws IOException, ExecutionException, InterruptedException, TimeoutException {
 
         UserProfileRequestBody userProfileRequestBody = new UserProfileRequestBody();
@@ -113,7 +114,7 @@ public class UserController {
         userProfileRequestBody.setName(username);
         userProfileRequestBody.setEmail(email);
         userProfileRequestBody.setNickName(nickname);
-        userProfileRequestBody.setBirthday(birthday);
+        userProfileRequestBody.setBirthday(LocalDateTime.parse(birthday));
         userProfileRequestBody.setAddress(address);
         UserProfileDto userProfileDto = userService.updateUserProfile(userProfileRequestBody);
         if(userProfileDto == null)

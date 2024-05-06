@@ -41,6 +41,13 @@ public class UserGroupController {
         return new ApiResponse<>(true, "查詢成功", userGroupDtoPage, HttpStatus.OK);
     }
 
+
+    @GetMapping("/{id}")
+    @Operation(summary = "查詢使用者群組",description = "查詢使用者群組")
+    public ApiResponse<UserGroupDto> getRoleByUserId(@Parameter(description = "使用者id",example = "1")@PathVariable Long id){
+        return new ApiResponse<>(true, "查詢成功", userGroupService.findById(id), HttpStatus.OK);
+    }
+
     @GetMapping("/findList")
     @Operation(summary = "查詢所有使用者群組",description = "查詢所有使用者群組")
     public ApiResponse<List<UserGroupDto>> findAll(){

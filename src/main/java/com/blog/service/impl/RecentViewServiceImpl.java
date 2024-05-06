@@ -27,7 +27,7 @@ import java.util.*;
 @Transactional
 public class RecentViewServiceImpl implements RecentViewService {
     //2024-01-01T14:33
-    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final RecentViewPoRepository recentViewPoRepository;
     private final UserPoRepository userJpaRepository;

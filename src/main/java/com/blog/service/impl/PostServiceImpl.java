@@ -3,14 +3,17 @@ package com.blog.service.impl;
 import com.blog.annotation.SendMail;
 import com.blog.dao.CategoryPoRepository;
 import com.blog.dao.PostPoRepository;
+import com.blog.dao.TagPoRepository;
 import com.blog.dao.UserPoRepository;
 import com.blog.dto.PostDto;
 import com.blog.enumClass.PostStatus;
 import com.blog.exception.ResourceNotFoundException;
+import com.blog.mapper.CategoryPoMapper;
 import com.blog.mapper.PostPoMapper;
+import com.blog.mapper.TagPoMapper;
 import com.blog.po.CategoryPo;
 import com.blog.po.PostPo;
-import com.blog.service.AwsS3ClientService;
+import com.blog.service.GoogleStorageService;
 import com.blog.service.PostService;
 import com.blog.utils.SpringSecurityUtils;
 
@@ -23,7 +26,10 @@ import org.hibernate.search.mapper.orm.Search;
 import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +43,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+
 @Service
 @Slf4j
 public class PostServiceImpl implements PostService {
@@ -46,10 +53,15 @@ public class PostServiceImpl implements PostService {
     private PostPoRepository postPoRepository;
     @Resource
     private UserPoRepository userJpaRepository;
+
+    @Resource
+    private TagPoRepository tagPoRepository;
     @Resource
     private EntityManager  entityManager;
+
     @Resource
-    private AwsS3ClientService awsS3ClientService;
+    private GoogleStorageService googleStorageService;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -131,7 +143,7 @@ public class PostServiceImpl implements PostService {
             PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
             if(postPo.getImageName()!= null){
                 try {
-                    byte[] image = awsS3ClientService.downloadFile(postPo.getImageName());
+                    byte[] image = googleStorageService.downloadFile(postPo.getImageName());
                     if(image != null) {
                         postDto.setImage(image);
                     }
@@ -141,6 +153,10 @@ public class PostServiceImpl implements PostService {
             }
             postDto.setCategoryId(postPo.getCategory().getId());
             dtoList.add(postDto);
+        });
+        dtoList.forEach(postDto -> {
+            postDto.setTagDtoList(TagPoMapper.INSTANCE.toDtoList(tagPoRepository.findAllTagsByPostId(postDto.getId())));
+            postDto.setCategoryDto(CategoryPoMapper.INSTANCE.toDto(categoryPoRepository.findById(postDto.getCategoryId()).orElse(null)));
         });
         return new PageImpl<>(dtoList, pageable, postPos.getTotalElements());
     }
@@ -177,6 +193,8 @@ public class PostServiceImpl implements PostService {
         List<PostDto> postDtoList = new ArrayList<>();
         for (PostPo postPo : postPoList) {
             PostDto postDto = downloadImage(postPo);
+            postDto.setTagDtoList(TagPoMapper.INSTANCE.toDtoList(tagPoRepository.findAllTagsByPostId(postPo.getId())));
+            postDto.setCategoryDto(postPo.getCategory() != null ? CategoryPoMapper.INSTANCE.toDto(postPo.getCategory()) : null);
             postDtoList.add(postDto);
         }
         return postDtoList;
@@ -188,6 +206,8 @@ public class PostServiceImpl implements PostService {
         List<PostDto> postDtoList = new ArrayList<>();
         for (PostPo postPo : postPoList) {
             PostDto postDto = downloadImage(postPo);
+            postDto.setTagDtoList(TagPoMapper.INSTANCE.toDtoList(tagPoRepository.findAllTagsByPostId(postPo.getId())));
+            postDto.setCategoryDto(postPo.getCategory() != null ? CategoryPoMapper.INSTANCE.toDto(postPo.getCategory()) : null);
             postDtoList.add(postDto);
         }
         return postDtoList;
@@ -203,6 +223,10 @@ public class PostServiceImpl implements PostService {
             List<PostPo> postPos = searchResult.hits();
             return postPos.stream()
                     .map(this::downloadImage)
+                    .peek(postDto -> {
+                        postDto.setTagDtoList(TagPoMapper.INSTANCE.toDtoList(tagPoRepository.findAllTagsByPostId(postDto.getId())));
+                        postDto.setCategoryDto(postDto.getCategoryId() != null ? CategoryPoMapper.INSTANCE.toDto(categoryPoRepository.findById(postDto.getCategoryId()).orElse(null)) : null);
+                    })
                     .toList();
         } catch (Exception e) {
             log.error("搜尋文章失敗", e);
@@ -239,7 +263,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public void createDraft(PostDto postDto) throws ExecutionException, InterruptedException {
+    public void createDraft(PostDto postDto) throws ExecutionException, InterruptedException, IOException {
         PostPo postPo = PostPoMapper.INSTANCE.toPo(postDto);
         postPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
         postPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
@@ -263,7 +287,7 @@ public class PostServiceImpl implements PostService {
         postDto.setCategoryId(categoryPo.getId());
         if (postPo.getImageName() != null) {
             try {
-                byte[] image = awsS3ClientService.downloadFile(postPo.getImageName());
+                byte[] image = googleStorageService.downloadFile(postPo.getImageName());
                 postDto.setImage(image);
             } catch (Exception e) {
                 log.error("下載文章圖片失敗", e);
@@ -276,7 +300,7 @@ public class PostServiceImpl implements PostService {
         PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
         if (postPo.getImageName() != null) {
             try {
-                byte[] image = awsS3ClientService.downloadFile(postPo.getImageName());
+                byte[] image = googleStorageService.downloadFile(postPo.getImageName());
                 postDto.setImage(image);
             } catch (Exception e) {
                 log.error("下載文章圖片失敗", e);
@@ -285,14 +309,12 @@ public class PostServiceImpl implements PostService {
         return postDto;
     }
 
-    private void uploadFile(PostPo postPo, PostDto postDto) throws ExecutionException, InterruptedException {
+    private void uploadFile(PostPo postPo, PostDto postDto) throws IOException, ExecutionException, InterruptedException {
         //上傳文章圖片
         if(!ObjectUtils.isEmpty(postDto.getImage())) {
-            // 上傳圖片智s3
-            CompletableFuture<String> result = awsS3ClientService.uploadFile(
-                postDto.getImageUrl(),postDto.getImageName()
-            );
-            if(result.get() != null) {
+            // 上傳圖片智google storage
+            CompletableFuture<String> result = googleStorageService.uploadFile(postDto.getImageUrl(), postDto.getImageName());
+            if(result.equals("上傳文件成功")) {
                 postPo.setImageName(postDto.getImageName());
             }
         }
@@ -301,7 +323,10 @@ public class PostServiceImpl implements PostService {
     private void deleteFile(PostPo postPo) {
         if(!ObjectUtils.isEmpty(postPo.getImageName()) && postPo.getImageName() != null) {
             try {
-                awsS3ClientService.deleteFile(postPo.getImageName());
+                googleStorageService.deleteFile(postPo.getImageName());
+                if(postPo.getImageName() != null) {
+                    postPo.setImageName(null);
+                }
             } catch (Exception e) {
                 log.error("刪除文章圖片失敗", e);
             }

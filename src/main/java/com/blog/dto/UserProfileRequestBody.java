@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -34,8 +35,8 @@ public class UserProfileRequestBody implements Serializable {
     private String imageName;
 
     @Schema(description = "生日")
-    @JsonFormat(pattern = "yyyy/MM/dd")
-    private String birthday;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private LocalDateTime birthday;
 
     @Schema(description = "暱稱")
     private String nickName;

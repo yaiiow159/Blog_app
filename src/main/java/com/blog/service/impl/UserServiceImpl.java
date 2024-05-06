@@ -4,9 +4,9 @@ import com.blog.dao.*;
 import com.blog.dto.*;
 import com.blog.exception.ValidateFailedException;
 import com.blog.enumClass.UserRole;
-import com.blog.exception.JwtDomainException;
 import com.blog.mapper.*;
 import com.blog.po.*;
+import com.blog.service.GoogleStorageService;
 import com.blog.service.UserService;
 import com.blog.utils.SpringSecurityUtils;
 
@@ -55,7 +55,7 @@ public class UserServiceImpl implements UserService {
     @Resource
     private PasswordEncoder passwordEncoder;
     @Resource
-    private AmazonS3ClientService amazonS3ClientService;
+    private GoogleStorageService googleStorageService;
 
     @Resource
     @Lazy
@@ -81,7 +81,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void changePassword(String oldPassword, String newPassword) {
-         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (!passwordEncoder.matches(oldPassword, userDetails.getPassword())) {
             throw new ValidateFailedException("原密碼錯誤");
         }
@@ -149,9 +149,9 @@ public class UserServiceImpl implements UserService {
         // 密碼需進行先進行加密處理，Spring security 在驗證階段會使用passwordEncoder比對
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
         //增加創建使用者名稱與時間
-        userDto.setCreatUser(SpringSecurityUtils.getCurrentUser());
-        userDto.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
         UserPo userPo = UserPoMapper.INSTANCE.toPo(userDto);
+        userPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
+        userPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
         userPo.setUserGroupPo(userGroupPoRepository.findById(userDto.getGroupId()).orElseThrow(() -> new ValidateFailedException("找不到群組")));
         rolePoRepository.findAllById(userDto.getRoleIds()).forEach(userPo.getRoles()::add);
         userJpaRepository.saveAndFlush(userPo);
@@ -225,15 +225,10 @@ public class UserServiceImpl implements UserService {
             UserPo userPo = userJpaRepository.findByUserName(userProfileRequestBody.getName())
                     .orElseThrow(() -> new UsernameNotFoundException("找不到使用者 " + userProfileRequestBody.getName()));
             if (null != userProfileRequestBody.getAvatar()) {
-                CompletableFuture<String> result = amazonS3ClientService.uploadFile(
-                        userProfileRequestBody.getAvatar(),
-                        userProfileRequestBody.getImageName());
-                if (!result.get().equals("文件上傳成功")) {
-                    throw new IOException("文件上傳失敗");
-                }
+               googleStorageService.uploadFile(userProfileRequestBody.getAvatar(), userProfileRequestBody.getImageName());
                 userPo.setAvatarName(userProfileRequestBody.getImageName());
             } else if (null != userPo.getAvatarName() && !userPo.getAvatarName().isEmpty()) {
-                CompletableFuture<String> result = amazonS3ClientService.deleteFile(userPo.getAvatarName());
+                CompletableFuture<String> result = googleStorageService.deleteFile(userPo.getAvatarName());
                 if (!result.get().equals("文件删除成功")) {
                     throw new IOException("文件删除失敗");
                 }
@@ -244,8 +239,7 @@ public class UserServiceImpl implements UserService {
             userPo.setEmail(userProfileRequestBody.getEmail());
             userPo.setNickName(userProfileRequestBody.getNickName());
             userPo.setAddress(userProfileRequestBody.getAddress());
-            TemporalAccessor parse = dateTimeFormatter.parse(userProfileRequestBody.getBirthday());
-            userPo.setBirthday(LocalDate.from(parse));
+            userPo.setBirthday(userProfileRequestBody.getBirthday());
             userPo = userJpaRepository.saveAndFlush(userPo);
 
             UserProfileDto userProfileDto = new UserProfileDto();
@@ -255,7 +249,7 @@ public class UserServiceImpl implements UserService {
             userProfileDto.setNickname(userPo.getNickName());
             userProfileDto.setBirthday(userPo.getBirthday());
             // 從s3 取回圖片
-            amazonS3ClientService.downloadFile(userPo.getAvatarName());
+            googleStorageService.downloadFile(userPo.getAvatarName());
             return userProfileDto;
         }
 
@@ -267,7 +261,7 @@ public class UserServiceImpl implements UserService {
             UserProfileDto userProfileDto = new UserProfileDto();
             if (avatarName != null) {
                 try {
-                    byte[] image = amazonS3ClientService.downloadFile(avatarName);
+                    byte[] image = googleStorageService.downloadFile(avatarName);
                     if (null != image) {
                         userProfileDto.setAvatar(image);
                     }

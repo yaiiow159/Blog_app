@@ -37,8 +37,9 @@ public class UserGroupServiceImpl implements UserGroupService {
 
     @Override
     public UserGroupDto findById(Long userGroupId) {
-        Optional<UserGroupPo> userGroupPo = userGroupRepository.findById(userGroupId);
-        return userGroupPo.map(UserGroupPoMapper.INSTANCE::toDto).orElse(null);
+        return userGroupRepository.findById(userGroupId)
+                .map(UserGroupPoMapper.INSTANCE::toDto)
+                .orElse(null);
     }
 
     @Override

@@ -55,6 +55,14 @@ public class PostDto extends BaseDto implements Serializable {
     @Valid
     private List<CommentDto> comments;
 
+    @Schema(description = "文章分類名稱")
+    @Valid
+    private CategoryDto categoryDto;
+
+    @Schema(description = "文章標籤名稱")
+    @Valid
+    private List<TagDto> tagDtoList;
+
     @Schema(description = "文章作者名稱")
     private String authorName;
 
@@ -70,5 +78,4 @@ public class PostDto extends BaseDto implements Serializable {
     @Schema(description = "文章狀態",requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "文章狀態不得為空")
     private String status;
-
 }

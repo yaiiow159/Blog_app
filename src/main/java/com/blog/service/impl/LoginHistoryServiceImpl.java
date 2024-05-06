@@ -7,6 +7,7 @@ import com.blog.po.LoginHistoryPo;
 import com.blog.service.LoginHistoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,6 +36,7 @@ public class LoginHistoryServiceImpl implements LoginHistoryService {
     }
 
     @Override
+    @Transactional
     public void deleteLogBefore(LocalDateTime localDateTime) {
         loginHistoryPoRepository.deleteByLoginTimestampBefore(localDateTime);
     }

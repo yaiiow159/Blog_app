@@ -91,4 +91,9 @@ public class RoleServiceImpl implements RoleService {
         return RolePoMapper.INSTANCE.toDtoList(rolePoRepository.findByUserId(id));
     }
 
+    @Override
+    public RoleDto findById(Long id) {
+        return RolePoMapper.INSTANCE.toDto(rolePoRepository.findById(id).orElse(null));
+    }
+
 }

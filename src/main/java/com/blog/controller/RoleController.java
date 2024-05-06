@@ -53,8 +53,8 @@ public class RoleController {
 
     @GetMapping("/{id}")
     @Operation(summary = "查詢使用者角色",description = "查詢使用者角色")
-    public ApiResponse<List<RoleDto>> getRoleByUserId(@Parameter(description = "使用者id",example = "1")@PathVariable long id){
-        return new ApiResponse<>(true, "查詢成功", roleService.getRoleByUserId(id), HttpStatus.OK);
+    public ApiResponse<RoleDto> getRoleByUserId(@Parameter(description = "使用者id",example = "1")@PathVariable Long id){
+        return new ApiResponse<>(true, "查詢成功", roleService.findById(id), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -89,5 +89,16 @@ public class RoleController {
         if(CollectionUtils.isEmpty(userList))
             return new ApiResponse<>(false, "查無資料", null, HttpStatus.NO_CONTENT);
         return new ApiResponse<>(true, "查詢成功", userList, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "刪除角色",description = "刪除角色")
+    public ApiResponse<String> delete(@PathVariable long id){
+        try {
+            roleService.delete(id);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "刪除失敗", null, HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "刪除成功",HttpStatus.OK);
     }
 }

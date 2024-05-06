@@ -3,6 +3,7 @@ package com.blog.config;
 import com.blog.dao.RolePoRepository;
 import com.blog.dao.UserGroupPoRepository;
 import com.blog.dao.UserPoRepository;
+import com.blog.enumClass.GroupStatus;
 import com.blog.enumClass.UserRole;
 import com.blog.po.RolePo;
 import com.blog.po.UserGroupPo;
@@ -34,9 +35,6 @@ public class InitializeConfig {
     @Resource
     private PasswordEncoder passwordEncoder;
 
-    @Resource
-    private EntityManager entityManager;
-
     @PostConstruct
     @Transactional(rollbackFor = Exception.class)
     public void initAdministrator() throws Exception {
@@ -64,7 +62,7 @@ public class InitializeConfig {
             userGroupPo.setGroupName("admin");
             userGroupPo.setDescription("管理員群組");
             userGroupPo.setCreatUser("admin");
-            userGroupPo.setUpdateUser("admin");
+            userGroupPo.setReviewLevel(GroupStatus.ADMIN.getStatus());
             UserGroupPo groupPo = userGroupPoRepository.saveAndFlush(userGroupPo);
 
             UserPo userPo = new UserPo();
