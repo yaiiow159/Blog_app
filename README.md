@@ -28,7 +28,9 @@
 前端使用axios來傳遞前端資料至後端，後端使用dto接收資料，並使用mapstructer來轉換dto至po物件並在dao層進行crud操作<br>
 系統可以針對容器化配置以及本地化配置有分別使用不同配置檔進行設定
 
-![blog_app系統流程圖 drawio](https://github.com/yaiiow159/Blog_app/assets/39752246/1396dde9-fd7b-4541-b3d4-f99ef3df579f)
+流程圖: <br>
+![blog_app系統流程圖 drawio](https://github.com/yaiiow159/Blog_app/assets/39752246/5c30b0b1-34f4-4314-b819-e65416abdecc)
+
 
 資料庫規劃:
 ![Diagram 1](https://github.com/yaiiow159/Blog_app/assets/39752246/d73d894b-28b6-4dd0-9bc1-437d94935b34)
