@@ -1,27 +1,36 @@
 
 
 # 直型 maven package
-name: CI/CD
-
+name: Blog-App Workflow
 on:
   push:
     branches: [ master ]
+    paths:
+      - src/**
+      - github/workflows/ci-cd.yml
 
 jobs:
+
   build:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
       - name: Set up JDK 17
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v3
         with:
           java-version: 17
           distribution: 'adopt'
-      - name: Extract project version
-        run: echo "PROJECT_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.1.0:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
-      # maven 打包
-      - name: Maven Package
-        run: mvn package --settings settings.xml --file pom.xml
+
+      - name: Set up the Maven dependencies caching
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
 
       - name: Copy Dockerfile And Docker-Compose File to GCE
         uses: appleboy/scp-action@master
@@ -32,6 +41,10 @@ jobs:
           source: ./
           target: /home/${{ secrets.GCE_USER }}/
 
+  deploy:
+    runs-on: ubuntu-20.04
+    needs: build
+    steps:
       - name: Deploy To GCE
         uses: appleboy/ssh-action@master
         with:
