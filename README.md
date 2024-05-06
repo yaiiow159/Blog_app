@@ -7,7 +7,6 @@
 擴充功能
 - 作者追蹤
 - 統計分析: 依照使用者權限顯示不同統計分析紀錄
-- 
 
 <hr>
 
@@ -42,5 +41,40 @@
 文檔生成以及測試: openApi3
 容器化: docker、docker-compose <br>
 容器化管理平台: portainer <br>
-雲服務技術: GCP(google-storage、computer-engine、gcloud-sql)
+雲服務技術: GCP(google-storage、computer-engine、gcloud-sql) 進行中
+
+---------------------------------------------------------------------------------------------------------------------
+## 畫面預覽:
+登入畫面
+有進行格式校驗 以及驗證碼校驗 可註冊會員 或是忘記密碼重設等
+![登入畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/34bf10dc-8c86-48c1-ad94-189ddfa007ce)
+
+首頁畫面
+![首頁畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/8c9f2caf-6736-4531-bf9c-f82c3b2c01a3)
+
+分類管理畫面
+![分類管理畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/60b99972-dacc-4f43-955c-5fcf680e1910)
+
+文章管理畫面
+![文章管理頁面](https://github.com/yaiiow159/Blog_app/assets/39752246/12a6a4d5-4c1a-4d26-bd4f-5d8e0d9da260)
+
+標籤管理畫面
+![標籤管理功能畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/64e39bbd-aa99-4c9c-9d26-c08512e670c8)
+
+使用者管理畫面
+![使用者管理頁面](https://github.com/yaiiow159/Blog_app/assets/39752246/17ca940a-682e-45c4-9541-43e33bbe9725)
+
+群組管理畫面
+![群組管理畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/75c94218-3e9a-4e0f-8f91-cbfde0c969bf)
+
+角色管理畫面
+![角色管理畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/4a062437-2626-43bc-8e9b-1fe12767601f)
+
+使用者登入紀錄畫面
+![使用者登入紀錄畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/e3477767-c5ca-471d-8877-820126fb150d)
+
+以上畫面都可進行分頁功能以及針對特定欄位進行sort排序功能
+
+
+
 
