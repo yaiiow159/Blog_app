@@ -44,6 +44,30 @@
 雲服務技術: GCP(google-storage、computer-engine、gcloud-sql) 進行中
 
 ---------------------------------------------------------------------------------------------------------------------
+
+## OpenApi3 測試後端Api 以及說明文檔
+因應項目是前後端分離項目，導入openApi 可以針對後端Api進行測試 驗證回傳結果 測試前須先使用jwt token開放權限 <br>
+
+### openApi測試相關網址
+http://localhost:9090/swagger-ui/index.html <br>
+http://localhost:9090/v3/api-docs <br>
+
+### swagger測試相關
+![openApi測試](https://github.com/yaiiow159/Blog_app/assets/39752246/ff09ccd0-4a63-4333-a8ec-50fd9a5ea3a1) <br>
+![openApi測試開放](https://github.com/yaiiow159/Blog_app/assets/39752246/33fbb056-92bb-4441-9a38-586190a5007c) <br>
+
+![openApi Dto說明](https://github.com/yaiiow159/Blog_app/assets/39752246/eb0226d2-a0d6-4716-9738-8712fe1bff06) <br>
+<hr>
+
+## 容器化
+項目有針對容器化環境進行項目配置，可使用dockerFile搭配docker-compose 集成 搭建項目所需環境，並搭配portainer檢控容器狀況
+![docker照片](https://github.com/yaiiow159/Blog_app/assets/39752246/3b15dde8-e3e7-4d92-bb9a-312f59df606c)
+
+容器化項目正常運行
+![docker項目正常運行](https://github.com/yaiiow159/Blog_app/assets/39752246/aaa0474f-3a29-4606-bc65-dd1b89a9c47c)
+
+<hr>
+
 ## 畫面預覽:
 登入畫面
 有進行格式校驗 以及驗證碼校驗 可註冊會員 或是忘記密碼重設等
