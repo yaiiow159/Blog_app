@@ -67,6 +67,7 @@ http://localhost:9090/v3/api-docs <br>
 
 ## 容器化
 項目有針對容器化環境進行項目配置，可使用dockerFile搭配docker-compose 集成 搭建項目所需環境，並搭配portainer檢控容器狀況
+此構思是因應快速部屬環境以及部屬至雲服務
 ![docker照片](https://github.com/yaiiow159/Blog_app/assets/39752246/3b15dde8-e3e7-4d92-bb9a-312f59df606c)
 
 容器化項目正常運行
