@@ -2,7 +2,7 @@ version: '3.7'
 services:
   blog_app:
     build:
-      context: ./
+      context: .
       dockerfile: Dockerfile
     container_name: blog_app
     external_links:
