@@ -46,10 +46,10 @@
 消息隊列: kafka + zookeeper <br>
 資料庫:mysql <br>
 非關係型資料庫:redis <br>
-文檔生成以及測試: openApi3
+文檔生成以及測試: openApi3 <br>
 容器化: docker、docker-compose <br>
 容器化管理平台: portainer <br>
-雲服務技術: GCP(google-storage、computer-engine、gcloud-sql) 進行中
+雲服務技術: GCP(google-storage、computer-engine、Artifact-registry)
 
 ---------------------------------------------------------------------------------------------------------------------
 
