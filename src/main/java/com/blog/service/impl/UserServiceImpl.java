@@ -26,16 +26,13 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.FileCopyUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.naming.AuthenticationNotSupportedException;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -45,7 +42,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Transactional
 public class UserServiceImpl implements UserService {
-    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
     @Resource
     private UserGroupPoRepository userGroupPoRepository;
     @Resource
@@ -225,8 +221,8 @@ public class UserServiceImpl implements UserService {
             UserPo userPo = userJpaRepository.findByUserName(userProfileRequestBody.getName())
                     .orElseThrow(() -> new UsernameNotFoundException("找不到使用者 " + userProfileRequestBody.getName()));
             if (null != userProfileRequestBody.getAvatar()) {
-               googleStorageService.uploadFile(userProfileRequestBody.getAvatar(), userProfileRequestBody.getImageName());
-                userPo.setAvatarName(userProfileRequestBody.getImageName());
+                String imageName = generateImageName(userProfileRequestBody.getAvatar());
+               googleStorageService.uploadFile(userProfileRequestBody.getAvatar(), imageName);
             } else if (null != userPo.getAvatarName() && !userPo.getAvatarName().isEmpty()) {
                 CompletableFuture<String> result = googleStorageService.deleteFile(userPo.getAvatarName());
                 if (!result.get().equals("文件删除成功")) {
@@ -254,20 +250,18 @@ public class UserServiceImpl implements UserService {
         }
 
         @Override
-        public UserProfileDto getUserProfile (String username) throws Exception {
+        public UserProfileDto getUserProfile (String username) {
             UserPo userPo = userJpaRepository.findByUserName(username)
                     .orElseThrow(() -> new ValidateFailedException("找不到使用者 " + username));
             String avatarName = userPo.getAvatarName();
             UserProfileDto userProfileDto = new UserProfileDto();
-            if (avatarName != null) {
-                try {
-                    byte[] image = googleStorageService.downloadFile(avatarName);
-                    if (null != image) {
-                        userProfileDto.setAvatar(image);
-                    }
-                } catch (Exception e) {
-                    log.error("沒有此檔案", e);
+            try {
+                byte[] image = googleStorageService.downloadFile(avatarName);
+                if (null != image) {
+                    userProfileDto.setAvatar(image);
                 }
+            } catch (Exception e) {
+                log.error("沒有此檔案", e);
             }
             userProfileDto.setEmail(userPo.getEmail());
             userProfileDto.setUsername(userPo.getUserName());
@@ -296,5 +290,14 @@ public class UserServiceImpl implements UserService {
                 throw new AuthenticationNotSupportedException("此名使用者沒有關聯的群組，請先建立關聯群組");
             }
         }
+
+    private String generateImageName(MultipartFile imgFile) {
+        String originalFilename = imgFile.getOriginalFilename();
+        String extension = "";
+        if (Objects.requireNonNull(originalFilename).lastIndexOf(".") > -1) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+        return UUID.randomUUID() + extension;
+    }
 
 }

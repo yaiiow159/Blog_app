@@ -7,9 +7,12 @@ import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.CompletableFuture;
@@ -19,14 +22,16 @@ import java.util.concurrent.CompletableFuture;
 public class GoogleStorageServiceImpl implements GoogleStorageService {
 
     private static final String BUCKET_NAME = "blog-pic-bucket";
-    private static final String KEY_FOR_ACCESS = "src/main/resources/json/key_for_access.json";
     private static final String GCP_URL = "https://www.googleapis.com/auth/cloud-platform";
 
 
     private static GoogleCredentials getGoogleAccess() throws IOException {
-        return GoogleCredentials
-                .fromStream(new FileInputStream(KEY_FOR_ACCESS))
-                .createScoped(Lists.newArrayList((GCP_URL)));
+        try (InputStream is = GoogleStorageServiceImpl.class.getClassLoader().getResourceAsStream("json/key_for_access.json")) {
+            if (is == null) {
+                throw new FileNotFoundException("找不到該文件");
+            }
+            return GoogleCredentials.fromStream(is).createScoped(Lists.newArrayList((GCP_URL)));
+        }
     }
 
     // get the storage
@@ -35,11 +40,12 @@ public class GoogleStorageServiceImpl implements GoogleStorageService {
     }
 
     @Async(value = "defaultThreadPoolExecutor")
-    public CompletableFuture<String> uploadFile(String filePath, String fileName) throws IOException {
+    public CompletableFuture<String> uploadFile(MultipartFile file, String fileName) throws IOException {
         GoogleCredentials credentials = getGoogleAccess();
         Storage storage = getStorage(credentials);
-        byte[] bytes = Files.readAllBytes(Paths.get(filePath));
-
+        // 將 file 轉成 bytes
+        byte[] bytes = file.getBytes();
+        // 將 bytes 轉成 blob
         BlobId blobId = BlobId.of(BUCKET_NAME, fileName);
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
         Blob blob = storage.create(blobInfo, bytes);

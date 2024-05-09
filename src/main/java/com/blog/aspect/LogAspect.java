@@ -27,6 +27,10 @@ import java.util.Date;
 @Slf4j
 public class LogAspect {
 
+    @Pointcut("execution(public * com.blog.controller.*.*(..))")
+    public void logPointcut() {
+    }
+
     @Around("logPointcut()")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         long startTime = System.currentTimeMillis();

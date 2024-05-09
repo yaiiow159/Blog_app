@@ -28,14 +28,14 @@ public class PostDto extends BaseDto implements Serializable {
     @Schema(description = "文章內文",requiredMode = Schema.RequiredMode.REQUIRED)
     private String content;
 
-    @Schema(description = "文章圖片(請求)")
-    private String imageUrl;
-
-    @Schema(description = "文章圖片名稱(請求)")
-    private String imageName;
-
     @Schema(description = "文章圖片(回傳)")
-    private byte[] image;
+    private MultipartFile image;
+
+    @Schema(description = "文章圖片名稱(回傳)")
+    private byte[] imageBytes;
+
+    @Schema(description = "文章圖片網址(回傳)")
+    private String imageUrl;
 
     @Schema(description = "標籤IDS")
     private List<Long> tagIds;

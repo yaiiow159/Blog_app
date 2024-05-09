@@ -34,6 +34,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 
 import java.io.IOException;
@@ -84,6 +85,7 @@ public class PostServiceImpl implements PostService {
         PostPo postPo = PostPoMapper.INSTANCE.toPo(postDto);
         postPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
         postPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
+        postPo.setStatus(PostStatus.PUBLISHED.getStatus());
         postPo.setCategory(categoryPo);
         //上傳文章圖片
         uploadFile(postPo, postDto);
@@ -145,7 +147,7 @@ public class PostServiceImpl implements PostService {
                 try {
                     byte[] image = googleStorageService.downloadFile(postPo.getImageName());
                     if(image != null) {
-                        postDto.setImage(image);
+                        postDto.setImageBytes(image);
                     }
                 } catch (Exception e) {
                     log.error("下載文章圖片失敗", e);
@@ -288,7 +290,7 @@ public class PostServiceImpl implements PostService {
         if (postPo.getImageName() != null) {
             try {
                 byte[] image = googleStorageService.downloadFile(postPo.getImageName());
-                postDto.setImage(image);
+                postDto.setImageBytes(image);
             } catch (Exception e) {
                 log.error("下載文章圖片失敗", e);
             }
@@ -301,7 +303,7 @@ public class PostServiceImpl implements PostService {
         if (postPo.getImageName() != null) {
             try {
                 byte[] image = googleStorageService.downloadFile(postPo.getImageName());
-                postDto.setImage(image);
+                postDto.setImageBytes(image);
             } catch (Exception e) {
                 log.error("下載文章圖片失敗", e);
             }
@@ -309,13 +311,14 @@ public class PostServiceImpl implements PostService {
         return postDto;
     }
 
-    private void uploadFile(PostPo postPo, PostDto postDto) throws IOException, ExecutionException, InterruptedException {
+    private void uploadFile(PostPo postPo,PostDto postDto) throws IOException, ExecutionException, InterruptedException {
         //上傳文章圖片
-        if(!ObjectUtils.isEmpty(postDto.getImage())) {
+        if(!ObjectUtils.isEmpty(postDto.getImage()) && postDto.getImage() != null) {
             // 上傳圖片智google storage
-            CompletableFuture<String> result = googleStorageService.uploadFile(postDto.getImageUrl(), postDto.getImageName());
+            String imageName = postDto.getImage().getOriginalFilename();
+            CompletableFuture<String> result = googleStorageService.uploadFile(postDto.getImage(), imageName);
             if(result.equals("上傳文件成功")) {
-                postPo.setImageName(postDto.getImageName());
+                postPo.setImageName(imageName);
             }
         }
     }
@@ -333,5 +336,13 @@ public class PostServiceImpl implements PostService {
         }
     }
 
+    private String generateImageName(MultipartFile imgFile) {
+        String originalFilename = imgFile.getOriginalFilename();
+        String extension = "";
+        if (Objects.requireNonNull(originalFilename).lastIndexOf(".") > -1) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+        return UUID.randomUUID() + extension;
+    }
 
 }

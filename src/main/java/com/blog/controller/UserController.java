@@ -102,7 +102,7 @@ public class UserController {
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PutMapping(value = "/userProfile",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "使用者個人資料API",description = "使用者個人資料API")
-    public ApiResponse<UserProfileDto> updateUserProfile(@Parameter(description = "使用者圖像",example = "avatar.png") @RequestPart(name = "avatar") String avatar,
+    public ApiResponse<UserProfileDto> updateUserProfile(@Parameter(description = "使用者圖像",example = "avatar.png") @RequestPart(name = "avatar") MultipartFile avatar,
                                                          @Parameter(description = "使用者名稱",example = "Timmy") @RequestPart(name = "username") String username,
                                                          @Parameter(description = "使用者信箱",example = "Timmy123@gmail.com") @RequestPart(name = "email") String email ,
                                                          @Parameter(description = "使用者暱稱",example = "Timmy") @RequestPart(name = "nickname") String nickname,
@@ -129,7 +129,6 @@ public class UserController {
         return new ApiResponse<>(true, "解鎖成功", userService.unlockUser(id),HttpStatus.OK);
     }
 
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @GetMapping("/userProfile/{username}")
     @Operation(summary = "使用者個人資料API",description = "使用者個人資料API")
     public ApiResponse<UserProfileDto> getUserProfile(

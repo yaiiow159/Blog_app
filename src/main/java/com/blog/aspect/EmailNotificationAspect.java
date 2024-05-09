@@ -7,7 +7,6 @@ import com.blog.dto.EmailNotification;
 import com.blog.dto.PostDto;
 import com.blog.dto.SubscriptionDto;
 import com.blog.exception.ResourceNotFoundException;
-import com.blog.mapper.PostPoMapper;
 import com.blog.po.PostPo;
 import com.blog.producer.EmailNotificationProducer;
 import com.blog.service.SubscriptionService;
@@ -89,7 +88,7 @@ public class EmailNotificationAspect {
         // 如果文章被收藏才需要通知
         List<SubscriptionDto> subscriptionDtos = subscriptionService.findByAuthorNameOrAuthorEmail(postPo.getAuthorName(), postPo.getAuthorEmail());
         if(!CollectionUtils.isEmpty(subscriptionDtos)) {
-            if("comment".equals(type) && "add".equals(operation)) {
+            if("comment".equals(type)) {
                 // 新增留言通知
                 emailNotification.setSendTo(postPo.getAuthorEmail());
                 emailNotification.setSubject("留言通知");
