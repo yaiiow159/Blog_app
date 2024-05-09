@@ -10,7 +10,7 @@ on:
       - .github/workflows/ci-cd.yml
 jobs:
   # 進行 maven package
-  mvn-package:
+  package:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
           path: target/${{ env.ARTIFACT_ID }}-${{ env.PROJECT_VERSION }}.jar
 
   # 進行 docker image build
-  build and push image:
+  build-image:
     runs-on: ubuntu-20.04
     needs: mvn-package
     steps:
