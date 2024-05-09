@@ -45,7 +45,7 @@ jobs:
   # 進行 docker image build
   build-image:
     runs-on: ubuntu-20.04
-    needs: mvn-package
+    needs: package
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -67,7 +67,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-20.04
-    needs: Pull Gcr Image To GCE
+    needs: build-image
     steps:
       - name: Deploy
         uses: appleboy/ssh-action@master
