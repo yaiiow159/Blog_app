@@ -6,6 +6,7 @@ import com.blog.exception.ResourceNotFoundException;
 import com.blog.exception.ValidateFailedException;
 import com.blog.dto.UserDto;
 import org.springframework.data.domain.Page;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.naming.AuthenticationNotSupportedException;
 import java.io.IOException;
@@ -28,7 +29,7 @@ public interface UserService {
 
     void logout(String token) throws AuthenticationNotSupportedException;
 
-    UserProfileDto updateUserProfile(UserProfileRequestBody userProfileRequestBody) throws IOException, ExecutionException, InterruptedException, TimeoutException;
+    UserProfileDto updateUserProfile(UserProfileDto userProfileDto) throws IOException, ExecutionException, InterruptedException, TimeoutException;
 
     UserProfileDto getUserProfile(String username) throws ResourceNotFoundException, ExecutionException, InterruptedException, IOException, Exception;
 
@@ -41,4 +42,6 @@ public interface UserService {
     void changePassword(String oldPassword, String newPassword);
 
     Page<UserDto> findAll(String userName, String userEmail, int page, int pageSize);
+
+    void upload(MultipartFile file) throws IOException, ExecutionException, InterruptedException;
 }

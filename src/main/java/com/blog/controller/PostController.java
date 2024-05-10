@@ -19,6 +19,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 
@@ -77,25 +78,22 @@ public class PostController {
     }
 
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PostMapping("/upload")
+    @Operation(summary = "上傳圖片API",description = "上傳圖片API")
+    public ApiResponse<String> upload(@RequestParam("file") MultipartFile file,
+                                      @RequestParam("id") Long id) {
+        try {
+            postService.upload(file,id);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "上傳失敗", null, HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "上傳成功" , HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping(value = "/draft", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "創建草稿API",description = "創建草稿API")
-    public ApiResponse<PostDto> createDraft(
-                    @Parameter(description = "圖片",example = "圖片") @RequestPart(required = false) MultipartFile image,
-                    @Parameter(description = "圖片名稱",example = "圖片") @RequestPart String imageName,
-                    @Parameter(description = "標題",example = "標題") @RequestPart String title,
-                    @Parameter(description = "內容",example = "內容") @RequestPart(required = false) String content,
-                    @Parameter(description = "說明",example = "說明") @RequestPart(required = false) String description,
-                    @Parameter(description = "狀態",example = "狀態") @RequestPart String authorName,
-                    @Parameter(description = "信箱",example = "信箱") @RequestPart(required = false) String authorEmail
-                    ) {
-        PostDto postDto = new PostDto();
-        postDto.setTitle(title);
-        postDto.setContent(content);
-        postDto.setDescription(description);
-        postDto.setAuthorName(authorName);
-        postDto.setAuthorEmail(authorEmail);
-        postDto.setImage(image);
-        postDto.setStatus("草稿");
+    public ApiResponse<PostDto> createDraft(@Validated @RequestBody PostDto postDto) {
         try {
             postService.createDraft(postDto);
         } catch (Exception e) {
@@ -134,7 +132,51 @@ public class PostController {
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     @Operation(summary = "刪除發布文章API",description = "刪除發布文章API")
-    public ApiResponse<String> deletePost(@Parameter(description = "刪除文章id",example = "1") @PathVariable Long id) throws ResourceNotFoundException {
+    public ApiResponse<String> deletePost(@Parameter(description = "刪除文章id",example = "1") @PathVariable Long id) throws ResourceNotFoundException, IOException {
         return new ApiResponse<>(true, "刪除成功", postService.delete(id), HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @DeleteMapping("/{id}/bookmarks")
+    @Operation(summary = "取消收藏文章API",description = "取消收藏文章API")
+    public ApiResponse<String> deleteBookmark(@Parameter(description = "取消收藏文章id",example = "1") @PathVariable Long id) throws ResourceNotFoundException {
+        try {
+            postService.deleteBookmark(id);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "取消收藏失敗", null, HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "取消收藏成功", HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PostMapping("/{postId}/like")
+    @Operation(summary = "按讚文章API",description = "按讚文章API")
+    public ApiResponse<String> addLike(@Parameter(description = "按讚文章id",example = "1") @PathVariable Long postId) throws ResourceNotFoundException {
+        try {
+            postService.addLike(postId);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "按讚失敗", null, HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "按讚成功", HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @DeleteMapping("/{postId}/like")
+    @Operation(summary = "取消按讚文章API",description = "取消按讚文章API")
+    public ApiResponse<String> deleteLike(@Parameter(description = "取消按讚文章id",example = "1") @PathVariable Long postId) throws ResourceNotFoundException {
+        try {
+            postService.disLike(postId);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "取消按讚失敗", null, HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "取消按讚成功", HttpStatus.OK);
+    }
+
+
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @GetMapping("/bookmarks/{username}")
+    @Operation(summary = "收藏文章列表API",description = "收藏文章列表API")
+    public ApiResponse<List<PostDto>> getBookmarks(@Parameter(description = "收藏文章列表",example = "1") @PathVariable String username) {
+        return new ApiResponse<>(true, "收藏文章列表", postService.getBookmarks(username), HttpStatus.OK);
     }
 }

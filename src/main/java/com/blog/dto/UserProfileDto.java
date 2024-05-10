@@ -16,8 +16,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserProfileDto implements Serializable {
-    @Schema(description = "頭像")
-    private byte[] avatar;
+    @Schema(description = "頭像Url")
+    private String avatarPath;
+
+    @Schema(description = "頭像名稱")
+    private String avatarName;
 
     @Schema(description = "使用者名稱")
     private String username;

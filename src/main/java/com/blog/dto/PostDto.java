@@ -28,13 +28,7 @@ public class PostDto extends BaseDto implements Serializable {
     @Schema(description = "文章內文",requiredMode = Schema.RequiredMode.REQUIRED)
     private String content;
 
-    @Schema(description = "文章圖片(回傳)")
-    private MultipartFile image;
-
-    @Schema(description = "文章圖片名稱(回傳)")
-    private byte[] imageBytes;
-
-    @Schema(description = "文章圖片網址(回傳)")
+    @Schema(description = "文章圖片名稱")
     private String imageUrl;
 
     @Schema(description = "標籤IDS")
@@ -76,6 +70,5 @@ public class PostDto extends BaseDto implements Serializable {
     private Long viewCount;
 
     @Schema(description = "文章狀態",requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotBlank(message = "文章狀態不得為空")
     private String status;
 }

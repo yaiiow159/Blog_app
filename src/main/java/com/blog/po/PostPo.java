@@ -1,6 +1,7 @@
 package com.blog.po;
 
 
+import com.blog.enumClass.PostStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.*;
@@ -32,10 +33,14 @@ public class PostPo extends BasicPo implements java.io.Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    @Column(name = "imageName")
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @Column(name = "image_name")
     private String imageName;
 
     @Column(name = "content")
+    @FullTextField(name = "content")
     private String content;
 
     @Column(name = "title", nullable = false)
@@ -74,7 +79,6 @@ public class PostPo extends BasicPo implements java.io.Serializable {
     @Column(name = "likes",columnDefinition = "bigint default 0",nullable = false)
     private Long likes;
 
-    // 預設為0
     @Column(name = "bookmarks",columnDefinition = "bigint default 0",nullable = false)
     private Long bookmarks;
 

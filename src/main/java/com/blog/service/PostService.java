@@ -4,6 +4,7 @@ import com.blog.dto.PostDto;
 import com.blog.exception.ResourceNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -14,7 +15,7 @@ public interface PostService {
 
     void edit(Long postId, PostDto postDto) throws ResourceNotFoundException, IOException, ExecutionException, InterruptedException;
 
-    String delete(Long id) throws ResourceNotFoundException;
+    String delete(Long id) throws ResourceNotFoundException, IOException;
 
     PostDto findPostById(Long id) throws ResourceNotFoundException;
 
@@ -27,19 +28,27 @@ public interface PostService {
     
     List<PostDto> searchByKeyword(String keyword);
 
-    void addLike(String postId);
+    void addLike(Long postId);
     
-    void disLike(String postId);
+    void disLike(Long postId);
     
-    Long getLikeCount(String postId);
+    Long getLikeCount(Long postId);
 
-    void addView(String postId);
+    void addView(Long postId);
 
-    Long getViewCount(String postId);
+    Long getViewCount(Long postId);
 
     void createDraft(PostDto postDto) throws ExecutionException, InterruptedException, IOException;
 
     Long getViewsCount(Long postId);
     
     Long getLikesCountById(Long postId);
+
+    void upload(MultipartFile file,Long postId) throws IOException, ExecutionException, InterruptedException;
+
+    void addBookmark(Long id);
+
+    void deleteBookmark(Long id);
+
+    List<PostDto> getBookmarks(String username);
 }

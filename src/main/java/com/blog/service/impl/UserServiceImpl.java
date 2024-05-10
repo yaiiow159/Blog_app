@@ -123,6 +123,16 @@ public class UserServiceImpl implements UserService {
         });
     }
 
+    @Override
+    public void upload(MultipartFile file) throws IOException, ExecutionException, InterruptedException {
+        String imageName = generateImageName(file);
+        CompletableFuture<String> result = googleStorageService.uploadFile(file, imageName);
+        if(result.get() == null) {
+            throw new IOException("上傳圖片失敗");
+        }
+        userJpaRepository.updateImageName(result.get(), SpringSecurityUtils.getCurrentUser());
+    }
+
     public String unlockUser(Long userId) {
         return userJpaRepository.findById(userId)
                 .map(userPo -> {
@@ -216,59 +226,34 @@ public class UserServiceImpl implements UserService {
         }
 
         @Override
-        public UserProfileDto updateUserProfile (UserProfileRequestBody userProfileRequestBody) throws
-        IOException, ExecutionException, InterruptedException {
-            UserPo userPo = userJpaRepository.findByUserName(userProfileRequestBody.getName())
-                    .orElseThrow(() -> new UsernameNotFoundException("找不到使用者 " + userProfileRequestBody.getName()));
-            if (null != userProfileRequestBody.getAvatar()) {
-                String imageName = generateImageName(userProfileRequestBody.getAvatar());
-               googleStorageService.uploadFile(userProfileRequestBody.getAvatar(), imageName);
-            } else if (null != userPo.getAvatarName() && !userPo.getAvatarName().isEmpty()) {
-                CompletableFuture<String> result = googleStorageService.deleteFile(userPo.getAvatarName());
-                if (!result.get().equals("文件删除成功")) {
-                    throw new IOException("文件删除失敗");
-                }
-                userPo.setAvatarName(null);
-            }
+        public UserProfileDto updateUserProfile (UserProfileDto userProfileDto)  {
+            UserPo userPo = userJpaRepository.findByUserName(userProfileDto.getUsername())
+                    .orElseThrow(() -> new UsernameNotFoundException("找不到使用者 " + userProfileDto.getUsername()));
 
-            userPo.setUserName(userProfileRequestBody.getName());
-            userPo.setEmail(userProfileRequestBody.getEmail());
-            userPo.setNickName(userProfileRequestBody.getNickName());
-            userPo.setAddress(userProfileRequestBody.getAddress());
-            userPo.setBirthday(userProfileRequestBody.getBirthday());
+            userPo.setUserName(userProfileDto.getUsername());
+            userPo.setEmail(userProfileDto.getEmail());
+            userPo.setNickName(userProfileDto.getNickname());
+            userPo.setAddress(userProfileDto.getAddress());
+            userPo.setBirthday(userProfileDto.getBirthday());
             userPo = userJpaRepository.saveAndFlush(userPo);
-
-            UserProfileDto userProfileDto = new UserProfileDto();
-            userProfileDto.setEmail(userPo.getEmail());
-            userProfileDto.setUsername(userPo.getUserName());
-            userProfileDto.setAddress(userPo.getAddress());
-            userProfileDto.setNickname(userPo.getNickName());
-            userProfileDto.setBirthday(userPo.getBirthday());
             // 從s3 取回圖片
-            googleStorageService.downloadFile(userPo.getAvatarName());
-            return userProfileDto;
+            UserProfileDto userProfile = getUserProfile(userPo.getUserName());
+            return userProfile;
         }
 
         @Override
         public UserProfileDto getUserProfile (String username) {
             UserPo userPo = userJpaRepository.findByUserName(username)
                     .orElseThrow(() -> new ValidateFailedException("找不到使用者 " + username));
-            String avatarName = userPo.getAvatarName();
             UserProfileDto userProfileDto = new UserProfileDto();
-            try {
-                byte[] image = googleStorageService.downloadFile(avatarName);
-                if (null != image) {
-                    userProfileDto.setAvatar(image);
-                }
-            } catch (Exception e) {
-                log.error("沒有此檔案", e);
-            }
             userProfileDto.setEmail(userPo.getEmail());
             userProfileDto.setUsername(userPo.getUserName());
             userProfileDto.setPassword(userPo.getPassword());
             userProfileDto.setAddress(userPo.getAddress());
             userProfileDto.setNickname(userPo.getNickName());
             userProfileDto.setBirthday(userPo.getBirthday());
+            userProfileDto.setAvatarName(userPo.getAvatarName());
+            userProfileDto.setAvatarPath(userPo.getAvatarPath());
             return userProfileDto;
         }
 

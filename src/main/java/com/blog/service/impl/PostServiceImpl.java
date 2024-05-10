@@ -87,8 +87,7 @@ public class PostServiceImpl implements PostService {
         postPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
         postPo.setStatus(PostStatus.PUBLISHED.getStatus());
         postPo.setCategory(categoryPo);
-        //上傳文章圖片
-        uploadFile(postPo, postDto);
+        //上傳文章圖
         postPoRepository.saveAndFlush(postPo);
     }
     @SendMail(type = "post", operation = "edit")
@@ -113,15 +112,15 @@ public class PostServiceImpl implements PostService {
         PostPo postPo = postPoRepository.findById(postId).orElseThrow(ResourceNotFoundException::new);
         postPo = PostPoMapper.INSTANCE.partialUpdate(postDto, postPo);
         postPo.setCategory(categoryPo);
-        deleteFile(postPo);
-        uploadFile(postPo, postDto);
         postPoRepository.saveAndFlush(postPo);
     }
     @Override
     public PostDto findPostById(Long id) throws ResourceNotFoundException {
         PostPo postPo = postPoRepository.findById(id).orElseThrow(ResourceNotFoundException::new);
         CategoryPo categoryPo = postPo.getCategory();
-        return downloadImage(postPo, categoryPo);
+        PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
+        postDto.setCategoryDto(CategoryPoMapper.INSTANCE.toDto(categoryPo));
+        return postDto;
     }
     @Override
     public Page<PostDto> findAll(String title, String authorName, Integer page, Integer size) {
@@ -147,7 +146,6 @@ public class PostServiceImpl implements PostService {
                 try {
                     byte[] image = googleStorageService.downloadFile(postPo.getImageName());
                     if(image != null) {
-                        postDto.setImageBytes(image);
                     }
                 } catch (Exception e) {
                     log.error("下載文章圖片失敗", e);
@@ -165,10 +163,10 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String delete(Long id) throws ResourceNotFoundException {
+    public String delete(Long id) throws ResourceNotFoundException, IOException {
         PostPo postPo = postPoRepository.findById(id).orElseThrow(ResourceNotFoundException::new);
-        deleteFile(postPo);
         postPoRepository.deleteById(id);
+        googleStorageService.deleteFile(postPo.getImageName());
         return "刪除成功";
     }
 
@@ -180,8 +178,7 @@ public class PostServiceImpl implements PostService {
         PostDto postDto = null;
         for (PostPo postPo : postPoList) {
             if (postId.equals(postPo.getId())) {
-                postDto = PostPoMapper.INSTANCE.toDto(postPo);
-                postDto = downloadImage(postPo);
+                postDto = PostPoMapper.INSTANCE.toDto(postPo);;
                 break;
             }
         }
@@ -194,7 +191,7 @@ public class PostServiceImpl implements PostService {
         List<PostPo> postPoList = postPoRepository.findTop5ByOrderByIdDesc();
         List<PostDto> postDtoList = new ArrayList<>();
         for (PostPo postPo : postPoList) {
-            PostDto postDto = downloadImage(postPo);
+            PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
             postDto.setTagDtoList(TagPoMapper.INSTANCE.toDtoList(tagPoRepository.findAllTagsByPostId(postPo.getId())));
             postDto.setCategoryDto(postPo.getCategory() != null ? CategoryPoMapper.INSTANCE.toDto(postPo.getCategory()) : null);
             postDtoList.add(postDto);
@@ -207,7 +204,7 @@ public class PostServiceImpl implements PostService {
         List<PostPo> postPoList = postPoRepository.findTop5Posts();
         List<PostDto> postDtoList = new ArrayList<>();
         for (PostPo postPo : postPoList) {
-            PostDto postDto = downloadImage(postPo);
+            PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
             postDto.setTagDtoList(TagPoMapper.INSTANCE.toDtoList(tagPoRepository.findAllTagsByPostId(postPo.getId())));
             postDto.setCategoryDto(postPo.getCategory() != null ? CategoryPoMapper.INSTANCE.toDto(postPo.getCategory()) : null);
             postDtoList.add(postDto);
@@ -220,16 +217,18 @@ public class PostServiceImpl implements PostService {
         SearchSession searchSession = Search.session(entityManager);
         try {
             SearchResult<PostPo> searchResult = searchSession.search(PostPo.class)
-                    .where((postPo) -> postPo.match().fields("title", "content","author_name").matching(keyword + "*"))
+                    .where((postPo) -> postPo.match().fields("title","content","author_name").matching(keyword + "*"))
                     .fetchAll();
             List<PostPo> postPos = searchResult.hits();
-            return postPos.stream()
-                    .map(this::downloadImage)
-                    .peek(postDto -> {
-                        postDto.setTagDtoList(TagPoMapper.INSTANCE.toDtoList(tagPoRepository.findAllTagsByPostId(postDto.getId())));
-                        postDto.setCategoryDto(postDto.getCategoryId() != null ? CategoryPoMapper.INSTANCE.toDto(categoryPoRepository.findById(postDto.getCategoryId()).orElse(null)) : null);
-                    })
-                    .toList();
+
+            List<PostDto> postDtoList = new ArrayList<>();
+            for (PostPo postPo : postPos) {
+                PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
+                postDto.setTagDtoList(TagPoMapper.INSTANCE.toDtoList(tagPoRepository.findAllTagsByPostId(postPo.getId())));
+                postDto.setCategoryDto(postPo.getCategory() != null ? CategoryPoMapper.INSTANCE.toDto(postPo.getCategory()) : null);
+                postDtoList.add(postDto);
+            }
+            return postDtoList;
         } catch (Exception e) {
             log.error("搜尋文章失敗", e);
             return Collections.emptyList();
@@ -238,30 +237,30 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public synchronized void addLike(String postId) {
-        postPoRepository.addLike(Long.parseLong(postId));
+    public synchronized void addLike(Long postId) {
+        postPoRepository.addLike(postId);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public synchronized void disLike(String postId) {
-        postPoRepository.disLike(Long.parseLong(postId));
+    public synchronized void disLike(Long postId) {
+        postPoRepository.disLike(postId);
     }
 
     @Override
-    public Long getLikeCount(String postId) {
-        return postPoRepository.getLikeCount(Long.parseLong(postId));
+    public Long getLikeCount(Long postId) {
+        return postPoRepository.getLikeCount(postId);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public synchronized void addView(String postId) {
-        postPoRepository.addView(Long.parseLong(postId));
+    public synchronized void addView(Long postId) {
+        postPoRepository.addView(postId);
     }
 
     @Override
-    public Long getViewCount(String postId) {
-        return postPoRepository.getViewCount(Long.parseLong(postId));
+    public Long getViewCount(Long postId) {
+        return postPoRepository.getViewCount(postId);
     }
 
     @Override
@@ -269,7 +268,6 @@ public class PostServiceImpl implements PostService {
         PostPo postPo = PostPoMapper.INSTANCE.toPo(postDto);
         postPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
         postPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-        uploadFile(postPo,postDto);
         postPo.setStatus(PostStatus.DRAFT.getStatus());
         postPoRepository.saveAndFlush(postPo);
     }
@@ -284,57 +282,41 @@ public class PostServiceImpl implements PostService {
         return postPoRepository.getLikesCountById(postId);
     }
 
-    private PostDto downloadImage(PostPo postPo, CategoryPo categoryPo) {
-        PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
-        postDto.setCategoryId(categoryPo.getId());
-        if (postPo.getImageName() != null) {
-            try {
-                byte[] image = googleStorageService.downloadFile(postPo.getImageName());
-                postDto.setImageBytes(image);
-            } catch (Exception e) {
-                log.error("下載文章圖片失敗", e);
-            }
+    @Override
+    public void upload(MultipartFile file, Long postId) throws IOException, ExecutionException, InterruptedException {
+        String imageName = generateImageName(file);
+        CompletableFuture<String> result = googleStorageService.uploadFile(file, imageName);
+        if(result.get() == null) {
+            throw new IOException("上傳圖片失敗");
         }
-        return postDto;
+        postPoRepository.updateImageName(result.get(), postId);
     }
 
-    private PostDto downloadImage(PostPo postPo) {
-        PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
-        if (postPo.getImageName() != null) {
-            try {
-                byte[] image = googleStorageService.downloadFile(postPo.getImageName());
-                postDto.setImageBytes(image);
-            } catch (Exception e) {
-                log.error("下載文章圖片失敗", e);
-            }
-        }
-        return postDto;
+    @Override
+    @Transactional
+    public void addBookmark(Long id) {
+        postPoRepository.addBookmark(id);
     }
 
-    private void uploadFile(PostPo postPo,PostDto postDto) throws IOException, ExecutionException, InterruptedException {
-        //上傳文章圖片
-        if(!ObjectUtils.isEmpty(postDto.getImage()) && postDto.getImage() != null) {
-            // 上傳圖片智google storage
-            String imageName = postDto.getImage().getOriginalFilename();
-            CompletableFuture<String> result = googleStorageService.uploadFile(postDto.getImage(), imageName);
-            if(result.equals("上傳文件成功")) {
-                postPo.setImageName(imageName);
-            }
-        }
+    @Override
+    @Transactional
+    public void deleteBookmark(Long id) {
+        postPoRepository.deleteBookmark(id);
     }
 
-    private void deleteFile(PostPo postPo) {
-        if(!ObjectUtils.isEmpty(postPo.getImageName()) && postPo.getImageName() != null) {
-            try {
-                googleStorageService.deleteFile(postPo.getImageName());
-                if(postPo.getImageName() != null) {
-                    postPo.setImageName(null);
-                }
-            } catch (Exception e) {
-                log.error("刪除文章圖片失敗", e);
-            }
+    @Override
+    public List<PostDto> getBookmarks(String username) {
+        List<PostPo> postPos = postPoRepository.getBookmarksByUsername(username);
+        List<PostDto> postDtoList = new ArrayList<>();
+        for (PostPo postPo : postPos) {
+            PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
+            postDto.setTagDtoList(TagPoMapper.INSTANCE.toDtoList(tagPoRepository.findAllTagsByPostId(postPo.getId())));
+            postDto.setCategoryDto(postPo.getCategory() != null ? CategoryPoMapper.INSTANCE.toDto(postPo.getCategory()) : null);
+            postDtoList.add(postDto);
         }
+        return postDtoList;
     }
+
 
     private String generateImageName(MultipartFile imgFile) {
         String originalFilename = imgFile.getOriginalFilename();

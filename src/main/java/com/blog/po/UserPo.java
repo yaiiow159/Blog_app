@@ -61,6 +61,9 @@ public class UserPo extends BasicPo implements Serializable {
     @Column(name = "avatar_name")
     private String avatarName;
 
+    @Column(name = "avatar_path")
+    private String avatarPath;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_group_po_id",nullable = false,
             foreignKey = @ForeignKey(name = "fk_user_group_user"),

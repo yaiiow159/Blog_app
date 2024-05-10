@@ -50,8 +50,9 @@ public class GoogleStorageServiceImpl implements GoogleStorageService {
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
         Blob blob = storage.create(blobInfo, bytes);
 
-        blob.toBuilder().setContentType("image/png").build().update();
-        return CompletableFuture.completedFuture("上傳文件成功");
+        blob.toBuilder().setContentType("image/jpg").build().update();
+        // 回傳url
+        return CompletableFuture.completedFuture(blob.getMediaLink());
     }
 
     @Async(value = "defaultThreadPoolExecutor")
@@ -64,7 +65,7 @@ public class GoogleStorageServiceImpl implements GoogleStorageService {
         Blob blob = storage.create(blobInfo);
         Blob.BlobSourceOption option = Blob.BlobSourceOption.decryptionKey(fileName);
         blob.delete(option);
-
+        // 返回刪除結果
         return CompletableFuture.completedFuture("刪除文件成功");
     }
 
