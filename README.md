@@ -49,7 +49,7 @@
 文檔生成以及測試: openApi3 <br>
 容器化: docker、docker-compose <br>
 容器化管理平台: portainer <br>
-雲服務技術: GCP(google-storage、computer-engine、Artifact-registry)
+雲服務技術: GCP(google-storage、computer-engine)
 
 ---------------------------------------------------------------------------------------------------------------------
 
