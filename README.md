@@ -1,6 +1,6 @@
 # 部落客系統
 這個項目是一個簡單的部落格系統，可以進行張貼文章以及撰寫評論回復留言等基本功能，如果是管理員身分的話可額外使用使用者管理、群組管理、權限管理等功能設置系統 <br>
-另外頁面上參照如dcard的一些頁面設計 可以在使用者資料上查看當前張貼文章數、評論數、按讚數等訊息，系統也能進行全文搜尋 利用文章內文 標題 作者等進行查詢 <br>
+可以在使用者資料上查看當前張貼文章數、評論數、按讚數等訊息，系統也能進行全文搜尋 利用文章內文 標題 作者等進行查詢 <br>
 當使用者收藏其他作者的文章時 若該作者更改其文章內容或發佈新文章時，可從注冊mail中收到通知 利用kafka 線性序傳輸的特性 可保證資料不丟失 且
 功能還在持續擴充中
 
@@ -83,30 +83,35 @@ http://localhost:9090/v3/api-docs <br>
 ![登入畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/34bf10dc-8c86-48c1-ad94-189ddfa007ce)
 
 首頁畫面
-![首頁畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/8c9f2caf-6736-4531-bf9c-f82c3b2c01a3)
+![首頁閱讀文章畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/cbee1e10-89ec-4210-8c09-acf13509fe35)
+![首頁畫面3](https://github.com/yaiiow159/Blog_app/assets/39752246/eda561fe-abc9-4f52-941c-47f5266c3ef2)
+![首頁畫面2](https://github.com/yaiiow159/Blog_app/assets/39752246/766c4e03-4988-4e0c-a9a0-62534b3da3a8)
+![首頁畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/b2ee7661-4560-46d0-96fe-c2d2b8adc14b)
+
 
 分類管理畫面
 ![分類管理畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/60b99972-dacc-4f43-955c-5fcf680e1910)
+![創建成功分類](https://github.com/yaiiow159/Blog_app/assets/39752246/4c73eceb-2081-4ffb-adbd-8ca86dd5e9b8)
+![分類管理畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/1e8795ed-d0d0-4107-922f-7d79c894fed7)
+![分類管理更新成功](https://github.com/yaiiow159/Blog_app/assets/39752246/77b5405f-9729-4d3f-816c-212e6234e2a7)
+![刪除成功](https://github.com/yaiiow159/Blog_app/assets/39752246/d524271d-ca72-4db0-99ea-01a8e23af1ad)
 
 文章管理畫面
-![文章管理頁面](https://github.com/yaiiow159/Blog_app/assets/39752246/12a6a4d5-4c1a-4d26-bd4f-5d8e0d9da260)
+
 
 標籤管理畫面
-![標籤管理功能畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/64e39bbd-aa99-4c9c-9d26-c08512e670c8)
 
 使用者管理畫面
-![使用者管理頁面](https://github.com/yaiiow159/Blog_app/assets/39752246/17ca940a-682e-45c4-9541-43e33bbe9725)
 
 群組管理畫面
-![群組管理畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/75c94218-3e9a-4e0f-8f91-cbfde0c969bf)
 
 角色管理畫面
-![角色管理畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/4a062437-2626-43bc-8e9b-1fe12767601f)
 
 使用者登入紀錄畫面
 ![使用者登入紀錄畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/e3477767-c5ca-471d-8877-820126fb150d)
 
-以上畫面都可進行分頁功能以及針對特定欄位進行sort排序功能
+郵件通知畫面
+
 
 
 
