@@ -85,7 +85,7 @@ public class UserController {
         return new ApiResponse<>(true, "新增成功", HttpStatus.OK);
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PutMapping("/{id}")
     @Operation(summary = "更新使用者API",description = "更新使用者API")
     public ApiResponse<UserDto> updateUser(@Parameter(name = "使用者帳戶") @Validated @RequestBody UserDto userDto) {

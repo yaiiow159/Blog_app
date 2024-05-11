@@ -6,6 +6,7 @@ import com.blog.service.TagService;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -64,9 +65,11 @@ public class TagController {
         return new ApiResponse<>(true, "新增成功", HttpStatus.CREATED);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<TagDto> update(@Validated @RequestBody TagDto tagDto) {
+    public ApiResponse<TagDto> update(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "標籤資料", required = true)
+            @Validated @RequestBody TagDto tagDto) {
         try {
             tagService.edit(tagDto);
         } catch (Exception e) {

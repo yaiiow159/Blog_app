@@ -21,5 +21,5 @@ public interface RecentViewPoRepository extends JpaRepository<RecentViewPo, Long
             "JOIN rv.posts p " +
             "WHERE rv.user.id = :userId " +
             "AND (:createTime IS NULL OR rv.createTime < :createTime)")
-    Page<PostVo> findPostPoByUserIdAndCreateTimeBefore(@Param("userId") Long userId, @Param("createTime") LocalDateTime createTime, Pageable pageable);
+    Page<PostVo> findPostPoByUserId(@Param("userId") Long userId, Pageable pageable);
 }

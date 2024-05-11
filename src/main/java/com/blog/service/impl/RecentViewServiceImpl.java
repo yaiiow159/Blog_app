@@ -33,9 +33,8 @@ public class RecentViewServiceImpl implements RecentViewService {
     private final UserPoRepository userJpaRepository;
     private final PostPoRepository postPoRepository;
     @Override
-    public Page<PostVo> getRecentView(String dateTime, Long postId, String username, Integer page, Integer size) {;
+    public Page<PostVo> getRecentView(Long postId, String username, Integer page, Integer size) {;
         Pageable pageable = PageRequest.of(page - 1, size);
-        LocalDateTime createTime = dateTime.isEmpty() ? null : LocalDateTime.parse(dateTime, dateTimeFormatter);
         //利用username 查詢使用者
         if(Strings.isNullOrEmpty(username)) {
             throw new UsernameNotFoundException("找不到該使用者");
@@ -45,7 +44,7 @@ public class RecentViewServiceImpl implements RecentViewService {
             throw new UsernameNotFoundException("找不到該使用者");
         }
         Long userId = user.get().getId();
-        Page<PostVo> postVoPage = recentViewPoRepository.findPostPoByUserIdAndCreateTimeBefore(userId, createTime,pageable);
+        Page<PostVo> postVoPage = recentViewPoRepository.findPostPoByUserId(userId,pageable);
         if(!postVoPage.getContent().isEmpty()) {
             for (PostVo postVo : postVoPage) {
                 postVo.setCreateTimeStr(transformDateToString(postVo.getCreateTime()));

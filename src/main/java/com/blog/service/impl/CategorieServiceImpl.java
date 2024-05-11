@@ -48,8 +48,8 @@ public class CategorieServiceImpl implements CategorieService {
         return "刪除成功";
     }
     @Override
-    public void edit(long categoryId, CategoryDto categoryDto) throws ValidateFailedException {
-        CategoryPo categoryPo = categoryPoRepository.findById(categoryId).orElseThrow(
+    public void edit(CategoryDto categoryDto) throws ValidateFailedException {
+        CategoryPo categoryPo = categoryPoRepository.findById(categoryDto.getId()).orElseThrow(
                 () -> new ValidateFailedException(ValidateFailedException.DomainErrorStatus.RESOURCE_NOT_FOUND));
         categoryPo = CategoryPoMapper.INSTANCE.partialUpdate(categoryDto, categoryPo);
         categoryPoRepository.saveAndFlush(categoryPo);

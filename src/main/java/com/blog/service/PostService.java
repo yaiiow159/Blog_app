@@ -31,12 +31,6 @@ public interface PostService {
     void addLike(Long postId);
     
     void disLike(Long postId);
-    
-    Long getLikeCount(Long postId);
-
-    void addView(Long postId);
-
-    Long getViewCount(Long postId);
 
     void createDraft(PostDto postDto) throws ExecutionException, InterruptedException, IOException;
 
@@ -50,5 +44,13 @@ public interface PostService {
 
     void deleteBookmark(Long id);
 
-    List<PostDto> getBookmarks(String username);
+//    List<PostDto> getBookmarksList(String username);
+
+    Integer getLikesCount(Long postId);
+
+    Integer getBookmarksCount(Long postId);
+
+    void addPostView(Long id);
+
+    List<PostDto> searchByTag(Long id);
 }

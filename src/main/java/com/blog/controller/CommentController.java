@@ -99,7 +99,7 @@ public class CommentController {
         return new ApiResponse<>(true, "檢舉成功",HttpStatus.OK);
     }
 
-    @PostMapping("/posts/{postId}/comments/{id}/like")
+    @PostMapping("/posts/{postId}/comments/{id}/likes")
     @Operation(summary = "按讚評論",description = "按讚一篇文章底下的評論")
     public ApiResponse<String> likeComment(
             @Parameter(description = "文章id",example = "1")@PathVariable Long postId,
@@ -112,7 +112,7 @@ public class CommentController {
         return new ApiResponse<>(true, "按讚成功",HttpStatus.OK);
     }
 
-    @DeleteMapping("/posts/{postId}/comments/{id}/like")
+    @DeleteMapping("/posts/{postId}/comments/{id}/likes")
     @Operation(summary = "取消按讚評論",description = "取消按讚一篇文章底下的評論")
     public ApiResponse<String> cancelLikeComment(
             @Parameter(description = "文章id",example = "1")@PathVariable Long postId,
@@ -123,6 +123,19 @@ public class CommentController {
             return new ApiResponse<>(false, "取消按讚失敗", HttpStatus.BAD_REQUEST);
         }
         return new ApiResponse<>(true, "取消按讚成功",HttpStatus.OK);
+    }
+
+    // 查詢按讚數
+    @GetMapping("/posts/{postId}/comments/{id}/likeCount")
+    @Operation(summary = "查詢評論按讚數",description = "查詢評論按讚數")
+    public ApiResponse<Integer> likeCountComment(
+            @Parameter(description = "文章id",example = "1")@PathVariable Long postId,
+            @Parameter(description = "評論id",example = "1")@PathVariable Long id){
+        try {
+            return new ApiResponse<>(true, "查詢成功",commentService.findLikeCount(postId, id),HttpStatus.OK);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "查詢失敗",HttpStatus.BAD_REQUEST);
+        }
     }
 
 }

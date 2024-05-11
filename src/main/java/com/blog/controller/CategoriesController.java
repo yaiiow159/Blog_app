@@ -84,13 +84,12 @@ public class CategoriesController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("{id}")
+    @PutMapping
     @Operation(summary = "更新分類",description = "更新分類物件")
     public ApiResponse<CategoryDto> updateCategory(
-            @Parameter(description = "分類id",example = "1") @PathVariable Long id,
             @Parameter(description = "分類內容") @Validated @RequestBody CategoryDto categoryDto) throws ValidateFailedException {
         try {
-            categorieService.edit(id,categoryDto);
+            categorieService.edit(categoryDto);
         }  catch (Exception e) {
             return new ApiResponse<>(false, "更新失敗", null, HttpStatus.BAD_REQUEST);
         }

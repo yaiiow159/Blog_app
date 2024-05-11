@@ -1,5 +1,6 @@
 package com.blog.po;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -58,6 +59,7 @@ public class MailNotificationPo implements Serializable {
 
     @Column(name = "send_time")
     @CreationTimestamp
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",shape = JsonFormat.Shape.STRING)
     private LocalDateTime sendTime;
 
     @Column(name = "is_read",columnDefinition = "boolean default false",nullable = false)

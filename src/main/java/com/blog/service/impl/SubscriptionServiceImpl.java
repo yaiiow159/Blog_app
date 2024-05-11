@@ -31,7 +31,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     private final SubscriptionPoRepository subscriptionPoRepository;
     private final UserPoRepository userPoRepository;
-    private final PostPoRepository postPoRepository;
 
     /**
      * 訂閱文章
@@ -47,8 +46,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         SubscriptionPo subscriptionPo = SubscriptionPoMapper.INSTANCE.toPo(subscriptionDto);
         UserPo userPo = userPoRepository.findByUserName(username).orElseThrow(() -> new ResourceNotFoundException("找不到使用者"));
         subscriptionPo.setUser(userPo);
-        PostPo postPo = postPoRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException("找不到文章"));
-        subscriptionPo.setPost(postPo);
         subscriptionPoRepository.saveAndFlush(subscriptionPo);
         return "訂閱成功";
     }
@@ -62,10 +59,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String unSubscribe(String username, Long postId) {
-        subscriptionPoRepository.deleteByUsernameAndPostId(username, postId);
-        if(subscriptionPoRepository.existsByUsernameAndPostId(username, postId) > 0){
-            return "取消訂閱失敗";
-        }
+        subscriptionPoRepository.deleteByUsername(username);
         return "取消訂閱成功";
     }
 
@@ -77,7 +71,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Override
     public String checkSubscription(String username, Long postId) {
-        if(subscriptionPoRepository.existsByUsernameAndPostId(username, postId) > 0){
+        if(subscriptionPoRepository.existsByUsername(username) > 0){
            return "已訂閱";
         }
         return "未訂閱";

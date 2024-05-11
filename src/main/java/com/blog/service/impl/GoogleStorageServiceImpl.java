@@ -9,12 +9,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
@@ -56,7 +53,7 @@ public class GoogleStorageServiceImpl implements GoogleStorageService {
     }
 
     @Async(value = "defaultThreadPoolExecutor")
-    public CompletableFuture<String> deleteFile(String fileName) throws IOException {
+    public void deleteFile(String fileName) throws IOException {
         GoogleCredentials credentials = getGoogleAccess();
         Storage storage = getStorage(credentials);
 
@@ -66,10 +63,11 @@ public class GoogleStorageServiceImpl implements GoogleStorageService {
         Blob.BlobSourceOption option = Blob.BlobSourceOption.decryptionKey(fileName);
         blob.delete(option);
         // 返回刪除結果
-        return CompletableFuture.completedFuture("刪除文件成功");
+        CompletableFuture.completedFuture("刪除文件成功");
     }
 
     public byte[] downloadFile(String fileName) throws IOException {
+        // 回傳 圖片的 url地址
         GoogleCredentials credentials = getGoogleAccess();
         Storage storage = getStorage(credentials);
         BlobId blobId = BlobId.of(BUCKET_NAME, fileName);

@@ -15,10 +15,10 @@ public interface SubscriptionPoRepository extends JpaRepository<SubscriptionPo, 
     List<SubscriptionPo> findByAuthorNameOrEmail(@Param("authorName") String authorName,@Param("authorEmail") String authorEmail);
 
     @Modifying
-    @Query("delete from SubscriptionPo subscriptionPo where subscriptionPo.user.userName = :username and subscriptionPo.post.id = :postId")
-    void deleteByUsernameAndPostId(@Param("username") String username,@Param("postId") Long postId);
+    @Query("delete from SubscriptionPo subscriptionPo where subscriptionPo.user.userName = :username")
+    void deleteByUsername(@Param("username") String username);
 
-    @Query("select count(*) from SubscriptionPo subscriptionPo where subscriptionPo.user.userName = :username and subscriptionPo.post.id = :postId")
-    int existsByUsernameAndPostId(@Param("username") String username, @Param("postId") Long postId);
+    @Query("select count(*) from SubscriptionPo subscriptionPo where subscriptionPo.user.userName = :username")
+    Integer existsByUsername(@Param("username") String username);
 
 }

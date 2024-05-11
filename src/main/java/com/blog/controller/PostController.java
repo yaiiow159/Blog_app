@@ -48,16 +48,20 @@ public class PostController {
         return new ApiResponse<>(true, "查詢成功", postService.findPostById(id), HttpStatus.OK);
     }
 
-    @GetMapping("/{postId}/viewsCount")
-    @Operation(summary = "查詢文章瀏覽次數",description = "查詢文章瀏覽次數")
-    public ApiResponse<Long> getViewsCount(@Parameter(description = "文章id",example = "1") @PathVariable Long postId) {
-        return new ApiResponse<>(true, "查詢成功", postService.getViewsCount(postId), HttpStatus.OK);
-    }
-
     @GetMapping("/searchByKeyword")
     @Operation(summary = "關鍵字查詢文章",description = "關鍵字全文查詢文章")
     public ApiResponse<List<PostDto>> searchByKeyword(@Parameter(description = "關鍵字",example = "關鍵字")@RequestParam(name = "keyword") String keyword) {
         List<PostDto> postDtoList = postService.searchByKeyword(keyword);
+        if (postDtoList.isEmpty()) {
+            return new ApiResponse<>(false, "查無資料", null, HttpStatus.NO_CONTENT);
+        }
+        return new ApiResponse<>(true, "查詢成功", postDtoList, HttpStatus.OK);
+    }
+
+    @GetMapping("/searchByTag/{id}")
+    @Operation(summary = "標籤查詢文章",description = "標籤查詢文章")
+    public ApiResponse<List<PostDto>> searchByTag(@Parameter(description = "標籤id",example = "1") @PathVariable Long id) {
+        List<PostDto> postDtoList = postService.searchByTag(id);
         if (postDtoList.isEmpty()) {
             return new ApiResponse<>(false, "查無資料", null, HttpStatus.NO_CONTENT);
         }
@@ -137,6 +141,18 @@ public class PostController {
     }
 
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PostMapping("{id}/views")
+    @Operation(summary = "增加文章瀏覽次數API",description = "增加文章瀏覽次數API")
+    public ApiResponse<String> addPostView(@Parameter(description = "文章id",example = "1") @PathVariable Long id) throws ResourceNotFoundException {
+        try {
+            postService.addPostView(id);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "增加失敗", null, HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "增加成功", HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @DeleteMapping("/{id}/bookmarks")
     @Operation(summary = "取消收藏文章API",description = "取消收藏文章API")
     public ApiResponse<String> deleteBookmark(@Parameter(description = "取消收藏文章id",example = "1") @PathVariable Long id) throws ResourceNotFoundException {
@@ -146,6 +162,18 @@ public class PostController {
             return new ApiResponse<>(false, "取消收藏失敗", null, HttpStatus.BAD_REQUEST);
         }
         return new ApiResponse<>(true, "取消收藏成功", HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PostMapping("/{id}/bookmarks")
+    @Operation(summary = "收藏文章API",description = "收藏文章API")
+    public ApiResponse<String> addBookmark(@Parameter(description = "收藏文章id",example = "1") @PathVariable Long id) throws ResourceNotFoundException {
+        try {
+            postService.addBookmark(id);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "收藏失敗", null, HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "收藏成功", HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
@@ -173,10 +201,33 @@ public class PostController {
     }
 
 
+//    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+//    @GetMapping("/bookmarks/{username}")
+//    @Operation(summary = "收藏文章列表API",description = "收藏文章列表API")
+//    public ApiResponse<List<PostDto>> getBookmarks(@Parameter(description = "收藏文章列表",example = "1") @PathVariable String username) {
+//        return new ApiResponse<>(true, "收藏文章列表", postService.getBookmarksList(username), HttpStatus.OK);
+//    }
+
+    // likesCount
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    @GetMapping("/bookmarks/{username}")
-    @Operation(summary = "收藏文章列表API",description = "收藏文章列表API")
-    public ApiResponse<List<PostDto>> getBookmarks(@Parameter(description = "收藏文章列表",example = "1") @PathVariable String username) {
-        return new ApiResponse<>(true, "收藏文章列表", postService.getBookmarks(username), HttpStatus.OK);
+    @GetMapping("/{postId}/likesCount")
+    @Operation(summary = "查詢案讚人數",description = "按讚人數API")
+    public ApiResponse<Integer> getLikesCount(@Parameter(description = "文章id",example = "1") @PathVariable Long postId) {
+        return new ApiResponse<>(true, "按讚人數", postService.getLikesCount(postId), HttpStatus.OK);
+    }
+
+    // 查詢收藏人數
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @GetMapping("/{postId}/bookmarksCount")
+    @Operation(summary = "查詢收藏人數",description = "收藏人數API")
+    public ApiResponse<Integer> getBookmarksCount(@Parameter(description = "文章id",example = "1") @PathVariable Long postId) {
+        return new ApiResponse<>(true, "收藏人數", postService.getBookmarksCount(postId), HttpStatus.OK);
+    }
+
+    @GetMapping("{postId}/viewsCount")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @Operation(summary = "查詢文章瀏覽次數",description = "查詢文章瀏覽次數")
+    public ApiResponse<Long> getViewsCount(@Parameter(description = "文章id",example = "1") @PathVariable Long postId) {
+        return new ApiResponse<>(true, "查詢成功", postService.getViewsCount(postId), HttpStatus.OK);
     }
 }

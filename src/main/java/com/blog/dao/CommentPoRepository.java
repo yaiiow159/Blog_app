@@ -27,4 +27,7 @@ public interface CommentPoRepository extends JpaRepository<CommentPo, Long>, Jpa
 
     @Query("SELECT c.dislikes FROM CommentPo c WHERE c.id = ?1")
     Long getCommentDisLike(Long id);
+
+    @Query("SELECT count(c.likes) FROM CommentPo c WHERE c.post.id = ?1 AND c.id = ?2")
+    Integer findLikeCount(Long postId, Long id);
 }

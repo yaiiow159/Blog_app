@@ -9,7 +9,7 @@ public interface GoogleStorageService {
 
     CompletableFuture<String> uploadFile(MultipartFile filePath, String fileName) throws IOException;
 
-    CompletableFuture<String> deleteFile(String fileName) throws IOException;
+    void deleteFile(String fileName) throws IOException;
 
     byte[] downloadFile(String fileName) throws IOException;
 

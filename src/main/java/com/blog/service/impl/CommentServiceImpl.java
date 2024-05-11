@@ -109,28 +109,6 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    @Transactional
-    public synchronized void addCommentLike(Long postId, Long commentId) {
-        commentPoRepository.addCommentLike(postId, commentId);
-    }
-
-    @Override
-    @Transactional
-    public synchronized void addCommentDisLike(Long postId, Long commentId) {
-        commentPoRepository.addCommentDisLike(postId, commentId);
-    }
-
-    @Override
-    public Long getCommentLikeCount(Long commentId) {
-        return commentPoRepository.getCommentLike(commentId);
-    }
-
-    @Override
-    public Long getCommentDisLikeCount(Long commentId) {
-        return commentPoRepository.getCommentDisLike(commentId);
-    }
-
-    @Override
     public void likeComment(Long postId, Long id) {
 
     }
@@ -138,6 +116,11 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public void cancelLikeComment(Long postId, Long id) {
 
+    }
+
+    @Override
+    public Integer findLikeCount(Long postId, Long id) {
+        return commentPoRepository.findLikeCount(postId, id);
     }
 
 }

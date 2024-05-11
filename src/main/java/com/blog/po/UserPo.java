@@ -15,6 +15,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -29,6 +30,7 @@ public class UserPo extends BasicPo implements Serializable {
     public static final String DEFAULT_USER_NAME = "admin";
     public UserPo() {
         this.isLocked = false;
+        roles = new HashSet<>();
     }
 
     @Serial
@@ -49,10 +51,6 @@ public class UserPo extends BasicPo implements Serializable {
 
     @Column(name = "phone")
     private String phone;
-
-    @Column(name = "birthday")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime birthday;
 
     @Column(name = "address")
     private String address;

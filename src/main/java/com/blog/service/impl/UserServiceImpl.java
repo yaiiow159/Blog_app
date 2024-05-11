@@ -234,11 +234,9 @@ public class UserServiceImpl implements UserService {
             userPo.setEmail(userProfileDto.getEmail());
             userPo.setNickName(userProfileDto.getNickname());
             userPo.setAddress(userProfileDto.getAddress());
-            userPo.setBirthday(userProfileDto.getBirthday());
             userPo = userJpaRepository.saveAndFlush(userPo);
             // 從s3 取回圖片
-            UserProfileDto userProfile = getUserProfile(userPo.getUserName());
-            return userProfile;
+            return getUserProfile(userPo.getUserName());
         }
 
         @Override
@@ -251,7 +249,6 @@ public class UserServiceImpl implements UserService {
             userProfileDto.setPassword(userPo.getPassword());
             userProfileDto.setAddress(userPo.getAddress());
             userProfileDto.setNickname(userPo.getNickName());
-            userProfileDto.setBirthday(userPo.getBirthday());
             userProfileDto.setAvatarName(userPo.getAvatarName());
             userProfileDto.setAvatarPath(userPo.getAvatarPath());
             return userProfileDto;

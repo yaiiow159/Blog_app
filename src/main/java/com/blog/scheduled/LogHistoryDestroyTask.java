@@ -19,7 +19,7 @@ public class LogHistoryDestroyTask {
     public void executeLogHistoryDestroyTask() {
         // 清除一小時前的紀錄
         log.info("executeLogHistoryDestroyTask start");
-        loginHistoryService.deleteLogBefore(LocalDateTime.now().minusHours(1));
+        loginHistoryService.deleteLogBefore(LocalDateTime.now().minusDays(1));
         log.info("executeLogHistoryDestroyTask end");
     }
 }

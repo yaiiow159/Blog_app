@@ -33,7 +33,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 
@@ -90,7 +89,7 @@ public class PostServiceImpl implements PostService {
         //上傳文章圖
         postPoRepository.saveAndFlush(postPo);
     }
-    @SendMail(type = "post", operation = "edit")
+    @SendMail(operation = "edit")
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void edit(Long postId, PostDto postDto) throws ResourceNotFoundException, IOException, ExecutionException, InterruptedException {
@@ -142,15 +141,6 @@ public class PostServiceImpl implements PostService {
         List<PostDto> dtoList = new ArrayList<>(postPos.getSize());
         postPos.forEach(postPo -> {
             PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
-            if(postPo.getImageName()!= null){
-                try {
-                    byte[] image = googleStorageService.downloadFile(postPo.getImageName());
-                    if(image != null) {
-                    }
-                } catch (Exception e) {
-                    log.error("下載文章圖片失敗", e);
-                }
-            }
             postDto.setCategoryId(postPo.getCategory().getId());
             dtoList.add(postDto);
         });
@@ -201,7 +191,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public List<PostDto> getHotPost() {
-        List<PostPo> postPoList = postPoRepository.findTop5Posts();
+        List<PostPo> postPoList = postPoRepository.findPopularPost();
         List<PostDto> postDtoList = new ArrayList<>();
         for (PostPo postPo : postPoList) {
             PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
@@ -248,22 +238,6 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public Long getLikeCount(Long postId) {
-        return postPoRepository.getLikeCount(postId);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public synchronized void addView(Long postId) {
-        postPoRepository.addView(postId);
-    }
-
-    @Override
-    public Long getViewCount(Long postId) {
-        return postPoRepository.getViewCount(postId);
-    }
-
-    @Override
     public void createDraft(PostDto postDto) throws ExecutionException, InterruptedException, IOException {
         PostPo postPo = PostPoMapper.INSTANCE.toPo(postDto);
         postPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
@@ -304,9 +278,38 @@ public class PostServiceImpl implements PostService {
         postPoRepository.deleteBookmark(id);
     }
 
+//    @Override
+//    public List<PostDto> getBookmarksList(String username) {
+//        List<PostPo> postPos = postPoRepository.getBookmarkList(username);
+//        List<PostDto> postDtoList = new ArrayList<>();
+//        for (PostPo postPo : postPos) {
+//            PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
+//            postDto.setTagDtoList(TagPoMapper.INSTANCE.toDtoList(tagPoRepository.findAllTagsByPostId(postPo.getId())));
+//            postDto.setCategoryDto(postPo.getCategory() != null ? CategoryPoMapper.INSTANCE.toDto(postPo.getCategory()) : null);
+//            postDtoList.add(postDto);
+//        }
+//        return postDtoList;
+//    }
+
     @Override
-    public List<PostDto> getBookmarks(String username) {
-        List<PostPo> postPos = postPoRepository.getBookmarksByUsername(username);
+    public Integer getLikesCount(Long postId) {
+        return postPoRepository.getLikeCount(postId);
+    }
+
+    @Override
+    public Integer getBookmarksCount(Long postId) {
+        return postPoRepository.getBookmarkCount(postId);
+    }
+
+    @Override
+    @Transactional
+    public void addPostView(Long id) {
+        postPoRepository.addPostView(id);
+    }
+
+    @Override
+    public List<PostDto> searchByTag(Long id) {
+        List<PostPo> postPos = postPoRepository.findAllByTagId(id);
         List<PostDto> postDtoList = new ArrayList<>();
         for (PostPo postPo : postPos) {
             PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);

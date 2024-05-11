@@ -28,12 +28,6 @@ public class SubscriptionPo implements Serializable {
     @ToString.Exclude
     private UserPo user;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
-    @JoinColumn(name = "post_id",referencedColumnName = "id",
-            foreignKey = @ForeignKey(name = "fk_subscription_post"))
-    @ToString.Exclude
-    private PostPo post;
-
     @Column(name = "authorName", length = 100)
     private String authorName;
 

@@ -10,7 +10,7 @@ import java.util.List;
 public interface CategorieService {
     void add(CategoryDto categoryDto);
 
-    void edit(long categoryId, CategoryDto categoryDto) throws ValidateFailedException;
+    void edit(CategoryDto categoryDto) throws ValidateFailedException;
 
     String delete(Long categoryId) throws ValidateFailedException;
 
