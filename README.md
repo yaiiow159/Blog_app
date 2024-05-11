@@ -85,6 +85,8 @@ http://localhost:9090/v3/api-docs <br>
 ##　權限判斷：
 ![jwy權限驗證2](https://github.com/yaiiow159/Blog_app/assets/39752246/7bc651c6-7dd4-48de-b556-2ff71d52c6ff)
 ![jwt權限判斷](https://github.com/yaiiow159/Blog_app/assets/39752246/ad448468-4f32-4450-8d70-6b4688e66d6d)
+![驗證token過期](https://github.com/yaiiow159/Blog_app/assets/39752246/10671a34-fd72-4b01-a7cf-e1519073aa8a)
+
 
 
 ### 首頁畫面
