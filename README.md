@@ -82,6 +82,11 @@ http://localhost:9090/v3/api-docs <br>
 有進行格式校驗 以及驗證碼校驗 可註冊會員 或是忘記密碼重設等
 ![登入畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/34bf10dc-8c86-48c1-ad94-189ddfa007ce)
 
+##　權限判斷：
+![jwy權限驗證2](https://github.com/yaiiow159/Blog_app/assets/39752246/7bc651c6-7dd4-48de-b556-2ff71d52c6ff)
+![jwt權限判斷](https://github.com/yaiiow159/Blog_app/assets/39752246/ad448468-4f32-4450-8d70-6b4688e66d6d)
+
+
 首頁畫面
 ![首頁閱讀文章畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/cbee1e10-89ec-4210-8c09-acf13509fe35)
 ![首頁畫面3](https://github.com/yaiiow159/Blog_app/assets/39752246/eda561fe-abc9-4f52-941c-47f5266c3ef2)
@@ -98,10 +103,15 @@ http://localhost:9090/v3/api-docs <br>
 
 文章管理畫面
 
-
 標籤管理畫面
+![標籤編輯成功 - 複製](https://github.com/yaiiow159/Blog_app/assets/39752246/a776f800-2812-4fd5-9a69-edc1e0cf2cf6)
+![標籤管理頁面 - 複製](https://github.com/yaiiow159/Blog_app/assets/39752246/9017ef6d-05ff-4f74-b69a-74dd2821702f)
+![標籤管理功能畫面 - 複製](https://github.com/yaiiow159/Blog_app/assets/39752246/f5daee44-82b6-468f-8118-02513b319bca)
+![標籤新增成功 - 複製](https://github.com/yaiiow159/Blog_app/assets/39752246/12de06cc-ae98-46f6-a1c6-af9c8e510c47)
+![標籤刪除成功 - 複製](https://github.com/yaiiow159/Blog_app/assets/39752246/04f944be-5e50-49ab-aad5-304617fe83b1)
 
 使用者管理畫面
+
 
 群組管理畫面
 
