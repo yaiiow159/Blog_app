@@ -3,6 +3,7 @@ package com.blog.controller;
 import com.blog.dto.ApiResponse;
 import com.blog.dto.TagDto;
 import com.blog.service.TagService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ public class TagController {
     private TagService tagService;
 
     @GetMapping
+    @Operation(summary = "查詢標籤",description = "查詢標籤")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<Page<TagDto>> getTags(@Parameter(description = "頁數",example = "1") @RequestParam(name = "page",defaultValue = "1",required = false) Integer page,
                                              @Parameter(description = "每頁筆數",example = "10") @RequestParam(name = "pageSize",defaultValue = "10",required = false) Integer pageSize,
@@ -37,7 +39,8 @@ public class TagController {
     }
 
     @GetMapping("/findList")
-    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "查詢所有標籤",description = "查詢所有標籤")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     public ApiResponse<List<TagDto>> getTagList() {
         List<TagDto> tagDtoList = tagService.findAll();
         if(CollectionUtils.isEmpty(tagDtoList))
@@ -46,6 +49,7 @@ public class TagController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "查詢標籤",description = "利用id查詢標籤")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<TagDto> getTag(@PathVariable("id") Long id) {
         TagDto tagDto = tagService.findById(id);
@@ -55,6 +59,7 @@ public class TagController {
     }
 
     @PostMapping
+    @Operation(summary = "新增標籤",description = "新增標籤")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<TagDto> create(@Validated @RequestBody TagDto tagDto) {
         try {
@@ -66,6 +71,7 @@ public class TagController {
     }
 
     @PutMapping
+    @Operation(summary = "更新標籤",description = "更新標籤")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<TagDto> update(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "標籤資料", required = true)
@@ -79,6 +85,7 @@ public class TagController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "刪除標籤",description = "刪除標籤")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<String> delete(@PathVariable("id") Long id) {
         return new ApiResponse<>(true, tagService.delete(id),HttpStatus.OK);

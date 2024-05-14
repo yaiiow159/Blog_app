@@ -18,7 +18,4 @@ public interface SubscriptionPoRepository extends JpaRepository<SubscriptionPo, 
     @Query("delete from SubscriptionPo subscriptionPo where subscriptionPo.user.userName = :username")
     void deleteByUsername(@Param("username") String username);
 
-    @Query("select count(*) from SubscriptionPo subscriptionPo where subscriptionPo.user.userName = :username")
-    Integer existsByUsername(@Param("username") String username);
-
 }

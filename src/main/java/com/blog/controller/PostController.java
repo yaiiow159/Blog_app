@@ -216,6 +216,10 @@ public class PostController {
         return new ApiResponse<>(true, "按讚人數", postService.getLikesCount(postId), HttpStatus.OK);
     }
 
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @GetMapping("{postId}/dislikesCount")
+    @Operation
+
     // 查詢收藏人數
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @GetMapping("/{postId}/bookmarksCount")

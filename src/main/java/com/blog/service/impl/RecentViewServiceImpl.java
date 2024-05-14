@@ -4,8 +4,7 @@ import com.blog.dao.PostPoRepository;
 import com.blog.dao.RecentViewPoRepository;
 import com.blog.dao.UserPoRepository;
 import com.blog.dto.RecentViewDto;
-import com.blog.exception.ResourceNotFoundException;
-import com.blog.po.PostPo;
+import com.blog.mapper.RecentViewPoMapper;
 import com.blog.po.RecentViewPo;
 import com.blog.po.UserPo;
 import com.blog.service.RecentViewService;
@@ -54,13 +53,13 @@ public class RecentViewServiceImpl implements RecentViewService {
     }
 
     @Override
-    public void createRecentView(RecentViewDto recentViewDto) throws ResourceNotFoundException {
+    public void createRecentView(RecentViewDto recentViewDto){
         // 找出對應使用者
         String userName = recentViewDto.getUserName();
         if(Strings.isNullOrEmpty(userName)) {
             throw new UsernameNotFoundException("找不到該用戶");
         }
-        RecentViewPo recentViewPo = new RecentViewPo();
+        RecentViewPo recentViewPo = RecentViewPoMapper.INSTANCE.toPo(recentViewDto);
         userJpaRepository.findByUserName(userName).ifPresent(recentViewPo::setUser);
         // 找出對應文章
         Long postId = recentViewDto.getPostId();
@@ -71,6 +70,11 @@ public class RecentViewServiceImpl implements RecentViewService {
                 }
         );
         recentViewPoRepository.saveAndFlush(recentViewPo);
+    }
+
+    @Override
+    public PostVo getRecentViewById(Long id) {
+        return recentViewPoRepository.findPostVoById(id).orElse(null);
     }
 
     private String transformDateToString(LocalDateTime dateTime) {

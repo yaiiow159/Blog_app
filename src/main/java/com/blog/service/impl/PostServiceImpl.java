@@ -31,6 +31,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -61,6 +62,9 @@ public class PostServiceImpl implements PostService {
 
     @Resource
     private GoogleStorageService googleStorageService;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
 
     @Override
@@ -238,7 +242,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public void createDraft(PostDto postDto) throws ExecutionException, InterruptedException, IOException {
+    public void createDraft(PostDto postDto) {
         PostPo postPo = PostPoMapper.INSTANCE.toPo(postDto);
         postPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
         postPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
@@ -267,13 +271,13 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    @Transactional
-    public void addBookmark(Long id) {
+    @Transactional(rollbackFor = Exception.class)
+    public void addBookmark(Long id){
         postPoRepository.addBookmark(id);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteBookmark(Long id) {
         postPoRepository.deleteBookmark(id);
     }
@@ -302,7 +306,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void addPostView(Long id) {
         postPoRepository.addPostView(id);
     }

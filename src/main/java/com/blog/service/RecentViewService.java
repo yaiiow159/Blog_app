@@ -9,4 +9,6 @@ public interface RecentViewService {
     Page<PostVo> getRecentView( Long postId, String username, Integer page, Integer size);
 
     void createRecentView(RecentViewDto recentViewDto) throws ResourceNotFoundException;
+
+    PostVo getRecentViewById(Long id);
 }

@@ -25,7 +25,7 @@ public interface PostPoRepository extends JpaRepository<PostPo, Long>, JpaSpecif
 
     // 減少讚數 - 1
     @Modifying
-    @Query("UPDATE PostPo p SET p.likes=- 1 WHERE p.id = ?1")
+    @Query("UPDATE PostPo p SET p.dislikes =+ 1 WHERE p.id = ?1")
     void disLike(long postId);
 
     @Query("SELECT p.likes FROM PostPo p WHERE p.id = ?1")

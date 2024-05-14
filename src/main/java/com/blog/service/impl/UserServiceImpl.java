@@ -10,6 +10,7 @@ import com.blog.service.GoogleStorageService;
 import com.blog.service.UserService;
 import com.blog.utils.SpringSecurityUtils;
 
+import com.blog.utils.ThreadLocalUtils;
 import jakarta.annotation.Resource;
 import jakarta.persistence.criteria.Predicate;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -77,18 +79,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void changePassword(String oldPassword, String newPassword) {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (!passwordEncoder.matches(oldPassword, userDetails.getPassword())) {
-            throw new ValidateFailedException("原密碼錯誤");
-        }
-        userJpaRepository.changePassword(passwordEncoder.encode(newPassword), userDetails.getUsername());
+        Map<String, Object> threadLocal = ThreadLocalUtils.get();
+        String username = (String) threadLocal.get("username");
+        userJpaRepository.changePassword(passwordEncoder.encode(newPassword), username);
         // 查詢新使用者密碼
         Optional<UserPo> userNameOption = userJpaRepository.findByUserName(SpringSecurityUtils.getCurrentUser());
         if (userNameOption.isEmpty()) {
             throw new UsernameNotFoundException("找不到使用者 " + SpringSecurityUtils.getCurrentUser());
         }
         // 更新spring-security的數據
-        userDetails = userDetailsService.loadUserByUsername(userNameOption.get().getUserName());
+        var userDetails = userDetailsService.loadUserByUsername(userNameOption.get().getUserName());
         var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null,userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
     }
@@ -159,7 +159,8 @@ public class UserServiceImpl implements UserService {
         userPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
         userPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
         userPo.setUserGroupPo(userGroupPoRepository.findById(userDto.getGroupId()).orElseThrow(() -> new ValidateFailedException("找不到群組")));
-        rolePoRepository.findAllById(userDto.getRoleIds()).forEach(userPo.getRoles()::add);
+        Set<RolePo> rolePoList = new HashSet<>(rolePoRepository.findAllById(userDto.getRoleIds()));
+        userPo.setRoles(CollectionUtils.isEmpty(rolePoList) ? new HashSet<>() : rolePoList);
         userJpaRepository.saveAndFlush(userPo);
     }
 
@@ -168,6 +169,7 @@ public class UserServiceImpl implements UserService {
         validateUser(userDto);
         userJpaRepository.findById(userDto.getId()).ifPresent(userPo -> {
             userPo = UserPoMapper.INSTANCE.partialUpdate(userDto, userPo);
+            userPo.setPassword(passwordEncoder.encode(userDto.getPassword()));
             userPo.setUpdateUser(SpringSecurityUtils.getCurrentUser());
             userPo.setUpdDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             userPo.setUserGroupPo(userGroupPoRepository.findById(userDto.getGroupId()).orElseThrow(() -> new ValidateFailedException("找不到群組")));

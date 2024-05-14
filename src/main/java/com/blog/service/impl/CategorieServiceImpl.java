@@ -20,6 +20,7 @@ import org.springframework.util.ObjectUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -52,6 +53,8 @@ public class CategorieServiceImpl implements CategorieService {
         CategoryPo categoryPo = categoryPoRepository.findById(categoryDto.getId()).orElseThrow(
                 () -> new ValidateFailedException(ValidateFailedException.DomainErrorStatus.RESOURCE_NOT_FOUND));
         categoryPo = CategoryPoMapper.INSTANCE.partialUpdate(categoryDto, categoryPo);
+        categoryPo.setUpdDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
+        categoryPo.setUpdateUser(SpringSecurityUtils.getCurrentUser());
         categoryPoRepository.saveAndFlush(categoryPo);
     }
 

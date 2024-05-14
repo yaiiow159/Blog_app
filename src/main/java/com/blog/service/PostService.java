@@ -40,7 +40,7 @@ public interface PostService {
 
     void upload(MultipartFile file,Long postId) throws IOException, ExecutionException, InterruptedException;
 
-    void addBookmark(Long id);
+    void addBookmark(Long id) throws ResourceNotFoundException;
 
     void deleteBookmark(Long id);
 

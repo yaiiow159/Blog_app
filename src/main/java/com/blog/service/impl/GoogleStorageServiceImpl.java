@@ -67,7 +67,6 @@ public class GoogleStorageServiceImpl implements GoogleStorageService {
     }
 
     public byte[] downloadFile(String fileName) throws IOException {
-        // 回傳 圖片的 url地址
         GoogleCredentials credentials = getGoogleAccess();
         Storage storage = getStorage(credentials);
         BlobId blobId = BlobId.of(BUCKET_NAME, fileName);

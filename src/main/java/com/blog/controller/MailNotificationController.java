@@ -43,6 +43,15 @@ public class MailNotificationController {
         return new ApiResponse<>(true, "查詢成功", mailNotificationDtoPage, HttpStatus.OK);
     }
 
+    @GetMapping("/{username}/{id}")
+    @Operation(summary = "取得郵件通知", description = "取得郵件通知", tags = {"郵件通知"})
+    public ApiResponse<MailNotificationDto> getMailNotification(@PathVariable(name = "id") Long id) throws ResourceNotFoundException {
+        MailNotificationDto mailNotificationDto = mailNotificationService.getMailNotification(id);
+        if (mailNotificationDto == null)
+            return new ApiResponse<>(false, "查無資料", null, HttpStatus.NO_CONTENT);
+        return new ApiResponse<>(true, "查詢成功", mailNotificationDto, HttpStatus.OK);
+    }
+
     @Operation(summary = "轉換郵件讀取狀態", description = "轉換郵件讀取狀態", tags = {"郵件通知"})
     @PostMapping
     public ApiResponse<String> updateMailNotification(@Validated @RequestBody MailNotificationDto mailNotificationDto){

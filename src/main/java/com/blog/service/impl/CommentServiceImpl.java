@@ -6,6 +6,7 @@ import com.blog.dao.PostPoRepository;
 import com.blog.dao.UserPoRepository;
 import com.blog.dao.UserReportPoRepository;
 import com.blog.dto.CommentDto;
+import com.blog.enumClass.CommentReport;
 import com.blog.exception.ResourceNotFoundException;
 import com.blog.mapper.CommentPoMapper;
 import com.blog.po.CommentPo;
@@ -18,6 +19,7 @@ import com.blog.utils.SpringSecurityUtils;
 import jakarta.annotation.Resource;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +31,7 @@ import java.util.List;
 
 @Service
 @Slf4j
-@Transactional
+@Transactional(rollbackFor = Exception.class)
 public class CommentServiceImpl implements CommentService {
     private static final int MAX_REPORT_NUM = 5;
     @Resource
@@ -42,18 +44,21 @@ public class CommentServiceImpl implements CommentService {
     private UserReportPoRepository userReportPoRepository;
     @Resource
     private JavaMailSender javaMailSender;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
     // 每當有人創建新評論，通知該作者 該文章有新評論了
     @Override
     @SendMail(type = "comment",operation = "add")
     public void add(Long postId, CommentDto commentDto) throws ResourceNotFoundException {
         PostPo postPo = postPoRepository.findById(postId)
                 .orElseThrow(() -> new ResourceNotFoundException("找不到該文章"));
-        commentDto.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-        commentDto.setCreatUser(SpringSecurityUtils.getCurrentUser());
-        commentDto.setName(SpringSecurityUtils.getCurrentUser());
         // 使用NAME 查詢 使用者
         UserPo userPo = userJpaRepository.findByUserName(commentDto.getName()).orElseThrow(() -> new ResourceNotFoundException("找不到該用戶"));
         CommentPo commentPo = CommentPoMapper.INSTANCE.toPo(commentDto);
+        commentPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
+        commentPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
+        commentPo.setIsReport(CommentReport.NOT_REPORTED.getStatus());
         commentPo.setPost(postPo);
         commentPo.setUser(userPo);
         commentPoRepository.saveAndFlush(commentPo);
@@ -99,7 +104,7 @@ public class CommentServiceImpl implements CommentService {
                 .orElseThrow(() -> new ResourceNotFoundException("找不到該用戶"));
         CommentPo commentPo = commentPoRepository.findById(commentDto.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("找不到該留言"));
-        commentPo.setIsReport(true);
+        commentPo.setIsReport(CommentReport.IS_REPORTED.getStatus());
         commentPoRepository.saveAndFlush(commentPo);
 
         UserReportPo userReportPo = new UserReportPo();
@@ -110,12 +115,20 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public void likeComment(Long postId, Long id) {
-
+        // 加鎖 避免重複點擊
+        if(Boolean.TRUE.equals(stringRedisTemplate.opsForSet().isMember("commentLike:" + postId, id.toString())))
+            return;
+        stringRedisTemplate.opsForSet().add("commentLike:" + postId, id.toString());
+        commentPoRepository.addLikeCount(postId, id);
     }
 
     @Override
     public void cancelLikeComment(Long postId, Long id) {
-
+        // 加鎖 避免重複點擊
+        if(!Boolean.TRUE.equals(stringRedisTemplate.opsForSet().isMember("commentLike:" + postId, id.toString())))
+            return;
+        stringRedisTemplate.opsForSet().remove("commentLike:" + postId, id.toString());
+        commentPoRepository.cancelLikeCount(postId, id);
     }
 
     @Override

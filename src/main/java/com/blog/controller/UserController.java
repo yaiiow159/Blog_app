@@ -86,7 +86,7 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    @PutMapping("/{id}")
+    @PutMapping
     @Operation(summary = "更新使用者API",description = "更新使用者API")
     public ApiResponse<UserDto> updateUser(@Parameter(name = "使用者帳戶") @Validated @RequestBody UserDto userDto) {
         try {

@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# 函數用於檢查 MySQL 是否可用
+check_mysql() {
+    retries=10
+    while [ $retries -gt 0 ]; do
+        if mysqladmin ping -h"mysql" --silent; then
+            echo "MySQL is available."
+            return 0
+        else
+            echo "Waiting for MySQL to be ready..."
+            sleep 5
+            retries=$((retries - 1))
+        fi
+    done
+    echo "Error: MySQL is not available after waiting."
+    exit 1
+}
+
+# 函數用於檢查 Redis 是否可用
+check_redis() {
+    retries=10
+    while [ $retries -gt 0 ]; do
+        if redis-cli -h "redis" ping; then
+            echo "Redis is available."
+            return 0
+        else
+            echo "Waiting for Redis to be ready..."
+            sleep 5
+            retries=$((retries - 1))
+        fi
+    done
+    echo "Error: Redis is not available after waiting."
+    exit 1
+}
+
+# 函數用於檢查 Zookeeper 是否可用
+check_zookeeper() {
+    retries=10
+    while [ $retries -gt 0 ]; do
+        if echo ruok | nc zookeeper 2181 | grep -q "imok"; then
+            echo "Zookeeper is available."
+            return 0
+        else
+            echo "Waiting for Zookeeper to be ready..."
+            sleep 5
+            retries=$((retries - 1))
+        fi
+    done
+    echo "Error: Zookeeper is not available after waiting."
+    exit 1
+}
+
+# 函數用於檢查 Kafka 是否可用
+check_kafka() {
+    retries=10
+    while [ $retries -gt 0 ]; do
+        if kafka-topics.sh --bootstrap-server localhost:9092 --describe > /dev/null 2>&1; then
+            echo "Kafka is available."
+            return 0
+        else
+            echo "Waiting for Kafka to be ready..."
+            sleep 5
+            retries=$((retries - 1))
+        fi
+    done
+    echo "Error: Kafka is not available after waiting."
+    exit 1
+}
+
+# 檢查所有依賴服務是否可用
+check_mysql
+check_redis
+check_zookeeper
+check_kafka
+
+# 如果所有服務都可用，則啟動 Spring Boot 應用程序
+java ${JAVA_OPTS} -Dspring.profiles.active=${ACTIVE_PROFILE} -jar /app/blog_app.jar

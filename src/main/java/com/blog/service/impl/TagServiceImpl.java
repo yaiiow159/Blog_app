@@ -54,8 +54,6 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public void add(TagDto tagDto) {
-        if(tagDto.getCreatUser() == null)
-           tagDto.setCreatUser(SpringSecurityUtils.getCurrentUser());
         TagPo tagPo = TagPoMapper.INSTANCE.toPo(tagDto);
         tagPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
         tagPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
@@ -66,8 +64,7 @@ public class TagServiceImpl implements TagService {
     @Override
     public void edit(TagDto tagDto) {
         tagPoRepository.findById(tagDto.getId()).ifPresent(tagPo -> {
-            tagPo.setName(tagDto.getName());
-            tagPo.setDescription(tagDto.getDescription());
+            TagPoMapper.INSTANCE.partialUpdate(tagDto, tagPo);
             tagPo.setCategory(categoryPoRepository.findById(tagDto.getCategoryId()).orElse(null));
             tagPo.setUpdDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             tagPo.setUpdateUser(SpringSecurityUtils.getCurrentUser());

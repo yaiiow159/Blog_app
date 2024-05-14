@@ -26,6 +26,7 @@ import java.util.Set;
 public class PostPo extends BasicPo implements java.io.Serializable {
     public PostPo() {
         this.likes = 0L;
+        this.dislikes = 0L;
         this.views = 0L;
         this.bookmarks = 0L;
     }
@@ -78,6 +79,9 @@ public class PostPo extends BasicPo implements java.io.Serializable {
     // 預設為0
     @Column(name = "likes",columnDefinition = "bigint default 0",nullable = false)
     private Long likes;
+
+    @Column(name = "dislikes",columnDefinition = "bigint default 0",nullable = false)
+    private Long dislikes;
 
     @Column(name = "bookmarks",columnDefinition = "bigint default 0",nullable = false)
     private Long bookmarks;

@@ -6,6 +6,7 @@ import com.blog.jwt.JwtBlackListService;
 import com.blog.service.LoginHistoryService;
 import com.blog.utils.CacheUtils;
 import com.blog.utils.JwtTokenUtil;
+import com.blog.utils.ThreadLocalUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -43,6 +44,7 @@ public class LogoutHandler extends SecurityContextLogoutHandler {
             throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.JWT_AUTHENTICATION_ACCESS_ERROR);
         } else if (StringUtils.hasText(jwtToken)) {
             CacheUtils.remove(username);
+            ThreadLocalUtils.remove();
             List<LoginHistoryDto> loginHistoryDos = loginHistoryService.findLoginHistoryByUsername(username);
             // 按照登入時間排序 取最新的一筆
             loginHistoryDos.sort(Comparator.comparing(LoginHistoryDto::getLoginTimestamp).reversed());

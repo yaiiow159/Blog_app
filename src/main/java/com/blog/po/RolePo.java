@@ -24,4 +24,7 @@ public class RolePo extends BasicPo implements Serializable {
 
     @Column(name = "name", nullable = false)
     private String roleName;
+
+    @Column(name = "description")
+    private String description;
 }

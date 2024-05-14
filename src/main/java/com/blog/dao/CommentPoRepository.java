@@ -30,4 +30,12 @@ public interface CommentPoRepository extends JpaRepository<CommentPo, Long>, Jpa
 
     @Query("SELECT count(c.likes) FROM CommentPo c WHERE c.post.id = ?1 AND c.id = ?2")
     Integer findLikeCount(Long postId, Long id);
+
+    @Modifying
+    @Query("UPDATE CommentPo c SET c.likes = c.likes - 1 WHERE c.post.id = ?1 AND c.id = ?2")
+    void addLikeCount(Long postId, Long id);
+
+    @Modifying
+    @Query("UPDATE CommentPo c SET c.dislikes = c.dislikes - 1 WHERE c.post.id = ?1 AND c.id = ?2")
+    void cancelLikeCount(Long postId, Long id);
 }

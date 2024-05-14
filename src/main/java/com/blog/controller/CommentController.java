@@ -49,7 +49,7 @@ public class CommentController {
     @PostMapping("/posts/{postId}/comments")
     @Operation(summary = "創建評論",description = "創建一篇文章底下的評論")
     public ApiResponse<CommentDto> createComment(@Parameter(description = "文章id",example = "1") @PathVariable Long postId,
-                                                    @Parameter(description = "評論內容",example = "評論內容")@Validated @RequestBody CommentDto commentDto) throws ResourceNotFoundException {
+                                                    @Parameter(description = "評論內容",example = "評論內容")@Validated @RequestBody CommentDto commentDto){
         try {
             commentService.add(postId, commentDto);
         } catch (Exception e) {
@@ -63,7 +63,7 @@ public class CommentController {
     @Operation(summary = "更新評論",description = "更新一篇文章底下的評論")
     public ApiResponse<CommentDto> updateComment(@Parameter(description = "文章id",example = "1")@PathVariable Long postId,
                                                  @Parameter(description = "評論id",example = "1")@PathVariable Long id,
-                                                 @Parameter(description = "評論內容",example = "評論內容")@Validated @RequestBody CommentDto commentDto) throws ResourceNotFoundException {
+                                                 @Parameter(description = "評論內容",example = "評論內容")@Validated @RequestBody CommentDto commentDto){
         try {
             commentService.edit(postId, id, commentDto);
         } catch (Exception e) {
@@ -76,7 +76,7 @@ public class CommentController {
     @Operation(summary = "刪除評論",description = "刪除一篇文章底下的評論")
     public ApiResponse<String> deleteComment(
             @Parameter(description = "文章id",example = "1")@PathVariable Long postId,
-            @Parameter(description = "評論id",example = "1")@PathVariable Long id) throws ResourceNotFoundException {
+            @Parameter(description = "評論id",example = "1")@PathVariable Long id){
         try {
             commentService.delete(postId, id);
         } catch (Exception e) {
@@ -99,6 +99,7 @@ public class CommentController {
         return new ApiResponse<>(true, "檢舉成功",HttpStatus.OK);
     }
 
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping("/posts/{postId}/comments/{id}/likes")
     @Operation(summary = "按讚評論",description = "按讚一篇文章底下的評論")
     public ApiResponse<String> likeComment(

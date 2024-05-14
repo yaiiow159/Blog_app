@@ -75,4 +75,9 @@ public class MailNotificationServiceImpl implements MailNotificationService {
     public Long getMailNotificationCount() {
         return mailNotificationPoRepository.countByIsReadFalse();
     }
+
+    @Override
+    public MailNotificationDto getMailNotification(Long id) {
+        return MailNotificationPoMapper.INSTANCE.toDto(mailNotificationPoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("找不到該筆資料")));
+    }
 }

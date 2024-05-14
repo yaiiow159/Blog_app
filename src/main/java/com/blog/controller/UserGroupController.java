@@ -68,7 +68,7 @@ public class UserGroupController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{id}")
+    @PutMapping
     @Operation(summary = "更新使用者群組",description = "更新使用者群組")
     public ApiResponse<UserGroupDto> update(@Parameter(name = "群組")@RequestBody UserGroupDto userGroupDto) throws ValidateFailedException {
         try {

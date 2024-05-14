@@ -16,4 +16,6 @@ public interface MailNotificationService {
     String updateMailNotification(MailNotificationDto mailNotificationDto);
 
     Long getMailNotificationCount();
+
+    MailNotificationDto getMailNotification(Long id);
 }

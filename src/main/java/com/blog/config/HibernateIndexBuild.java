@@ -7,7 +7,6 @@ import org.hibernate.CacheMode;
 import org.hibernate.search.mapper.orm.Search;
 import org.hibernate.search.mapper.orm.massindexing.MassIndexer;
 import org.hibernate.search.mapper.orm.session.SearchSession;
-import org.hibernate.search.mapper.pojo.massindexing.MassIndexingEnvironment;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Configuration;
