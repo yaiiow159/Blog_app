@@ -84,6 +84,10 @@ http://localhost:9090/v3/api-docs <br>
 有進行格式校驗 以及驗證碼校驗 可註冊會員 或是忘記密碼重設等
 ![登入畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/34bf10dc-8c86-48c1-ad94-189ddfa007ce)
 
+## 使用者資訊
+![使用者資訊](https://github.com/yaiiow159/Blog_app/assets/39752246/a717fc2b-d23f-49fa-b1a0-61cb7c7bdb86)
+
+
 ##　權限判斷：
 ![jwy權限驗證2](https://github.com/yaiiow159/Blog_app/assets/39752246/7bc651c6-7dd4-48de-b556-2ff71d52c6ff)
 ![jwt權限判斷](https://github.com/yaiiow159/Blog_app/assets/39752246/ad448468-4f32-4450-8d70-6b4688e66d6d)
