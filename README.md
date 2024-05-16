@@ -92,6 +92,9 @@ http://localhost:9090/v3/api-docs <br>
 可查看當前使用者 總文章數、總文章按讚數、總評論數、總按讚數等資訊
 ![使用者資訊](https://github.com/yaiiow159/Blog_app/assets/39752246/5ac984a7-b888-4f93-a872-b716cc6c0cd3)
 
+## 鎖戶功能
+![使用者啟用 提用](https://github.com/yaiiow159/Blog_app/assets/39752246/374849e8-cddb-439a-830f-3497267362bc)
+
 ## 權限判斷：
 ![jwy權限驗證2](https://github.com/yaiiow159/Blog_app/assets/39752246/7bc651c6-7dd4-48de-b556-2ff71d52c6ff)
 ![jwt權限判斷](https://github.com/yaiiow159/Blog_app/assets/39752246/ad448468-4f32-4450-8d70-6b4688e66d6d)
@@ -125,6 +128,8 @@ http://localhost:9090/v3/api-docs <br>
 ![收藏功能](https://github.com/yaiiow159/Blog_app/assets/39752246/e82247f3-8088-40cd-88c7-6a6addb5101b)
 ![倒贊成功](https://github.com/yaiiow159/Blog_app/assets/39752246/47c23c8f-57bc-4573-ac4f-21819acd05e4)
 
+### 評論功能
+![評論功能](https://github.com/yaiiow159/Blog_app/assets/39752246/0d539d04-3b0f-485b-a479-0962d1b8ad70)
 
 
 ### 標籤管理畫面
