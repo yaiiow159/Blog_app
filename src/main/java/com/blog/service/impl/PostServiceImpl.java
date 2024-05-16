@@ -8,6 +8,7 @@ import com.blog.dao.UserPoRepository;
 import com.blog.dto.PostDto;
 import com.blog.enumClass.PostStatus;
 import com.blog.exception.ResourceNotFoundException;
+import com.blog.exception.ValidateFailedException;
 import com.blog.mapper.CategoryPoMapper;
 import com.blog.mapper.PostPoMapper;
 import com.blog.mapper.TagPoMapper;
@@ -15,7 +16,7 @@ import com.blog.po.CategoryPo;
 import com.blog.po.PostPo;
 import com.blog.service.GoogleStorageService;
 import com.blog.service.PostService;
-import com.blog.utils.SpringSecurityUtils;
+import com.blog.utils.SpringSecurityUtil;
 
 import jakarta.annotation.Resource;
 import jakarta.persistence.EntityManager;
@@ -26,6 +27,8 @@ import org.hibernate.search.mapper.orm.Search;
 import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -72,25 +75,36 @@ public class PostServiceImpl implements PostService {
     @SendMail(type = "post",operation = "add")
     public void add(PostDto postDto) throws ResourceNotFoundException, IOException, ExecutionException, InterruptedException {
         // 查詢使用者email 以及名稱
-        userJpaRepository.findByUserName(SpringSecurityUtils.getCurrentUser())
+        userJpaRepository.findByUserName(SpringSecurityUtil.getCurrentUser())
                 .map(user -> {
                     postDto.setAuthorEmail(user.getEmail());
                     postDto.setAuthorName(user.getUserName());
                     return postDto;
                 })
-                .orElseThrow(() -> new ResourceNotFoundException("使用者不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException("使用者不存在" + SpringSecurityUtil.getCurrentUser()));
         // 確認該篇文章是否已經存在分類中
-        CategoryPo categoryPo = categoryPoRepository.findById(postDto.getCategoryId()).orElseThrow(ResourceNotFoundException::new);
+        CategoryPo categoryPo = categoryPoRepository.findById(postDto.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("找不到該分類序號" + postDto.getCategoryId()));
         //驗證文章內容 防止xss注入攻擊
         String content = postDto.getContent();
         String cleanContent = Jsoup.clean(content, Safelist.relaxed());
         postDto.setContent(cleanContent);
         PostPo postPo = PostPoMapper.INSTANCE.toPo(postDto);
         postPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-        postPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
+        postPo.setCreatUser(SpringSecurityUtil.getCurrentUser());
         postPo.setStatus(PostStatus.PUBLISHED.getStatus());
         postPo.setCategory(categoryPo);
         //上傳文章圖
+        postPoRepository.saveAndFlush(postPo);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void createDraft(PostDto postDto) {
+        PostPo postPo = PostPoMapper.INSTANCE.toPo(postDto);
+        postPo.setCreatUser(SpringSecurityUtil.getCurrentUser());
+        postPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
+        postPo.setStatus(PostStatus.DRAFT.getStatus());
         postPoRepository.saveAndFlush(postPo);
     }
     @SendMail(operation = "edit")
@@ -98,21 +112,21 @@ public class PostServiceImpl implements PostService {
     @Transactional(rollbackFor = Exception.class)
     public void edit(Long postId, PostDto postDto) throws ResourceNotFoundException, IOException, ExecutionException, InterruptedException {
         // 查詢使用者email 以及名稱
-        userJpaRepository.findByUserName(SpringSecurityUtils.getCurrentUser())
+        userJpaRepository.findByUserName(SpringSecurityUtil.getCurrentUser())
                 .map(user -> {
                     postDto.setAuthorEmail(user.getEmail());
                     postDto.setAuthorName(user.getUserName());
                     return postDto;
                 })
-                .orElseThrow(() -> new ResourceNotFoundException("使用者不存在"));
-        postDto.setUpdateUser(SpringSecurityUtils.getCurrentUser());
+                .orElseThrow(() -> new ResourceNotFoundException("使用者名稱為" + SpringSecurityUtil.getCurrentUser() + "的使用者不存在"));
+        postDto.setUpdateUser(SpringSecurityUtil.getCurrentUser());
         //驗證文章內容 防止xss注入攻擊
         String content = postDto.getContent();
         String cleanContent = Jsoup.clean(content, Safelist.relaxed());
         postDto.setContent(cleanContent);
         // 確認該篇文章是否已經存在分類中
-        CategoryPo categoryPo = categoryPoRepository.findById(postDto.getCategoryId()).orElseThrow(ResourceNotFoundException::new);
-        PostPo postPo = postPoRepository.findById(postId).orElseThrow(ResourceNotFoundException::new);
+        CategoryPo categoryPo = categoryPoRepository.findById(postDto.getCategoryId()).orElseThrow(() -> new ResourceNotFoundException("找不到分類編號" + postDto.getCategoryId() + "的分類"));
+        PostPo postPo = postPoRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException("找不到該文章編號" + postId + "的文章"));
         postPo = PostPoMapper.INSTANCE.partialUpdate(postDto, postPo);
         postPo.setCategory(categoryPo);
         postPoRepository.saveAndFlush(postPo);
@@ -158,7 +172,7 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String delete(Long id) throws ResourceNotFoundException, IOException {
-        PostPo postPo = postPoRepository.findById(id).orElseThrow(ResourceNotFoundException::new);
+        PostPo postPo = postPoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("找不到該文章編號" + id + "的文章"));
         postPoRepository.deleteById(id);
         googleStorageService.deleteFile(postPo.getImageName());
         return "刪除成功";
@@ -167,7 +181,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public PostDto findPostByCategoryId(Long id, Long postId) throws ResourceNotFoundException {
-        CategoryPo categoryPo = categoryPoRepository.findById(id).orElseThrow(ResourceNotFoundException::new);
+        CategoryPo categoryPo = categoryPoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("找不到該分類編號" + id + "的分類"));
         List<PostPo> postPoList = categoryPo.getPosts();
         PostDto postDto = null;
         for (PostPo postPo : postPoList) {
@@ -229,27 +243,29 @@ public class PostServiceImpl implements PostService {
         }
     }
 
+
+
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public synchronized void addLike(Long postId) {
+    @CacheEvict(value = "likeCount", key = "#postId")
+    public void addLike(Long postId) {
+        if(Boolean.TRUE.equals(stringRedisTemplate.hasKey("like:" + postId))) {
+            return;
+        }
+        stringRedisTemplate.opsForValue().set("like:" + postId, "1");
         postPoRepository.addLike(postId);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public synchronized void disLike(Long postId) {
+    @CacheEvict(value = "likeCount", key = "#postId")
+    public void disLike(Long postId) {
+        if(Boolean.FALSE.equals(stringRedisTemplate.hasKey("like:" + postId))) {
+            return;
+        }
+        stringRedisTemplate.delete("like:" + postId);
         postPoRepository.disLike(postId);
     }
-
-    @Override
-    public void createDraft(PostDto postDto) {
-        PostPo postPo = PostPoMapper.INSTANCE.toPo(postDto);
-        postPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
-        postPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-        postPo.setStatus(PostStatus.DRAFT.getStatus());
-        postPoRepository.saveAndFlush(postPo);
-    }
-
     @Override
     public Long getViewsCount(Long postId) {
         return postPoRepository.getViewsCountById(postId);
@@ -262,53 +278,60 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public void upload(MultipartFile file, Long postId) throws IOException, ExecutionException, InterruptedException {
-        String imageName = generateImageName(file);
+        final String imageName = generateImageName(file);
         CompletableFuture<String> result = googleStorageService.uploadFile(file, imageName);
         if(result.get() == null) {
-            throw new IOException("上傳圖片失敗");
+            throw new IOException("上傳圖片失敗" + imageName);
         }
         postPoRepository.updateImageName(result.get(), postId);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void addBookmark(Long id){
-        postPoRepository.addBookmark(id);
+    @CacheEvict(value = "bookmarkCount", key = "#postId")
+    public void addBookmark(Long postId){
+        // 判斷 是否已收藏 若以收藏 則直接返回
+        if(Boolean.TRUE.equals(stringRedisTemplate.hasKey("bookmark:" + postId))) {
+            return;
+        }
+        stringRedisTemplate.opsForValue().set("bookmark:" + postId, "1");
+        postPoRepository.addBookmark(postId);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void deleteBookmark(Long id) {
-        postPoRepository.deleteBookmark(id);
+    @CacheEvict(value = "bookmarkCount", key = "#postId")
+    public void deleteBookmark(Long postId) {
+        if(Boolean.FALSE.equals(stringRedisTemplate.hasKey("bookmark:" + postId))) {
+            return;
+        }
+        stringRedisTemplate.delete("bookmark:" + postId);
+        postPoRepository.deleteBookmark(postId);
     }
 
-//    @Override
-//    public List<PostDto> getBookmarksList(String username) {
-//        List<PostPo> postPos = postPoRepository.getBookmarkList(username);
-//        List<PostDto> postDtoList = new ArrayList<>();
-//        for (PostPo postPo : postPos) {
-//            PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
-//            postDto.setTagDtoList(TagPoMapper.INSTANCE.toDtoList(tagPoRepository.findAllTagsByPostId(postPo.getId())));
-//            postDto.setCategoryDto(postPo.getCategory() != null ? CategoryPoMapper.INSTANCE.toDto(postPo.getCategory()) : null);
-//            postDtoList.add(postDto);
-//        }
-//        return postDtoList;
-//    }
-
     @Override
+    @Cacheable(value = "likeCount", key = "#postId")
     public Integer getLikesCount(Long postId) {
         return postPoRepository.getLikeCount(postId);
     }
 
     @Override
+    @Cacheable(value = "bookmarkCount", key = "#postId")
     public Integer getBookmarksCount(Long postId) {
         return postPoRepository.getBookmarkCount(postId);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void addPostView(Long id) {
-        postPoRepository.addPostView(id);
+    @CacheEvict(value = "postViewCount", key = "#postId")
+    public void addPostView(Long postId) {
+        postPoRepository.addPostView(postId);
+    }
+
+    @Override
+    @Cacheable(value = "dislikeCount", key = "#postId")
+    public Integer getDislikesCount(Long postId) {
+        return postPoRepository.getDislikeCount(postId);
     }
 
     @Override
@@ -323,7 +346,6 @@ public class PostServiceImpl implements PostService {
         }
         return postDtoList;
     }
-
 
     private String generateImageName(MultipartFile imgFile) {
         String originalFilename = imgFile.getOriginalFilename();

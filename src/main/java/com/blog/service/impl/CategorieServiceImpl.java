@@ -7,18 +7,16 @@ import com.blog.mapper.CategoryPoMapper;
 import com.blog.po.CategoryPo;
 import com.blog.service.CategorieService;
 
-import com.blog.utils.SpringSecurityUtils;
+import com.blog.utils.SpringSecurityUtil;
 import jakarta.annotation.Resource;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -26,7 +24,6 @@ import java.util.List;
 
 
 @Service
-@Transactional
 public class CategorieServiceImpl implements CategorieService {
     @Resource
     private CategoryPoRepository categoryPoRepository;
@@ -35,26 +32,29 @@ public class CategorieServiceImpl implements CategorieService {
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(CategoryDto categoryDto) {
         CategoryPo categoryPo = CategoryPoMapper.INSTANCE.toPo(categoryDto);
         categoryPo.setCreateDate(LocalDateTime.now());
-        categoryPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
+        categoryPo.setCreatUser(SpringSecurityUtil.getCurrentUser());
         categoryPoRepository.saveAndFlush(categoryPo);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String delete(Long categoryId) throws ValidateFailedException {
         validateCategory(categoryId);
         categoryPoRepository.deleteById(categoryId);
         return "刪除成功";
     }
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void edit(CategoryDto categoryDto) throws ValidateFailedException {
         CategoryPo categoryPo = categoryPoRepository.findById(categoryDto.getId()).orElseThrow(
                 () -> new ValidateFailedException(ValidateFailedException.DomainErrorStatus.RESOURCE_NOT_FOUND));
         categoryPo = CategoryPoMapper.INSTANCE.partialUpdate(categoryDto, categoryPo);
         categoryPo.setUpdDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-        categoryPo.setUpdateUser(SpringSecurityUtils.getCurrentUser());
+        categoryPo.setUpdateUser(SpringSecurityUtil.getCurrentUser());
         categoryPoRepository.saveAndFlush(categoryPo);
     }
 

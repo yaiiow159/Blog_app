@@ -1,12 +1,10 @@
 package com.blog.jwt;
 
 
-import com.blog.dao.RolePoRepository;
 import com.blog.dto.UserDto;
 import com.blog.service.UserService;
-import com.blog.utils.CacheUtils;
+import com.blog.utils.CacheUtil;
 import com.blog.utils.JsonUtil;
-import com.blog.utils.ThreadLocalUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -29,9 +27,9 @@ public class JwtUserDetailService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         log.info("loadUserByUsername: {}", username);
         UserDto userDto = null;
-        if (null != CacheUtils.get(username)) {
+        if (null != CacheUtil.get(username)) {
             try {
-                String userInfo = CacheUtils.get(username);
+                String userInfo = CacheUtil.get(username);
                 userDto = JsonUtil.parseObject(userInfo, UserDto.class);
             } catch (JsonProcessingException e) {
                 log.error("JsonProcessingException: {}", e.getMessage());
@@ -39,7 +37,7 @@ public class JwtUserDetailService implements UserDetailsService {
         } else {
             userDto = userService.findByUserName(username);
             if(null == userDto)
-                throw new UsernameNotFoundException("User not found");
+                throw new UsernameNotFoundException("該使用者不存在" + username);
             try {
                 cacheUserInfo(userDto);
             } catch (JsonProcessingException e) {
@@ -64,6 +62,6 @@ public class JwtUserDetailService implements UserDetailsService {
 
     private void cacheUserInfo(UserDto userDto) throws JsonProcessingException {
         String json = JsonUtil.toJsonString(userDto);
-        CacheUtils.put(userDto.getUserName(), json);
+        CacheUtil.put(userDto.getUserName(), json);
     }
 }

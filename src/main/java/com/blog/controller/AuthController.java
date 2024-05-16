@@ -1,5 +1,6 @@
 package com.blog.controller;
 
+import com.blog.annotation.NoResubmit;
 import com.blog.dto.ApiResponse;
 import com.blog.dto.ForgotPasswordDto;
 import com.blog.dto.ResetPasswordRequest;
@@ -11,7 +12,7 @@ import com.blog.service.AuthService;
 import com.blog.service.UserService;
 import com.blog.utils.JwtTokenUtil;
 
-import com.blog.utils.SpringSecurityUtils;
+import com.blog.utils.SpringSecurityUtil;
 import com.google.code.kaptcha.Constants;
 import com.google.code.kaptcha.Producer;
 import io.swagger.v3.oas.annotations.Operation;
@@ -83,7 +84,7 @@ public class AuthController {
             IOUtils.closeQuietly(out);
         }
     }
-
+    @NoResubmit(delaySecond = 5)
     @Operation(summary = "取得生成令牌", description = "取得生成令牌", tags = {"JWT認證相關功能"})
     @PostMapping(value = "/login")
     public ApiResponse<JwtResponseBody> getJwtToken(@Parameter(description = "帳號與密碼與電子郵件") @Validated @RequestBody JwtRequestBody jwtRequest) {
@@ -98,7 +99,7 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         User user = (User) authentication.getPrincipal();
         //取得使用者權限
-        Set<String> roles = SpringSecurityUtils.getCurrentUserAuthorities();
+        Set<String> roles = SpringSecurityUtil.getCurrentUserAuthorities();
         //取得jwt令牌
         final String token = jwtTokenUtil.generateToken(authentication);
         JwtResponseBody res = JwtResponseBody.builder()
@@ -110,7 +111,7 @@ public class AuthController {
 
         return new ApiResponse<>(true, "登入成功", res, HttpStatus.OK);
     }
-
+    @NoResubmit(delaySecond = 5)
     @PostMapping("/forgetPassword")
     @Operation(summary = "忘記密碼", description = "忘記密碼並發送電子郵件", tags = {"JWT認證相關功能"})
     public ApiResponse<String> forgotPassword(@Validated @RequestBody ForgotPasswordDto request) throws MessagingException, NoSuchAlgorithmException {
@@ -118,6 +119,14 @@ public class AuthController {
         return new ApiResponse<>(true, "發送電子郵件成功", HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 5)
+    @PostMapping("/forgetPassword/{token}")
+    @Operation(summary = "重設密碼", description = "重設密碼並更新密碼", tags = {"JWT認證相關功能"})
+    public ApiResponse<String> resetPassword(@PathVariable String token, @Validated @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(token, request.getNewPassword());
+        return new ApiResponse<>(true, "重設密碼成功", HttpStatus.OK);
+    }
+    @NoResubmit(delaySecond = 5)
     @Operation(summary = "重設密碼", description = "重設密碼並更新密碼")
     @PostMapping("/resetPassword")
     public ApiResponse<String> resetPassword(@Validated @RequestBody ResetPasswordRequest request) {
@@ -125,6 +134,7 @@ public class AuthController {
         return new ApiResponse<>(true, "重設密碼成功", HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 5)
     @PostMapping("/register")
     @Operation(summary = "註冊使用者", description = "註冊使用者並將使用者訊息返回給前端")
     public ApiResponse<String> register(@Parameter(description = "帳號與密碼") @Validated @RequestBody UserDto userDto) throws AuthenticationNotSupportedException {
@@ -134,7 +144,7 @@ public class AuthController {
         }
         return new ApiResponse<>(true, "註冊成功", HttpStatus.OK);
     }
-
+    @NoResubmit(delaySecond = 5)
     @PostMapping("/logout")
     @Operation(summary = "登出", description = "登出")
     public ApiResponse<String> logout(@RequestHeader("Authorization") String token) throws AuthenticationNotSupportedException {

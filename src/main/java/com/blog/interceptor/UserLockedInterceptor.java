@@ -2,7 +2,7 @@ package com.blog.interceptor;
 
 import com.blog.dao.UserPoRepository;
 import com.blog.po.UserPo;
-import com.blog.utils.SpringSecurityUtils;
+import com.blog.utils.SpringSecurityUtil;
 
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,7 +33,7 @@ public class UserLockedInterceptor implements HandlerInterceptor {
         if(null == userJpaRepository) {
             userJpaRepository = beanFactory.getBean(UserPoRepository.class);
         }
-        String currentUserName = SpringSecurityUtils.getCurrentUser();
+        String currentUserName = SpringSecurityUtil.getCurrentUser();
         Optional<UserPo> user = userJpaRepository.findByUserName(currentUserName);
 
         if (user.isPresent()) {

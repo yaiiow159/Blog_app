@@ -82,8 +82,7 @@ public class EmailNotificationAspect {
     }
 
     private EmailNotification getEmailNotification(CommentDto commentDto, String operation, String type) throws ResourceNotFoundException {
-        PostPo postPo = postPoRepository.findById(commentDto.getPostId()).orElseThrow(ResourceNotFoundException::new);
-
+        PostPo postPo = postPoRepository.findById(commentDto.getPostId()).orElseThrow(() -> new ResourceNotFoundException("文章不存在"));
         EmailNotification emailNotification = new EmailNotification();
         // 如果文章被收藏才需要通知
         List<SubscriptionDto> subscriptionDtos = subscriptionService.findByAuthorNameOrAuthorEmail(postPo.getAuthorName(), postPo.getAuthorEmail());

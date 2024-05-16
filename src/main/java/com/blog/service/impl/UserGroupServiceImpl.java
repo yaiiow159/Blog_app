@@ -7,7 +7,7 @@ import com.blog.exception.ValidateFailedException;
 import com.blog.mapper.UserGroupPoMapper;
 import com.blog.po.UserGroupPo;
 import com.blog.service.UserGroupService;
-import com.blog.utils.SpringSecurityUtils;
+import com.blog.utils.SpringSecurityUtil;
 
 
 import jakarta.annotation.Resource;
@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
@@ -30,7 +31,6 @@ import java.util.Optional;
 
 @Service
 @Slf4j
-@Transactional
 public class UserGroupServiceImpl implements UserGroupService {
     @Resource
     private UserGroupPoRepository userGroupRepository;
@@ -64,26 +64,29 @@ public class UserGroupServiceImpl implements UserGroupService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(UserGroupDto userGroupDto) throws ValidateFailedException {
         validateUserGroup(userGroupDto);
         UserGroupPo userGroupPo = UserGroupPoMapper.INSTANCE.toPo(userGroupDto);
         userGroupPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-        userGroupPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
+        userGroupPo.setCreatUser(SpringSecurityUtil.getCurrentUser());
         userGroupRepository.saveAndFlush(userGroupPo);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void edit(UserGroupDto userGroupDto) throws ValidateFailedException {
         validateUserGroup(userGroupDto);
         userGroupRepository.findById(userGroupDto.getId()).ifPresent(userGroupPo -> {
             UserGroupPoMapper.INSTANCE.partialUpdate(userGroupDto, userGroupPo);
             userGroupPo.setUpdDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-            userGroupPo.setUpdateUser(SpringSecurityUtils.getCurrentUser());
+            userGroupPo.setUpdateUser(SpringSecurityUtil.getCurrentUser());
             userGroupRepository.saveAndFlush(userGroupPo);
         });
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class,isolation = Isolation.REPEATABLE_READ)
     public String delete(Long userGroupId) throws ValidateFailedException {
         Optional<UserGroupPo> optional = userGroupRepository.findById(userGroupId);
         UserGroupPo userGroupPo = optional.orElseThrow(() -> new ValidateFailedException("群組不存在"));

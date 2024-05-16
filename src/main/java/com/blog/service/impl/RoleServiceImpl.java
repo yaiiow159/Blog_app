@@ -5,14 +5,14 @@ import com.blog.dto.RoleDto;
 import com.blog.mapper.RolePoMapper;
 import com.blog.po.RolePo;
 import com.blog.service.RoleService;
-import com.blog.utils.SpringSecurityUtils;
+import com.blog.utils.SpringSecurityUtil;
 
 import jakarta.annotation.Resource;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.support.PageableUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
@@ -23,7 +23,6 @@ import java.util.List;
 
 
 @Service
-@Transactional
 public class RoleServiceImpl implements RoleService {
 
     @Resource
@@ -38,24 +37,27 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(RoleDto roleDto) {
         RolePo po = RolePoMapper.INSTANCE.toPo(roleDto);
         po.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-        po.setCreatUser(SpringSecurityUtils.getCurrentUser());
+        po.setCreatUser(SpringSecurityUtil.getCurrentUser());
         rolePoRepository.saveAndFlush(po);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void edit(RoleDto roleDto) {
         rolePoRepository.findByName(roleDto.getRoleName()).ifPresent(rolePo -> {
             RolePo po = RolePoMapper.INSTANCE.partialUpdate(roleDto, rolePo);
             po.setUpdDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-            po.setUpdateUser(SpringSecurityUtils.getCurrentUser());
+            po.setUpdateUser(SpringSecurityUtil.getCurrentUser());
             rolePoRepository.saveAndFlush(po);
         });
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String delete(Long id) {
         rolePoRepository.deleteById(id);
         return "刪除成功";

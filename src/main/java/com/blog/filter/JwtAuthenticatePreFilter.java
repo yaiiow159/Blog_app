@@ -4,7 +4,7 @@ import com.blog.exception.ValidateFailedException;
 import com.blog.jwt.JwtBlackListService;
 import com.blog.jwt.JwtUserDetailService;
 import com.blog.utils.JwtTokenUtil;
-import com.blog.utils.ThreadLocalUtils;
+import com.blog.utils.ThreadLocalUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 
 import jakarta.servlet.FilterChain;
@@ -43,7 +43,7 @@ public class JwtAuthenticatePreFilter extends OncePerRequestFilter {
             try {
                 username = jwtTokenUtil.getUsername(jwtToken);
                 // 將 username 放入 threadLocal 中
-                ThreadLocalUtils.set(username);
+                ThreadLocalUtil.set(username);
                 logger.info("username:" + username);
             } catch (IllegalArgumentException e) {
                 logger.info("無法取得token");

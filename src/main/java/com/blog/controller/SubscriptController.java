@@ -23,7 +23,7 @@ public class SubscriptController {
 
     private final SubscriptionService subscriptionService;
 
-    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping("/notification")
     @Operation(summary = "訂閱通知", description = "訂閱通知", tags = {"訂閱相關功能"})
     public ApiResponse<String> subscribeNotification (
@@ -37,7 +37,7 @@ public class SubscriptController {
             subscriptionService.subscribe(username, postId, authorName, email);
         } catch (Exception e) {
             e.printStackTrace();
-            return new ApiResponse<>(false, "訂閱失敗", null, HttpStatus.BAD_REQUEST);
+            return new ApiResponse<>(false, "訂閱失敗 原因:" + e.getMessage(), null, HttpStatus.BAD_REQUEST);
         }
         return new ApiResponse<>(true, "訂閱成功", subscriptionService.subscribe(username, postId, authorName, email), HttpStatus.CREATED);
     }
@@ -54,7 +54,7 @@ public class SubscriptController {
            subscriptionService.unSubscribe(username, postId);
        } catch (Exception e) {
            e.printStackTrace();
-           return new ApiResponse<>(false, "取消訂閱失敗", null, HttpStatus.BAD_REQUEST);
+           return new ApiResponse<>(false, "取消訂閱失敗 原因:" + e.getMessage(), null, HttpStatus.BAD_REQUEST);
        }
        return new ApiResponse<>(true, "取消訂閱成功", subscriptionService.unSubscribe(username, postId), HttpStatus.CREATED);
     }

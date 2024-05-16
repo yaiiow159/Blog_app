@@ -11,9 +11,7 @@ import org.springframework.security.core.Authentication;
 
 import org.springframework.stereotype.Component;
 
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,7 +41,7 @@ public class JwtTokenUtil {
                 .setClaims(claims)
                 .setSubject(username)
                 .setIssuedAt(new Date())
-                .setId(UUIDUtils.getUUID32())
+                .setId(UUIDUtil.getUUID32())
                 .setExpiration(expireDate)
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
@@ -54,7 +52,7 @@ public class JwtTokenUtil {
         Date expireDate = new Date(currentDate.getTime() + expirationTime);
         return Jwts.builder()
                 .setIssuedAt(new Date())
-                .setId(UUIDUtils.getUUID32())
+                .setId(UUIDUtil.getUUID32())
                 .setExpiration(expireDate)
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();

@@ -4,7 +4,7 @@ package com.blog.utils;
  * @author Timmy
  * threadLocal工去類
  */
-public class ThreadLocalUtils {
+public class ThreadLocalUtil {
 
     public static final ThreadLocal<Object> threadLocal = new ThreadLocal<>();
 

@@ -1,6 +1,7 @@
 package com.blog.controller;
 
 
+import com.blog.annotation.NoResubmit;
 import com.blog.dto.ApiResponse;
 import com.blog.dto.UserGroupDto;
 import com.blog.exception.ValidateFailedException;
@@ -54,6 +55,7 @@ public class UserGroupController {
         return new ApiResponse<>(true, "查詢成功", userGroupService.findAll(), HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     @Operation(summary = "創建使用者群組",description = "創建使用者群組")
@@ -61,12 +63,13 @@ public class UserGroupController {
         try {
             userGroupService.add(userGroupDto);
         } catch (Exception e) {
-            return new ApiResponse<>(false, "創建失敗", HttpStatus.BAD_REQUEST);
+            return new ApiResponse<>(false, "創建失敗 原因: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
         userGroupService.add(userGroupDto);
         return new ApiResponse<>(true, "創建成功", HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping
     @Operation(summary = "更新使用者群組",description = "更新使用者群組")
@@ -74,15 +77,21 @@ public class UserGroupController {
         try {
             userGroupService.edit(userGroupDto);
         } catch (Exception e) {
-            return new ApiResponse<>(false, "更新失敗", HttpStatus.BAD_REQUEST);
+            return new ApiResponse<>(false, "更新失敗 原因: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
         return new ApiResponse<>(true, "更新成功", HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     @Operation(summary = "刪除使用者群組",description = "刪除使用者群組")
     public ApiResponse<String> delete(@Parameter(description = "群組id",example = "1")@PathVariable Long id) throws ValidateFailedException {
-        return new ApiResponse<>(true, userGroupService.delete(id),HttpStatus.OK);
+        try {
+            userGroupService.delete(id);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "刪除失敗 原因: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "刪除成功", HttpStatus.OK);
     }
 }

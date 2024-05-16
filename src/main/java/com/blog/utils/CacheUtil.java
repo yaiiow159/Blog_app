@@ -3,12 +3,9 @@ package com.blog.utils;
 import com.blog.dto.UserDto;
 import com.blog.listener.RemovalCustomerListener;
 import com.blog.service.UserService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -20,12 +17,12 @@ import java.util.concurrent.TimeUnit;
  */
 @Component
 @Slf4j
-public class CacheUtils {
+public class CacheUtil {
     private static UserService userService;
 
     @Autowired
     public void setUserService(UserService userService) {
-        CacheUtils.userService = userService;
+        CacheUtil.userService = userService;
     }
     private static final LoadingCache<String, String> quavaCache = CacheBuilder.newBuilder()
             .initialCapacity(10)

@@ -68,5 +68,9 @@ public interface PostPoRepository extends JpaRepository<PostPo, Long>, JpaSpecif
     @Query("SELECT p FROM PostPo p JOIN p.tags t WHERE t.id = ?1")
     List<PostPo> findAllByTagId(Long tagId);
 
+
+    @Query("SELECT p.dislikes FROM PostPo p WHERE p.id = ?1")
+    Integer getDislikeCount(Long postId);
+
 //    List<PostPo> getBookmarkList(String username);
 }

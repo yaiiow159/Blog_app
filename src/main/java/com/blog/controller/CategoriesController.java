@@ -1,5 +1,6 @@
 package com.blog.controller;
 
+import com.blog.annotation.NoResubmit;
 import com.blog.dto.ApiResponse;
 import com.blog.dto.CategoryDto;
 import com.blog.dto.PostDto;
@@ -71,6 +72,7 @@ public class CategoriesController {
         return new ApiResponse<>(true, "查詢成功", postDto, HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping()
     @Operation(summary = "創建分類",description = "創建分類物件")
@@ -83,6 +85,7 @@ public class CategoriesController {
         return new ApiResponse<>(true, "創建成功", HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping
     @Operation(summary = "更新分類",description = "更新分類物件")
@@ -95,7 +98,7 @@ public class CategoriesController {
         }
         return new ApiResponse<>(true, "更新成功", HttpStatus.OK);
     }
-
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("{id}")
     @Operation(summary = "刪除分類",description = "用id刪除分類")

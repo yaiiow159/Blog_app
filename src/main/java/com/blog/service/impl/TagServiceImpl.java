@@ -6,21 +6,20 @@ import com.blog.dto.TagDto;
 import com.blog.mapper.TagPoMapper;
 import com.blog.po.TagPo;
 import com.blog.service.TagService;
-import com.blog.utils.SpringSecurityUtils;
+import com.blog.utils.SpringSecurityUtil;
 import jakarta.annotation.Resource;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Stream;
 
 @Service
 public class TagServiceImpl implements TagService {
@@ -53,26 +52,29 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(TagDto tagDto) {
         TagPo tagPo = TagPoMapper.INSTANCE.toPo(tagDto);
         tagPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-        tagPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
+        tagPo.setCreatUser(SpringSecurityUtil.getCurrentUser());
         tagPo.setCategory(categoryPoRepository.findById(tagDto.getCategoryId()).orElse(null));
         tagPoRepository.saveAndFlush(tagPo);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void edit(TagDto tagDto) {
         tagPoRepository.findById(tagDto.getId()).ifPresent(tagPo -> {
             TagPoMapper.INSTANCE.partialUpdate(tagDto, tagPo);
             tagPo.setCategory(categoryPoRepository.findById(tagDto.getCategoryId()).orElse(null));
             tagPo.setUpdDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-            tagPo.setUpdateUser(SpringSecurityUtils.getCurrentUser());
+            tagPo.setUpdateUser(SpringSecurityUtil.getCurrentUser());
             tagPoRepository.saveAndFlush(tagPo);
         });
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String delete(Long id) {
         tagPoRepository.deleteById(id);
         return "刪除成功";

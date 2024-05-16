@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class SpringSecurityUtils {
+public class SpringSecurityUtil {
     private static final String DEFAULT_USER = "admin";
     public static String getCurrentUser(){
         try {

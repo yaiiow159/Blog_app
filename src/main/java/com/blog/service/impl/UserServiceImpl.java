@@ -8,9 +8,9 @@ import com.blog.mapper.*;
 import com.blog.po.*;
 import com.blog.service.GoogleStorageService;
 import com.blog.service.UserService;
-import com.blog.utils.SpringSecurityUtils;
+import com.blog.utils.SpringSecurityUtil;
 
-import com.blog.utils.ThreadLocalUtils;
+import com.blog.utils.ThreadLocalUtil;
 import jakarta.annotation.Resource;
 import jakarta.persistence.criteria.Predicate;
 import lombok.extern.slf4j.Slf4j;
@@ -19,13 +19,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
@@ -42,8 +44,11 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-@Transactional
 public class UserServiceImpl implements UserService {
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
     @Resource
     private UserGroupPoRepository userGroupPoRepository;
     @Resource
@@ -69,6 +74,8 @@ public class UserServiceImpl implements UserService {
         return userDto;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class,isolation = Isolation.REPEATABLE_READ)
     public String lockUser(Long userId) {
         UserPo userPo = userJpaRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("找不到使用者: " + userId));
@@ -79,18 +86,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void changePassword(String oldPassword, String newPassword) {
-        Map<String, Object> threadLocal = ThreadLocalUtils.get();
+        Map<String, Object> threadLocal = ThreadLocalUtil.get();
         String username = (String) threadLocal.get("username");
         userJpaRepository.changePassword(passwordEncoder.encode(newPassword), username);
         // 查詢新使用者密碼
-        Optional<UserPo> userNameOption = userJpaRepository.findByUserName(SpringSecurityUtils.getCurrentUser());
-        if (userNameOption.isEmpty()) {
-            throw new UsernameNotFoundException("找不到使用者 " + SpringSecurityUtils.getCurrentUser());
-        }
-        // 更新spring-security的數據
-        var userDetails = userDetailsService.loadUserByUsername(userNameOption.get().getUserName());
-        var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null,userDetails.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+        userJpaRepository.findByUserName(username).ifPresent(userPo -> {
+            // 更新spring-security的數據
+            var userDetails = userDetailsService.loadUserByUsername(username);
+            var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null,userDetails.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+        });
     }
 
     @Override
@@ -130,7 +135,7 @@ public class UserServiceImpl implements UserService {
         if(result.get() == null) {
             throw new IOException("上傳圖片失敗");
         }
-        userJpaRepository.updateImageName(result.get(), SpringSecurityUtils.getCurrentUser());
+        userJpaRepository.updateImageName(result.get(), SpringSecurityUtil.getCurrentUser());
     }
 
     public String unlockUser(Long userId) {
@@ -144,6 +149,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.REPEATABLE_READ)
     public void add(UserDto userDto) throws AuthenticationNotSupportedException, ValidateFailedException {
         if (userJpaRepository.findByUserName(userDto.getUserName()).isPresent()) {
             throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.RESOURCE_ALREADY_EXISTS);
@@ -156,7 +162,7 @@ public class UserServiceImpl implements UserService {
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
         //增加創建使用者名稱與時間
         UserPo userPo = UserPoMapper.INSTANCE.toPo(userDto);
-        userPo.setCreatUser(SpringSecurityUtils.getCurrentUser());
+        userPo.setCreatUser(SpringSecurityUtil.getCurrentUser());
         userPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
         userPo.setUserGroupPo(userGroupPoRepository.findById(userDto.getGroupId()).orElseThrow(() -> new ValidateFailedException("找不到群組")));
         Set<RolePo> rolePoList = new HashSet<>(rolePoRepository.findAllById(userDto.getRoleIds()));
@@ -165,12 +171,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.REPEATABLE_READ)
     public void edit(UserDto userDto) throws AuthenticationNotSupportedException {
         validateUser(userDto);
         userJpaRepository.findById(userDto.getId()).ifPresent(userPo -> {
             userPo = UserPoMapper.INSTANCE.partialUpdate(userDto, userPo);
             userPo.setPassword(passwordEncoder.encode(userDto.getPassword()));
-            userPo.setUpdateUser(SpringSecurityUtils.getCurrentUser());
+            userPo.setUpdateUser(SpringSecurityUtil.getCurrentUser());
             userPo.setUpdDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             userPo.setUserGroupPo(userGroupPoRepository.findById(userDto.getGroupId()).orElseThrow(() -> new ValidateFailedException("找不到群組")));
             rolePoRepository.findAll().forEach(userPo.getRoles()::remove);
@@ -180,6 +187,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String delete(Long id) {
         userJpaRepository.deleteById(id);
         return "刪除成功";
@@ -190,90 +198,92 @@ public class UserServiceImpl implements UserService {
         UserPo userPo = userJpaRepository.findByUserName(userName).orElse(null);
         return UserPoMapper.INSTANCE.toDto(userPo);
     }
-        @Override
-        public String register(UserDto userDto) {
-            if (userJpaRepository.findByUserName(userDto.getUserName()).isPresent()) {
-                throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.USER_ALREADY_EXISTS);
-            }
-            if (userJpaRepository.findByEmail(userDto.getEmail()).isPresent()) {
-                throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.EMAIL_ALREADY_EXISTS);
-            }
-            userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
-            userDto.setCreatUser(SpringSecurityUtils.getCurrentUser());
-            userDto.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-            UserPo userPo = UserPoMapper.INSTANCE.toPo(userDto);
-            // 設置使用者群組
-            if (userGroupPoRepository.findByGroupName(userDto.getGroupName()).isPresent()) {
-                userGroupPoRepository.findByGroupName(userDto.getGroupName()).ifPresent(
-                        userPo::setUserGroupPo
-                );
-            } else {
-                userGroupPoRepository.findByGroupName(UserGroupPo.DEFAULT_GROUP_NAME).ifPresent(
-                        userPo::setUserGroupPo
-                );
-            }
-            Set<RolePo> rolePoSet = new HashSet<>();
-            rolePoRepository.findByRoleName(UserRole.ROLE_USER.toString()).ifPresent(rolePoSet::add);
-            userPo.setRoles(rolePoSet);
-            userJpaRepository.saveAndFlush(userPo);
-            return "註冊成功";
+    @Override
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.REPEATABLE_READ)
+    public String register(UserDto userDto) {
+        if (userJpaRepository.findByUserName(userDto.getUserName()).isPresent()) {
+            throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.USER_ALREADY_EXISTS);
         }
-
-        @Override
-        public void logout (String token) throws ValidateFailedException {
-            if (null == token || token.isEmpty()) {
-                throw new ValidateFailedException(
-                        ValidateFailedException.DomainErrorStatus.JWT_AUTHENTICATION_TOKEN_EXPIRED, "令牌為空");
-            }
+        if (userJpaRepository.findByEmail(userDto.getEmail()).isPresent()) {
+            throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.EMAIL_ALREADY_EXISTS);
         }
-
-        @Override
-        public UserProfileDto updateUserProfile (UserProfileDto userProfileDto)  {
-            UserPo userPo = userJpaRepository.findByUserName(userProfileDto.getUsername())
-                    .orElseThrow(() -> new UsernameNotFoundException("找不到使用者 " + userProfileDto.getUsername()));
-
-            userPo.setUserName(userProfileDto.getUsername());
-            userPo.setEmail(userProfileDto.getEmail());
-            userPo.setNickName(userProfileDto.getNickname());
-            userPo.setAddress(userProfileDto.getAddress());
-            userPo = userJpaRepository.saveAndFlush(userPo);
-            // 從s3 取回圖片
-            return getUserProfile(userPo.getUserName());
+        userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        userDto.setCreatUser(SpringSecurityUtil.getCurrentUser());
+        userDto.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
+        UserPo userPo = UserPoMapper.INSTANCE.toPo(userDto);
+        // 設置使用者群組
+        if (userGroupPoRepository.findByGroupName(userDto.getGroupName()).isPresent()) {
+            userGroupPoRepository.findByGroupName(userDto.getGroupName()).ifPresent(
+                    userPo::setUserGroupPo
+            );
+        } else {
+            userGroupPoRepository.findByGroupName(UserGroupPo.DEFAULT_GROUP_NAME).ifPresent(
+                    userPo::setUserGroupPo
+            );
         }
+        Set<RolePo> rolePoSet = new HashSet<>();
+        rolePoRepository.findByRoleName(UserRole.ROLE_USER.toString()).ifPresent(rolePoSet::add);
+        userPo.setRoles(rolePoSet);
+        userJpaRepository.saveAndFlush(userPo);
+        return "註冊成功";
+    }
 
-        @Override
-        public UserProfileDto getUserProfile (String username) {
-            UserPo userPo = userJpaRepository.findByUserName(username)
-                    .orElseThrow(() -> new ValidateFailedException("找不到使用者 " + username));
-            UserProfileDto userProfileDto = new UserProfileDto();
-            userProfileDto.setEmail(userPo.getEmail());
-            userProfileDto.setUsername(userPo.getUserName());
-            userProfileDto.setPassword(userPo.getPassword());
-            userProfileDto.setAddress(userPo.getAddress());
-            userProfileDto.setNickname(userPo.getNickName());
-            userProfileDto.setAvatarName(userPo.getAvatarName());
-            userProfileDto.setAvatarPath(userPo.getAvatarPath());
-            return userProfileDto;
+    @Override
+    public void logout (String token) throws ValidateFailedException {
+        if (null == token || token.isEmpty()) {
+            throw new ValidateFailedException(
+                    ValidateFailedException.DomainErrorStatus.JWT_AUTHENTICATION_TOKEN_EXPIRED, "令牌為空");
         }
+    }
 
-        @Override
-        public List<UserDto> findUsersByRoleName (long id){
-            List<UserPo> userPos = userJpaRepository.findUsersByRoleName(id);
-            return userPos.stream().map(UserPoMapper.INSTANCE::toDto).toList();
-        }
+    @Override
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.REPEATABLE_READ)
+    public UserProfileDto updateUserProfile (UserProfileDto userProfileDto)  {
+        UserPo userPo = userJpaRepository.findByUserName(userProfileDto.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("找不到使用者 " + userProfileDto.getUsername()));
 
-        private void validateUser (UserDto userDto) throws AuthenticationNotSupportedException {
-            if (userDto.getGroupId() == 0) {
-                throw new AuthenticationNotSupportedException("此名使用者沒有關聯的群組");
-            }
-            if(userDto.getRoleIds().isEmpty()) {
-                throw new AuthenticationNotSupportedException("使用者沒有關聯的角色");
-            }
-            // 判斷是否建立群組
-            if (userGroupPoRepository.findById(userDto.getGroupId()).isEmpty()) {
-                throw new AuthenticationNotSupportedException("此名使用者沒有關聯的群組，請先建立關聯群組");
-            }
+        userPo.setUserName(userProfileDto.getUsername());
+        userPo.setEmail(userProfileDto.getEmail());
+        userPo.setNickName(userProfileDto.getNickname());
+        userPo.setAddress(userProfileDto.getAddress());
+        userPo = userJpaRepository.saveAndFlush(userPo);
+        // 從s3 取回圖片
+        return getUserProfile(userPo.getUserName());
+    }
+
+    @Override
+    public UserProfileDto getUserProfile (String username) {
+        UserPo userPo = userJpaRepository.findByUserName(username)
+                .orElseThrow(() -> new ValidateFailedException("找不到使用者 " + username));
+        UserProfileDto userProfileDto = new UserProfileDto();
+        userProfileDto.setEmail(userPo.getEmail());
+        userProfileDto.setUsername(userPo.getUserName());
+        userProfileDto.setPassword(userPo.getPassword());
+        userProfileDto.setAddress(userPo.getAddress());
+        userProfileDto.setNickname(userPo.getNickName());
+        userProfileDto.setAvatarName(userPo.getAvatarName());
+        userProfileDto.setAvatarPath(userPo.getAvatarPath());
+        return userProfileDto;
+    }
+
+    @Override
+    public List<UserDto> findUsersByRoleName (long id){
+        List<UserPo> userPos = userJpaRepository.findUsersByRoleName(id);
+        return userPos.stream().map(UserPoMapper.INSTANCE::toDto).toList();
+    }
+
+    private void validateUser (UserDto userDto) throws AuthenticationNotSupportedException {
+        if (userDto.getGroupId() == 0) {
+            throw new AuthenticationNotSupportedException("此名使用者沒有關聯的群組");
         }
+        if(userDto.getRoleIds().isEmpty()) {
+            throw new AuthenticationNotSupportedException("使用者沒有關聯的角色");
+        }
+        // 判斷是否建立群組
+        if (userGroupPoRepository.findById(userDto.getGroupId()).isEmpty()) {
+            throw new AuthenticationNotSupportedException("此名使用者沒有關聯的群組，請先建立關聯群組");
+        }
+    }
 
     private String generateImageName(MultipartFile imgFile) {
         String originalFilename = imgFile.getOriginalFilename();

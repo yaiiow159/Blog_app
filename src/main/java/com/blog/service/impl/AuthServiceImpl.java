@@ -3,7 +3,7 @@ package com.blog.service.impl;
 import com.blog.dao.UserPoRepository;
 import com.blog.po.UserPo;
 import com.blog.service.AuthService;
-import com.blog.utils.UUIDUtils;
+import com.blog.utils.UUIDUtil;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
@@ -54,7 +54,7 @@ public class AuthServiceImpl implements AuthService {
         String validateCodeStr = String.valueOf(validateCode);
         // 將驗證碼存入redis
         //生成token當作 url令牌
-        final String refreshToken = UUIDUtils.getUUID32();
+        final String refreshToken = UUIDUtil.getUUID32();
         // 將refreshToken存入redis
         stringRedisTemplate.opsForValue().set(validateCodeStr, email, 10, TimeUnit.MINUTES);
         // refreshToken作為一次性令牌驗證

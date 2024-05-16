@@ -25,6 +25,19 @@ public class AsyncConfig implements AsyncConfigurer {
         return taskExecutor;
     }
 
+    @Bean(name = "noResubmitThreadPoolExecutor")
+    public ThreadPoolExecutor noResubmitExecutor() {
+        ThreadPoolExecutor taskExecutor = new ThreadPoolExecutor(
+                2 * CORE_POOL_SIZE + 1,
+                CORE_POOL_SIZE * 5,
+                60,
+                TimeUnit.SECONDS,
+                new SynchronousQueue<>());
+        // 執行續資源被耗盡 轉為 交給主線程執行任務
+        taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        return taskExecutor;
+    }
+
     @Bean(name = "mailExecutor")
     public ThreadPoolExecutor mailExecutor() {
         return new ThreadPoolExecutor(

@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -28,10 +29,10 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(rollbackFor = Exception.class)
 public class SubscriptionServiceImpl implements SubscriptionService {
 
     private final SubscriptionPoRepository subscriptionPoRepository;
+
     private final UserPoRepository userPoRepository;
 
     private final StringRedisTemplate stringRedisTemplate;
@@ -43,6 +44,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
      * @param postId 被訂閱的文章id
      */
     @Override
+    @Transactional(rollbackFor = Exception.class,isolation = Isolation.REPEATABLE_READ)
     public String subscribe(String username, Long postId, String authorName, String email) throws ResourceNotFoundException {
         SubscriptionDto subscriptionDto = new SubscriptionDto();
         subscriptionDto.setAuthorName(authorName);
@@ -51,10 +53,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         UserPo userPo = userPoRepository.findByUserName(username).orElseThrow(() -> new ResourceNotFoundException("找不到使用者"));
         subscriptionPo.setUser(userPo);
         // 防止二次訂閱
-        if(Boolean.FALSE.equals(stringRedisTemplate.hasKey("bookmark" + username + "_" + postId))){
-            subscriptionPoRepository.save(subscriptionPo);
-            stringRedisTemplate.opsForValue().set("bookmark" + username + "_" + postId, "true");
+        if(Boolean.TRUE.equals(stringRedisTemplate.hasKey("bookmark" + username + "_" + postId))){
+            return "已訂閱、請勿重複操作";
         }
+        stringRedisTemplate.opsForValue().set("bookmark" + username + "_" + postId, "true", 1, TimeUnit.DAYS);
         subscriptionPoRepository.saveAndFlush(subscriptionPo);
         return "訂閱成功";
     }
@@ -66,6 +68,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
      * @param postId 被取消訂閱的文章id
      */
     @Override
+    @Transactional(rollbackFor = Exception.class,isolation = Isolation.REPEATABLE_READ)
     public String unSubscribe(String username, Long postId) {
         // 防止二次取消
         if(Boolean.FALSE.equals(stringRedisTemplate.hasKey("bookmark" + username + "_" + postId))){

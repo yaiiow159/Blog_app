@@ -1,5 +1,6 @@
 package com.blog.controller;
 
+import com.blog.annotation.NoResubmit;
 import com.blog.dto.ApiResponse;
 import com.blog.dto.RoleDto;
 import com.blog.dto.UserDto;
@@ -57,6 +58,7 @@ public class RoleController {
         return new ApiResponse<>(true, "查詢成功", roleService.findById(id), HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     @Operation(summary = "新增角色",description = "新增角色")
@@ -69,6 +71,7 @@ public class RoleController {
         return new ApiResponse<>(true, "新增成功", HttpStatus.CREATED);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping
     @Operation(summary = "更新角色",description = "更新角色")
@@ -91,6 +94,7 @@ public class RoleController {
         return new ApiResponse<>(true, "查詢成功", userList, HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @DeleteMapping("/{id}")
     @Operation(summary = "刪除角色",description = "刪除角色")
     public ApiResponse<String> delete(@PathVariable long id){

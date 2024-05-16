@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class HibernateIndexBuild implements ApplicationListener<ApplicationEvent> {
     private final EntityManager entityManager;
     @Override
-    @Transactional
+    @Transactional(readOnly = true,rollbackFor = Exception.class)
     public void onApplicationEvent(ApplicationEvent event) {
         log.info("build hibernate index");
         SearchSession searchSession = Search.session(entityManager);

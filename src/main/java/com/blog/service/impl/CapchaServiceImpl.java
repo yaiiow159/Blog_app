@@ -1,10 +1,8 @@
 package com.blog.service.impl;
 
 import com.blog.service.CapchaService;
-import com.blog.utils.Base64Utils;
-import com.blog.utils.UUIDUtils;
+import com.blog.utils.UUIDUtil;
 import com.google.code.kaptcha.impl.DefaultKaptcha;
-import io.netty.handler.codec.base64.Base64Encoder;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -27,7 +25,7 @@ public class CapchaServiceImpl implements CapchaService {
     private Integer expireTime;
 
     @Resource
-    private UUIDUtils uuidUtils;
+    private UUIDUtil uuidUtils;
 
     @Resource
     private RedisTemplate redisTemplate;

@@ -1,10 +1,9 @@
     package com.blog.controller;
 
+    import com.blog.annotation.NoResubmit;
     import com.blog.dto.ApiResponse;
     import com.blog.dto.UserDto;
     import com.blog.dto.UserProfileDto;
-    import com.blog.dto.UserProfileRequestBody;
-    import com.blog.exception.ValidateFailedException;
     import com.blog.service.UserService;
 
 
@@ -15,7 +14,6 @@
 
     import lombok.extern.slf4j.Slf4j;
     import org.springframework.data.domain.Page;
-    import org.springframework.format.annotation.DateTimeFormat;
     import org.springframework.http.HttpStatus;
     import org.springframework.http.MediaType;
     import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,9 +22,7 @@
     import org.springframework.web.bind.annotation.*;
     import org.springframework.web.multipart.MultipartFile;
 
-
     import java.io.IOException;
-    import java.time.LocalDateTime;
     import java.util.concurrent.ExecutionException;
     import java.util.concurrent.TimeoutException;
 
@@ -63,7 +59,7 @@ public class UserController {
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/upload")
     @Operation(summary = "上傳圖片",description = "上傳圖片")
-    public ApiResponse<String> uploadProfileImage(@RequestParam("file") MultipartFile file) throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    public ApiResponse<String> uploadProfileImage(@RequestParam("file") MultipartFile file){
         try {
             userService.upload(file);
         } catch (Exception e) {
@@ -72,19 +68,21 @@ public class UserController {
         return new ApiResponse<>(true, "上傳成功",  HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     @Operation(summary = "新增使用者API",description = "新增使用者API")
     public ApiResponse<UserDto> createNewUser (
-            @Parameter(name = "使用者帳戶") @Validated @RequestBody  UserDto userDto) {
+            @Parameter(name = "使用者帳戶") @Validated @RequestBody UserDto userDto) {
         try {
             userService.add(userDto);
         } catch (Exception e) {
-            return new ApiResponse<>(false, "新增失敗", null, HttpStatus.BAD_REQUEST);
+            return new ApiResponse<>(false, "新增失敗 原因: " + e.getMessage(), null, HttpStatus.BAD_REQUEST);
         }
         return new ApiResponse<>(true, "新增成功", HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PutMapping
     @Operation(summary = "更新使用者API",description = "更新使用者API")
@@ -92,25 +90,52 @@ public class UserController {
         try {
             userService.edit(userDto);
         } catch (Exception e) {
-            return new ApiResponse<>(false, "更新失敗", null, HttpStatus.BAD_REQUEST);
+            return new ApiResponse<>(false, "更新失敗 原因: " + e.getMessage(), null, HttpStatus.BAD_REQUEST);
         }
         return new ApiResponse<>(true, "更新成功", HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     @Operation(summary = "刪除使用者API",description = "刪除使用者API")
     public ApiResponse<String> deleteUser(@Parameter(description = "使用者id",example = "1") @PathVariable long id){
-        return new ApiResponse<>(true, "刪除成功", userService.delete(id),HttpStatus.OK);
+        try {
+            userService.delete(id);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "刪除失敗 原因: " + e.getMessage(), null, HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "刪除成功", HttpStatus.OK);
     }
 
+
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/locked/{id}")
     @Operation(summary = "鎖戶使用者",description = "鎖戶使用者")
     public ApiResponse<String> bannedUser(@Parameter(description = "使用者ID",example = "1") @PathVariable Long id){
-        return new ApiResponse<>(true, "鎖戶成功", userService.lockUser(id),HttpStatus.OK);
+        try {
+            userService.lockUser(id);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "鎖戶失敗 原因: " + e.getMessage(), null, HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "鎖戶成功", HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/unlocked/{id}")
+    @Operation(summary = "解鎖使用者",description = "解鎖使用者")
+    public ApiResponse<String> unbannedUser(@Parameter(description = "使用者ID",example = "1") @PathVariable Long id){
+        try {
+            userService.unlockUser(id);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "解鎖失敗 原因: " + e.getMessage(), null, HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "解鎖成功", HttpStatus.OK);
+    }
+
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PutMapping(value = "/userProfile",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "使用者個人資料API",description = "使用者個人資料API")
@@ -119,13 +144,6 @@ public class UserController {
         if(userProfileDto == null)
             return new ApiResponse<>(false, "更新個人資料失敗",HttpStatus.NO_CONTENT);
         return new ApiResponse<>(true, "更新個人資料成功", userProfileDto,HttpStatus.OK);
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/unlocked/{id}")
-    @Operation(summary = "解鎖使用者",description = "解鎖使用者")
-    public ApiResponse<String> unbannedUser(@Parameter(description = "使用者ID",example = "1") @PathVariable Long id){
-        return new ApiResponse<>(true, "解鎖成功", userService.unlockUser(id),HttpStatus.OK);
     }
 
     @GetMapping("/userProfile/{username}")
@@ -138,6 +156,7 @@ public class UserController {
         return new ApiResponse<>(true, "查詢成功",userProfile,HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PutMapping("/changePassword")
     @Operation(summary = "修改密碼API",description = "修改密碼API")
@@ -147,7 +166,7 @@ public class UserController {
         try {
             userService.changePassword(oldPassword, newPassword);
         } catch (Exception e) {
-            return new ApiResponse<>(false, "修改密碼失敗", HttpStatus.BAD_REQUEST);
+            return new ApiResponse<>(false, "修改密碼失敗 原因: " + e.getMessage(), "", HttpStatus.BAD_REQUEST);
         }
         return new ApiResponse<>(true, "修改密碼成功",HttpStatus.OK);
     }

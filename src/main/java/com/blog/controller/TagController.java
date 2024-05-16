@@ -1,5 +1,6 @@
 package com.blog.controller;
 
+import com.blog.annotation.NoResubmit;
 import com.blog.dto.ApiResponse;
 import com.blog.dto.TagDto;
 import com.blog.service.TagService;
@@ -58,6 +59,7 @@ public class TagController {
         return new ApiResponse<>(true, "查詢成功", tagDto, HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PostMapping
     @Operation(summary = "新增標籤",description = "新增標籤")
     @PreAuthorize("hasRole('ADMIN')")
@@ -65,11 +67,12 @@ public class TagController {
         try {
             tagService.add(tagDto);
         } catch (Exception e) {
-            return new ApiResponse<>(false, "新增失敗", null, HttpStatus.BAD_REQUEST);
+            return new ApiResponse<>(false, "新增失敗 原因: " + e.getMessage(), null, HttpStatus.BAD_REQUEST);
         }
         return new ApiResponse<>(true, "新增成功", HttpStatus.CREATED);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PutMapping
     @Operation(summary = "更新標籤",description = "更新標籤")
     @PreAuthorize("hasRole('ADMIN')")
@@ -79,15 +82,21 @@ public class TagController {
         try {
             tagService.edit(tagDto);
         } catch (Exception e) {
-            return new ApiResponse<>(false, "更新失敗", null, HttpStatus.BAD_REQUEST);
+            return new ApiResponse<>(false, "更新失敗 原因: " + e.getMessage(), null, HttpStatus.BAD_REQUEST);
         }
         return new ApiResponse<>(true, "更新成功", HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @DeleteMapping("/{id}")
     @Operation(summary = "刪除標籤",description = "刪除標籤")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<String> delete(@PathVariable("id") Long id) {
-        return new ApiResponse<>(true, tagService.delete(id),HttpStatus.OK);
+        try {
+            tagService.delete(id);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "刪除失敗 原因: " + e.getMessage(), null, HttpStatus.BAD_REQUEST);
+        }
+        return new ApiResponse<>(true, "刪除成功", HttpStatus.OK);
     }
 }

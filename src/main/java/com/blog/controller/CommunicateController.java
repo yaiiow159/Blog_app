@@ -1,5 +1,6 @@
 package com.blog.controller;
 
+import com.blog.annotation.NoResubmit;
 import com.blog.dto.ApiResponse;
 import com.blog.dto.CommunicationDto;
 import com.blog.exception.ValidateFailedException;
@@ -30,6 +31,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class CommunicateController {
     private final JavaMailSender javaMailSender;
+
+    @NoResubmit(delaySecond = 3)
     @PostMapping("/contact")
     @Operation(summary = "聯繫我們", description = "聯繫我們", tags = {"聯繫相關功能"})
     public ApiResponse<String> communicate(@RequestParam("fromUser") String fromUser,

@@ -1,5 +1,6 @@
 package com.blog.controller;
 
+import com.blog.annotation.NoResubmit;
 import com.blog.dto.ApiResponse;
 import com.blog.dto.CommentDto;
 import com.blog.exception.ResourceNotFoundException;
@@ -45,6 +46,7 @@ public class CommentController {
         return new ApiResponse<>(true, "查詢成功", commentDtoList, HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping("/posts/{postId}/comments")
     @Operation(summary = "創建評論",description = "創建一篇文章底下的評論")
@@ -57,7 +59,7 @@ public class CommentController {
         }
         return new ApiResponse<>(true, "創建成功", HttpStatus.OK);
     }
-
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PutMapping("/posts/{postId}/comments/{id}")
     @Operation(summary = "更新評論",description = "更新一篇文章底下的評論")
@@ -71,6 +73,7 @@ public class CommentController {
         }
         return new ApiResponse<>(true, "更新成功", HttpStatus.OK);
     }
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @DeleteMapping("/posts/{postId}/comments/{id}")
     @Operation(summary = "刪除評論",description = "刪除一篇文章底下的評論")
@@ -85,6 +88,7 @@ public class CommentController {
         return new ApiResponse<>(true, "刪除成功",HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping("/posts/{postId}/comments/report/{id}")
     @Operation(summary = "檢舉評論",description = "檢舉一篇文章底下的評論")
@@ -99,6 +103,7 @@ public class CommentController {
         return new ApiResponse<>(true, "檢舉成功",HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping("/posts/{postId}/comments/{id}/likes")
     @Operation(summary = "按讚評論",description = "按讚一篇文章底下的評論")
@@ -113,6 +118,7 @@ public class CommentController {
         return new ApiResponse<>(true, "按讚成功",HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @DeleteMapping("/posts/{postId}/comments/{id}/likes")
     @Operation(summary = "取消按讚評論",description = "取消按讚一篇文章底下的評論")
     public ApiResponse<String> cancelLikeComment(

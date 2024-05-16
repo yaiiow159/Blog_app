@@ -53,4 +53,6 @@ public interface PostService {
     void addPostView(Long id);
 
     List<PostDto> searchByTag(Long id);
+
+    Integer getDislikesCount(Long postId);
 }

@@ -98,7 +98,7 @@ public class EmailNotificationConsumer {
             mailNotificationPo.setAction(emailNotification.getOperation());
             mailNotificationPo.setContent(emailNotification.getMessage());
             mailNotificationPo.setSendTime(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-            mailNotificationPoRepository.save(mailNotificationPo);
+            mailNotificationPoRepository.saveAndFlush(mailNotificationPo);
             log.info("Sending email notification: {}", message);
         } catch (Exception e) {
             log.error("Failed to send phone notification: {}", e.getMessage());

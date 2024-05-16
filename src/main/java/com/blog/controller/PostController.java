@@ -1,5 +1,6 @@
 package com.blog.controller;
 
+import com.blog.annotation.NoResubmit;
 import com.blog.dto.ApiResponse;
 import com.blog.dto.PostDto;
 import com.blog.exception.ResourceNotFoundException;
@@ -94,6 +95,7 @@ public class PostController {
         return new ApiResponse<>(true, "上傳成功" , HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping(value = "/draft", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "創建草稿API",description = "創建草稿API")
@@ -107,6 +109,7 @@ public class PostController {
     }
 
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping
     @Operation(summary = "創建發布文章API",description = "創建發布文章API")
@@ -119,6 +122,7 @@ public class PostController {
         return new ApiResponse<>(true, "創建成功", HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PutMapping( "/{postId}")
     @Operation(summary = "更新發布文章API",description = "更新發布文章API")
@@ -133,12 +137,14 @@ public class PostController {
         return new ApiResponse<>(true, "更新成功", HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     @Operation(summary = "刪除發布文章API",description = "刪除發布文章API")
     public ApiResponse<String> deletePost(@Parameter(description = "刪除文章id",example = "1") @PathVariable Long id) throws ResourceNotFoundException, IOException {
         return new ApiResponse<>(true, "刪除成功", postService.delete(id), HttpStatus.OK);
     }
+
 
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping("{id}/views")
@@ -152,6 +158,7 @@ public class PostController {
         return new ApiResponse<>(true, "增加成功", HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @DeleteMapping("/{id}/bookmarks")
     @Operation(summary = "取消收藏文章API",description = "取消收藏文章API")
@@ -164,6 +171,7 @@ public class PostController {
         return new ApiResponse<>(true, "取消收藏成功", HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping("/{id}/bookmarks")
     @Operation(summary = "收藏文章API",description = "收藏文章API")
@@ -176,6 +184,7 @@ public class PostController {
         return new ApiResponse<>(true, "收藏成功", HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping("/{postId}/like")
     @Operation(summary = "按讚文章API",description = "按讚文章API")
@@ -188,6 +197,7 @@ public class PostController {
         return new ApiResponse<>(true, "按讚成功", HttpStatus.OK);
     }
 
+    @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @DeleteMapping("/{postId}/like")
     @Operation(summary = "取消按讚文章API",description = "取消按讚文章API")
@@ -201,13 +211,6 @@ public class PostController {
     }
 
 
-//    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-//    @GetMapping("/bookmarks/{username}")
-//    @Operation(summary = "收藏文章列表API",description = "收藏文章列表API")
-//    public ApiResponse<List<PostDto>> getBookmarks(@Parameter(description = "收藏文章列表",example = "1") @PathVariable String username) {
-//        return new ApiResponse<>(true, "收藏文章列表", postService.getBookmarksList(username), HttpStatus.OK);
-//    }
-
     // likesCount
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @GetMapping("/{postId}/likesCount")
@@ -218,7 +221,10 @@ public class PostController {
 
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @GetMapping("{postId}/dislikesCount")
-    @Operation
+    @Operation(summary = "查詢倒讚人數",description = "倒讚人數API")
+    public ApiResponse<Integer> getDislikesCount(@Parameter(description = "文章id",example = "1") @PathVariable Long postId) {
+        return new ApiResponse<>(true, "倒讚人數", postService.getDislikesCount(postId), HttpStatus.OK);
+    }
 
     // 查詢收藏人數
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
