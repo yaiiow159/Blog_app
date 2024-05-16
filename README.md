@@ -90,7 +90,8 @@ http://localhost:9090/v3/api-docs <br>
 
 ## 使用者資訊
 可查看當前使用者 總文章數、總文章按讚數、總評論數、總按讚數等資訊
-![使用者資訊](https://github.com/yaiiow159/Blog_app/assets/39752246/5ac984a7-b888-4f93-a872-b716cc6c0cd3)
+![使用者資訊](https://github.com/yaiiow159/Blog_app/assets/39752246/1157def0-b355-47ea-9d41-c302d72dca62)
+
 
 ## 鎖戶功能
 ![使用者啟用 提用](https://github.com/yaiiow159/Blog_app/assets/39752246/374849e8-cddb-439a-830f-3497267362bc)
