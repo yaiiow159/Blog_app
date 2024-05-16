@@ -130,6 +130,7 @@ http://localhost:9090/v3/api-docs <br>
 
 ### 評論功能
 ![評論功能](https://github.com/yaiiow159/Blog_app/assets/39752246/0d539d04-3b0f-485b-a479-0962d1b8ad70)
+![評論按讚倒讚](https://github.com/yaiiow159/Blog_app/assets/39752246/f31b988b-23cc-43c0-8377-b6b2c7508c01)
 
 
 ### 標籤管理畫面
