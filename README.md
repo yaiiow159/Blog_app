@@ -80,20 +80,19 @@ http://localhost:9090/v3/api-docs <br>
 <hr>
 
 ## 畫面預覽:
-登入畫面
+
+## 登入畫面
 有進行格式校驗 以及驗證碼校驗 可註冊會員 或是忘記密碼重設等
 ![登入畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/34bf10dc-8c86-48c1-ad94-189ddfa007ce)
 
 ## 使用者資訊
+可查看當前使用者 總文章數 總評論述 總按讚數等資訊
 ![使用者資訊](https://github.com/yaiiow159/Blog_app/assets/39752246/a717fc2b-d23f-49fa-b1a0-61cb7c7bdb86)
 
-
-##　權限判斷：
+## 權限判斷：
 ![jwy權限驗證2](https://github.com/yaiiow159/Blog_app/assets/39752246/7bc651c6-7dd4-48de-b556-2ff71d52c6ff)
 ![jwt權限判斷](https://github.com/yaiiow159/Blog_app/assets/39752246/ad448468-4f32-4450-8d70-6b4688e66d6d)
 ![驗證token過期](https://github.com/yaiiow159/Blog_app/assets/39752246/10671a34-fd72-4b01-a7cf-e1519073aa8a)
-
-
 
 ### 首頁畫面
 ![首頁閱讀文章畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/12e28a68-3ce5-4151-8e39-db1991633b89)
