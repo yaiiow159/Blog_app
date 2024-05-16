@@ -39,4 +39,10 @@ public class CommentDto extends BaseDto implements Serializable {
 
     @Schema(description = "檢舉狀態",example = "true")
     Boolean isReport;
+
+    @Schema(description = "按讚數",example = "1")
+    Long likes;
+
+    @Schema(description = "踩數",example = "1")
+    Long dislikes;
 }

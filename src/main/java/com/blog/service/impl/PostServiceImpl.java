@@ -249,10 +249,6 @@ public class PostServiceImpl implements PostService {
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "likeCount", key = "#postId")
     public void addLike(Long postId) {
-        if(Boolean.TRUE.equals(stringRedisTemplate.hasKey("like:" + postId))) {
-            return;
-        }
-        stringRedisTemplate.opsForValue().set("like:" + postId, "1");
         postPoRepository.addLike(postId);
     }
 
@@ -290,11 +286,6 @@ public class PostServiceImpl implements PostService {
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "bookmarkCount", key = "#postId")
     public void addBookmark(Long postId){
-        // 判斷 是否已收藏 若以收藏 則直接返回
-        if(Boolean.TRUE.equals(stringRedisTemplate.hasKey("bookmark:" + postId))) {
-            return;
-        }
-        stringRedisTemplate.opsForValue().set("bookmark:" + postId, "1");
         postPoRepository.addBookmark(postId);
     }
 
@@ -302,10 +293,6 @@ public class PostServiceImpl implements PostService {
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "bookmarkCount", key = "#postId")
     public void deleteBookmark(Long postId) {
-        if(Boolean.FALSE.equals(stringRedisTemplate.hasKey("bookmark:" + postId))) {
-            return;
-        }
-        stringRedisTemplate.delete("bookmark:" + postId);
         postPoRepository.deleteBookmark(postId);
     }
 

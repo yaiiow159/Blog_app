@@ -111,7 +111,7 @@ public class CommentController {
             @Parameter(description = "文章id",example = "1")@PathVariable Long postId,
             @Parameter(description = "評論id",example = "1")@PathVariable Long id){
         try {
-            commentService.likeComment(postId, id);
+            commentService.addCommentlike(postId, id);
         } catch (Exception e) {
             return new ApiResponse<>(false, "按讚失敗", HttpStatus.BAD_REQUEST);
         }
@@ -125,7 +125,7 @@ public class CommentController {
             @Parameter(description = "文章id",example = "1")@PathVariable Long postId,
             @Parameter(description = "評論id",example = "1")@PathVariable Long id){
         try {
-            commentService.cancelLikeComment(postId, id);
+            commentService.addCommentDislike(postId, id);
         } catch (Exception e) {
             return new ApiResponse<>(false, "取消按讚失敗", HttpStatus.BAD_REQUEST);
         }

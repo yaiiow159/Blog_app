@@ -56,6 +56,7 @@ public class UserGroupServiceImpl implements UserGroupService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<UserGroupDto> findAll() {
         return userGroupRepository.findAll()
                 .stream()

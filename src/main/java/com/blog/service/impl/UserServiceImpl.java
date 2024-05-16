@@ -78,7 +78,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(rollbackFor = Exception.class,isolation = Isolation.REPEATABLE_READ)
     public String lockUser(Long userId) {
         UserPo userPo = userJpaRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("找不到使用者: " + userId));
+                .orElseThrow(() -> new UsernameNotFoundException("找不到使用者序號: " + userId));
         userPo.setLocked(true);
         userJpaRepository.saveAndFlush(userPo);
         return "鎖戶成功";
@@ -86,8 +86,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void changePassword(String oldPassword, String newPassword) {
-        Map<String, Object> threadLocal = ThreadLocalUtil.get();
-        String username = (String) threadLocal.get("username");
+        String username = SpringSecurityUtil.getCurrentUser();
         userJpaRepository.changePassword(passwordEncoder.encode(newPassword), username);
         // 查詢新使用者密碼
         userJpaRepository.findByUserName(username).ifPresent(userPo -> {
@@ -194,6 +193,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.REPEATABLE_READ)
     public UserDto findByUserName(String userName) {
         UserPo userPo = userJpaRepository.findByUserName(userName).orElse(null);
         return UserPoMapper.INSTANCE.toDto(userPo);
@@ -267,6 +267,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.REPEATABLE_READ)
     public List<UserDto> findUsersByRoleName (long id){
         List<UserPo> userPos = userJpaRepository.findUsersByRoleName(id);
         return userPos.stream().map(UserPoMapper.INSTANCE::toDto).toList();

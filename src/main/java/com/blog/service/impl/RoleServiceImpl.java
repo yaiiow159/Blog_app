@@ -84,6 +84,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<RoleDto> findAll() {
         return rolePoRepository.findAll().stream().map(RolePoMapper.INSTANCE::toDto).toList();
     }

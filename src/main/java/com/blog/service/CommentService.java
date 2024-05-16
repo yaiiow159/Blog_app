@@ -15,9 +15,9 @@ public interface CommentService {
 
     void reportComment(CommentDto commentDto) throws ResourceNotFoundException;
 
-    void likeComment(Long postId, Long id);
+    void addCommentlike(Long postId, Long id);
 
-    void cancelLikeComment(Long postId, Long id);
+    void addCommentDislike(Long postId, Long id);
 
     Integer findLikeCount(Long postId, Long id);
 }

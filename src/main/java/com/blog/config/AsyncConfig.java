@@ -32,7 +32,7 @@ public class AsyncConfig implements AsyncConfigurer {
                 CORE_POOL_SIZE * 5,
                 60,
                 TimeUnit.SECONDS,
-                new SynchronousQueue<>());
+                new LinkedBlockingQueue<>());
         // 執行續資源被耗盡 轉為 交給主線程執行任務
         taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         return taskExecutor;
