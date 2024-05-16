@@ -12,10 +12,13 @@
 - 使用springboot aop 用動態代理 對指定功能進行增強，再透過kafka傳輸寄送郵件訊息，透過kafka線性序列傳輸特點，可提高傳輸速度以及保證資料不丟失，確保郵件傳遞效率 <br>
 - 因應jwt無狀態的情況，為避免被有心人士擷取登入，設置黑名單並存放置redis中進行校驗
 - 避免登入時訪問資料庫次數過多，使用緩存quava-cache存儲使用者資訊，減少資料庫訪問次數
-- 使用redis 儲存驗證碼 refresh-token  並利用redisson上鎖實作防重複提交數據
-- 使用redis 儲存 案讚狀態記錄 為避免 按讚後繼續按讚 在redis紀錄案讚狀態 如已案讚則返回以錯誤訊息
+- 使用redis 儲存驗證碼 refresh-token
+- 使用redisson鎖 透過aop 進行 方法判斷 設置delay時間 避免重複提交表單內容
+- 使用redis緩存 紀錄收藏數 按讚數等訊息 並設置過期時間避免數據更新 且取消緩存空值 避免緩存穿透問題
 - aop 紀錄 請求地址 以及花費時間等
 - 使用ApplicationEvent 監聽 Authetication 驗證狀況，如登入驗證成功，則記錄當下登入時間以及其他訊息，並保存置db中 並在登出時寫入登出時間
+- 使用Jsoup 過濾前端文章內文，避免sql注入等問題
+- 使用OpenApi生成文件以及後端測試接口
 <hr>
 
 ## 系統介紹：
@@ -80,19 +83,29 @@ http://localhost:9090/v3/api-docs <br>
 <hr>
 
 ## 畫面預覽:
-登入畫面
-有進行格式校驗 以及驗證碼校驗 可註冊會員 或是忘記密碼重設等
+
+## 登入畫面
+#### 有進行格式校驗 以及驗證碼校驗 可註冊會員 或是忘記密碼重設等
 ![登入畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/34bf10dc-8c86-48c1-ad94-189ddfa007ce)
 
 ## 使用者資訊
-![使用者資訊](https://github.com/yaiiow159/Blog_app/assets/39752246/a717fc2b-d23f-49fa-b1a0-61cb7c7bdb86)
+可查看當前使用者 總文章數、總文章按讚數、總評論數、總按讚數等資訊
+![使用者資訊](https://github.com/yaiiow159/Blog_app/assets/39752246/1157def0-b355-47ea-9d41-c302d72dca62)
 
 
-##　權限判斷：
+## 鎖戶功能
+![使用者啟用 提用](https://github.com/yaiiow159/Blog_app/assets/39752246/374849e8-cddb-439a-830f-3497267362bc)
+
+## 權限判斷：
 ![jwy權限驗證2](https://github.com/yaiiow159/Blog_app/assets/39752246/7bc651c6-7dd4-48de-b556-2ff71d52c6ff)
 ![jwt權限判斷](https://github.com/yaiiow159/Blog_app/assets/39752246/ad448468-4f32-4450-8d70-6b4688e66d6d)
 ![驗證token過期](https://github.com/yaiiow159/Blog_app/assets/39752246/10671a34-fd72-4b01-a7cf-e1519073aa8a)
+![權限驗證錯誤](https://github.com/yaiiow159/Blog_app/assets/39752246/5aeaa7ed-ce65-45fd-86c2-f82c75acfaa0)
 
+
+## 重複提交檢驗
+#### 後端會進行檢驗判斷 利用redission鎖機制 在delay時間會釋放鎖 如時間內進行提交 會提出錯誤訊息
+![重複提交檢查](https://github.com/yaiiow159/Blog_app/assets/39752246/f0bf139f-1305-42a7-aab6-46f93aed35cb)
 
 
 ### 首頁畫面
@@ -108,7 +121,17 @@ http://localhost:9090/v3/api-docs <br>
 ![刪除成功](https://github.com/yaiiow159/Blog_app/assets/39752246/d524271d-ca72-4db0-99ea-01a8e23af1ad)
 
 ### 文章管理畫面
+
+#### 文章提供 倒攢、按讚、收藏、添加評論等功能
 ![文章管理](https://github.com/yaiiow159/Blog_app/assets/39752246/2ed52741-8605-4432-b94d-8257803c7dec)
+![文章管理閱讀](https://github.com/yaiiow159/Blog_app/assets/39752246/10d2b284-32a9-4530-9061-eaea0d017e89)
+![文章管理編輯](https://github.com/yaiiow159/Blog_app/assets/39752246/b5afb9e8-77be-4806-85a1-f86c18927a5d)
+![收藏功能](https://github.com/yaiiow159/Blog_app/assets/39752246/e82247f3-8088-40cd-88c7-6a6addb5101b)
+![倒贊成功](https://github.com/yaiiow159/Blog_app/assets/39752246/47c23c8f-57bc-4573-ac4f-21819acd05e4)
+
+### 評論功能
+![評論功能](https://github.com/yaiiow159/Blog_app/assets/39752246/0d539d04-3b0f-485b-a479-0962d1b8ad70)
+![評論按讚倒讚](https://github.com/yaiiow159/Blog_app/assets/39752246/f31b988b-23cc-43c0-8377-b6b2c7508c01)
 
 
 ### 標籤管理畫面
@@ -129,7 +152,6 @@ http://localhost:9090/v3/api-docs <br>
 ![Uploading 標籤刪除成功 - 複製.png…]()
 ![群組管理新增成功](https://github.com/yaiiow159/Blog_app/assets/39752246/71d53c16-3ab3-42f6-b457-3a18d615f33a)
 ![群組管理畫面](https://github.com/yaiiow159/Blog_app/assets/39752246/8815148a-a036-40b1-ab2a-a73483bf59a8)
-
 
 ### 角色管理畫面
 ![角色管理編輯](https://github.com/yaiiow159/Blog_app/assets/39752246/66b242db-e76c-45b1-9ddf-9a896db85524)
