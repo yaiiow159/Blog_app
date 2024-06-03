@@ -23,6 +23,7 @@ public class MailNotificationPo implements Serializable {
 
     public MailNotificationPo() {
         this.isRead = false;
+        this.isSend = false;
     }
 
     @Id
@@ -64,6 +65,10 @@ public class MailNotificationPo implements Serializable {
 
     @Column(name = "is_read",columnDefinition = "boolean default false",nullable = false)
     private boolean isRead = false;
+
+    // 寄送結果
+    @Column(name = "is_send",columnDefinition = "boolean default false",nullable = false)
+    private boolean isSend = false;
 
     @Serial
     private static final long serialVersionUID = 1L;

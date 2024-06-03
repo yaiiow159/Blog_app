@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 
 @Component
@@ -22,7 +24,7 @@ public class EmailNotificationProducer {
         kafkaTemplate.send("email-notification-topic", JSON.toJSONString(emailNotification));
     }
 
-    // 寄送手機驗證碼通知訊息
+
     public void sendPhoneNotification(EmailNotification emailNotification) {
         kafkaTemplate.setProducerListener(kafkaSendReqHandler);
         log.info("Sending phone notification: {}", emailNotification.toString());

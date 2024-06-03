@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class KafkaSendReqHandler implements ProducerListener {
-
     @Override
     public void onSuccess(ProducerRecord producerRecord, RecordMetadata recordMetadata) {
         log.info("send success" + producerRecord.toString());

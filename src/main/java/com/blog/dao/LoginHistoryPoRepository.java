@@ -14,7 +14,7 @@ import java.util.List;
 public interface LoginHistoryPoRepository extends JpaRepository<LoginHistoryPo, Long>, JpaSpecificationExecutor<LoginHistoryPo> {
     @Query("SELECT lg FROM LoginHistoryPo lg WHERE lg.username = :username")
     List<LoginHistoryPo> findByUsername(@Param("username") String username);
-    void deleteByUsername(@Param("usernam2e") String username);
+    void deleteByUsername(@Param("username") String username);
 
     @Modifying
     @Query("DELETE FROM LoginHistoryPo lg WHERE lg.loginTimestamp < :localDateTime")

@@ -9,10 +9,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import java.net.SocketTimeoutException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
@@ -23,9 +30,14 @@ public class EmailNotificationConsumer {
     private static final String EMAIL_SENDER = "TimmyChung";
     private final JavaMailSender javaMailSender;
     private final MailNotificationPoRepository mailNotificationPoRepository;
+    private final TransactionTemplate transactionTemplate;
+    private final KafkaTemplate kafkaTemplate;
 
-    @KafkaListener(topics = "email-notification-topic", groupId = "email-notification-consumer")
-    public void getMailNotification(ConsumerRecord<String, String> record) {
+    @KafkaListener(topics = "email-notification-topic", id = "email-notification-consumer")
+    @RetryableTopic(attempts = "5", backoff = @Backoff(multiplier = 2, maxDelay = 3000L),
+            include = SocketTimeoutException.class,dltTopicSuffix = "dlt",retryTopicSuffix = "retry")
+    @Transactional(rollbackFor = Exception.class)
+    public void getMailNotification(ConsumerRecord<String, String> record, Acknowledgment ack) {
         log.info("Received email notification: {}", record.value());
         EmailNotification emailNotification = JSON.parseObject(record.value(), EmailNotification.class);
 
@@ -60,16 +72,19 @@ public class EmailNotificationConsumer {
             mailNotificationPo.setAction(emailNotification.getOperation());
             mailNotificationPo.setContent(emailNotification.getMessage());
             mailNotificationPo.setSendTime(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
+            mailNotificationPo.setSend(true);
             mailNotificationPoRepository.saveAndFlush(mailNotificationPo);
-
         } catch (Exception e) {
-            log.error("Failed to send email notification: {}", e.getMessage());
+            log.error("寄送郵件通知訊息 失敗 原因: {}", e.getMessage());
         }
     }
 
     // 寄送手機驗證碼通知訊息
-    @KafkaListener(topics = "phone-notification-topic", groupId = "phone-notification-consumer")
-    public void getPhoneNotification(ConsumerRecord<String, String> record) {
+    @KafkaListener(topics = "phone-notification-topic", id = "phone-notification-consumer")
+    @RetryableTopic(attempts = "5", backoff = @Backoff(multiplier = 2, maxDelay = 3000L),
+            include = SocketTimeoutException.class, dltTopicSuffix = "dlt",retryTopicSuffix = "retry")
+    @Transactional(rollbackFor = Exception.class)
+    public void getPhoneNotification(ConsumerRecord<String, String> record, Acknowledgment ack) {
         log.info("Received phone notification: {}", record.value());
         EmailNotification emailNotification = JSON.parseObject(record.value(), EmailNotification.class);
 
@@ -90,7 +105,6 @@ public class EmailNotificationConsumer {
             helper.setTo(emailNotification.getEmailAddress());
             javaMailSender.send(message);
 
-            // 寄送郵件成功後 紀錄郵件訊息至資料庫
             MailNotificationPo mailNotificationPo = new MailNotificationPo();
             mailNotificationPo.setEmail(emailNotification.getEmailAddress());
             mailNotificationPo.setSubject(emailNotification.getSubject());
@@ -99,9 +113,8 @@ public class EmailNotificationConsumer {
             mailNotificationPo.setContent(emailNotification.getMessage());
             mailNotificationPo.setSendTime(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             mailNotificationPoRepository.saveAndFlush(mailNotificationPo);
-            log.info("Sending email notification: {}", message);
         } catch (Exception e) {
-            log.error("Failed to send phone notification: {}", e.getMessage());
+            log.error("寄送手機驗證碼通知訊息 失敗 原因: {}", e.getMessage());
         }
     }
 }

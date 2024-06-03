@@ -36,7 +36,7 @@ public class RedissionConfig {
     @Bean(destroyMethod = "shutdown")
     public RedissonClient redisClient() {
         Config config = new Config();
-        SingleServerConfig sconfig= config.useSingleServer()
+        SingleServerConfig sconfig = config.useSingleServer()
                 .setAddress(address)
                 .setDatabase(database);
         if(StringUtils.hasText(password)){
