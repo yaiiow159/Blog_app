@@ -30,8 +30,6 @@ public class EmailNotificationConsumer {
     private static final String EMAIL_SENDER = "TimmyChung";
     private final JavaMailSender javaMailSender;
     private final MailNotificationPoRepository mailNotificationPoRepository;
-    private final TransactionTemplate transactionTemplate;
-    private final KafkaTemplate kafkaTemplate;
 
     @KafkaListener(topics = "email-notification-topic", id = "email-notification-consumer")
     @RetryableTopic(attempts = "5", backoff = @Backoff(multiplier = 2, maxDelay = 3000L),

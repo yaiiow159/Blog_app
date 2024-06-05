@@ -30,7 +30,7 @@ public class CacheUtil {
             .expireAfterAccess(15, TimeUnit.MINUTES)
             .recordStats()
             .refreshAfterWrite(3, TimeUnit.MINUTES)
-            .concurrencyLevel(4)
+            .concurrencyLevel(1)
             .softValues()
             .removalListener(new RemovalCustomerListener())
             .build(new CacheLoader<>() {

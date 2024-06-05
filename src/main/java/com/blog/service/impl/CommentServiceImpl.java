@@ -29,6 +29,7 @@ import org.springframework.util.CollectionUtils;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -57,6 +58,8 @@ public class CommentServiceImpl implements CommentService {
         commentPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
         commentPo.setCreatUser(SpringSecurityUtil.getCurrentUser());
         commentPo.setIsReport(CommentReport.NOT_REPORTED.getStatus());
+        commentPo.setDislikes(0L);
+        commentPo.setLikes(0L);
         commentPo.setPost(postPo);
         commentPo.setUser(userPo);
         commentPoRepository.saveAndFlush(commentPo);
@@ -116,13 +119,27 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void addCommentlike(Long postId, Long id) throws ValidateFailedException {;
+    public void addCommentlike(Long postId, Long id){
+        // 確認同一使用者只能按讚一次
+        Boolean isLikeCheck = stringRedisTemplate.opsForSet()
+                .isMember("commentLike" + id, Objects.requireNonNull(SpringSecurityUtil.getCurrentUser()));
+        if(Boolean.TRUE.equals(isLikeCheck)) {
+            return;
+        }
+        stringRedisTemplate.opsForSet().add("commentLike" + id, Objects.requireNonNull(SpringSecurityUtil.getCurrentUser()));
         commentPoRepository.addCommentLike(postId, id);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addCommentDislike(Long postId, Long id) {
+        // 確認同一使用者只能按讚一次
+        Boolean isDislikeCheck = stringRedisTemplate.opsForSet()
+                .isMember("commentDislike" + id, Objects.requireNonNull(SpringSecurityUtil.getCurrentUser()));
+        if(Boolean.TRUE.equals(isDislikeCheck)) {
+            return;
+        }
+        stringRedisTemplate.opsForSet().add("commentDislike" + id, Objects.requireNonNull(SpringSecurityUtil.getCurrentUser()));
         commentPoRepository.addCommentDisLike(postId, id);
     }
 

@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 
 public interface LoginHistoryPoRepository extends JpaRepository<LoginHistoryPo, Long>, JpaSpecificationExecutor<LoginHistoryPo> {
@@ -19,4 +20,8 @@ public interface LoginHistoryPoRepository extends JpaRepository<LoginHistoryPo, 
     @Modifying
     @Query("DELETE FROM LoginHistoryPo lg WHERE lg.loginTimestamp < :localDateTime")
     void deleteByLoginTimestampBefore(@Param("localDateTime") LocalDateTime localDateTime);
+
+
+    @Query("SELECT lg FROM LoginHistoryPo lg WHERE lg.username = :username ORDER BY lg.loginTimestamp DESC limit 1")
+    Optional<LoginHistoryPo> findFirstByUsernameOrderByLoginTimestampDesc(String username);
 }

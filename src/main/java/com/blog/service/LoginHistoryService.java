@@ -11,4 +11,6 @@ public interface LoginHistoryService {
     void deleteLoginHistoryByUsername(String username);
 
     void deleteLogBefore(LocalDateTime localDateTime);
+
+    LoginHistoryDto findLastLoginHistoryByUsername(String username);
 }

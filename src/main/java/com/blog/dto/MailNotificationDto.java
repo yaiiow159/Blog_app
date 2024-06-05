@@ -37,4 +37,7 @@ public class MailNotificationDto implements Serializable {
 
     @Schema(description = "是否已讀取", example = "true")
     Boolean isRead;
+
+    @Schema(description = "是否已發送", example = "true")
+    Boolean isSend;
 }

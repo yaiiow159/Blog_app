@@ -40,4 +40,10 @@ public class LoginHistoryServiceImpl implements LoginHistoryService {
     public void deleteLogBefore(LocalDateTime localDateTime) {
         loginHistoryPoRepository.deleteByLoginTimestampBefore(localDateTime);
     }
+
+    @Override
+    public LoginHistoryDto findLastLoginHistoryByUsername(String username) {
+        Optional<LoginHistoryPo> loginHistoryPo = loginHistoryPoRepository.findFirstByUsernameOrderByLoginTimestampDesc(username);
+        return loginHistoryPo.map(LoginHistoryPoMapper.INSTANCE::toDto).orElse(null);
+    }
 }

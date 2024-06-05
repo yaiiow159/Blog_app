@@ -15,6 +15,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionManager;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
@@ -33,6 +34,7 @@ public class LogoutHandler extends SecurityContextLogoutHandler {
     private StringRedisTemplate stringRedisTemplate;
     @Resource
     private LoginHistoryService loginHistoryService;
+
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
         final String token = request.getHeader("Authorization");
@@ -43,13 +45,12 @@ public class LogoutHandler extends SecurityContextLogoutHandler {
         if(StringUtils.containsWhitespace(jwtToken)){
             throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.JWT_AUTHENTICATION_ACCESS_ERROR);
         } else if (StringUtils.hasText(jwtToken)) {
-            CacheUtil.remove(username);
-            List<LoginHistoryDto> loginHistoryDos = loginHistoryService.findLoginHistoryByUsername(username);
+            CacheUtil.remove(username);// 取得最近一筆的登入時間
+            LoginHistoryDto loginHistoryDo = loginHistoryService.findLastLoginHistoryByUsername(username);
             // 按照登入時間排序 取最新的一筆
-            loginHistoryDos.sort(Comparator.comparing(LoginHistoryDto::getLoginTimestamp).reversed());
-            loginHistoryDos.get(0).setAction("logout");
-            loginHistoryDos.get(0).setLogoutTimestamp(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-            loginHistoryService.addLog(loginHistoryDos.get(0));
+            loginHistoryDo.setAction("logout");
+            loginHistoryDo.setLogoutTimestamp(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
+            loginHistoryService.addLog(loginHistoryDo);
             jwtBlackListService.addJwtToBlackList(jwtToken);
             stringRedisTemplate.delete(username);
             log.info("logout success");

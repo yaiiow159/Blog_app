@@ -14,12 +14,12 @@ public class LogHistoryDestroyTask {
 
     private final LoginHistoryService loginHistoryService;
 
-    // 每一小時執行一次
-    @Scheduled(cron = "0 0 */1 * * *")
+    // 每五分鐘清理一次
+    @Scheduled(cron = "0 0/5 * * * ?")
     public void executeLogHistoryDestroyTask() {
         // 清除一小時前的紀錄
-        log.info("executeLogHistoryDestroyTask start");
+        log.info("清除一小時前的登入紀錄，清理");
         loginHistoryService.deleteLogBefore(LocalDateTime.now().minusDays(1));
-        log.info("executeLogHistoryDestroyTask end");
+        log.info("清除一小時前的登入紀錄，清理完成");
     }
 }

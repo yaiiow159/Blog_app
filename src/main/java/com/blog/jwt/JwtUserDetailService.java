@@ -50,12 +50,7 @@ public class JwtUserDetailService implements UserDetailsService {
 
         Set<GrantedAuthority> authoritySet = new HashSet<>();
         userDto.getRoles().forEach(role -> {
-            authoritySet.add(new GrantedAuthority() {
-                @Override
-                public String getAuthority() {
-                    return role.getRoleName();
-                }
-            });
+            authoritySet.add((GrantedAuthority) () -> role.getRoleName());
         });
         return new User(userName, email, authoritySet);
     }

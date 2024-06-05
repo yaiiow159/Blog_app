@@ -254,7 +254,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = "likeCount", key = "#postId")
+    @CacheEvict(value = "dislikeCount", key = "#postId")
     public void disLike(Long postId) {
         if(Boolean.FALSE.equals(stringRedisTemplate.hasKey("like:" + postId))) {
             return;
