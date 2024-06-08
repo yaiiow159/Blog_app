@@ -11,12 +11,12 @@ import org.springframework.stereotype.Component;
 public class KafkaSendReqHandler implements ProducerListener {
     @Override
     public void onSuccess(ProducerRecord producerRecord, RecordMetadata recordMetadata) {
-        log.info("send success" + producerRecord.toString());
+        log.info("producerRecord 寄送成功" + producerRecord.toString());
     }
 
     @Override
     public void onError(ProducerRecord producerRecord, RecordMetadata recordMetadata, Exception exception) {
-        log.info("send error" + producerRecord.toString() + "error message:" + exception.getMessage());
+        log.info("producerRecord 寄送 失敗" + producerRecord.toString() + "錯誤訊息:" + exception.getMessage());
     }
 
 }

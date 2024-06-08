@@ -57,11 +57,9 @@ public class CacheUtil {
     public static String get(String key) {
         return quavaCache.getIfPresent(key);
     }
-
         public static void put(String key, String value) {
             quavaCache.put(key, value);
         }
-
         public static void remove(String key) {
             if(quavaCache.getIfPresent(key) == null) {
                 return;

@@ -23,5 +23,5 @@ public interface LoginHistoryPoRepository extends JpaRepository<LoginHistoryPo, 
 
 
     @Query("SELECT lg FROM LoginHistoryPo lg WHERE lg.username = :username ORDER BY lg.loginTimestamp DESC limit 1")
-    Optional<LoginHistoryPo> findFirstByUsernameOrderByLoginTimestampDesc(String username);
+    Optional<LoginHistoryPo> findFirstByUsernameOrderByLoginTimestampDesc(@Param("username") String username);
 }

@@ -67,4 +67,48 @@ public class RetryEmailNotificationConsumer {
             log.error("存儲 mq 重試對列 郵件訊息 失敗 原因: {}", e.getMessage());
         }
     }
+
+    @Transactional(rollbackFor = Exception.class)
+    @KafkaListener(topics = "phone-notification-topic-retry", id = "phone-notification-consumer-retry")
+    public void retryPhoneNotification(ConsumerRecord<String, String> record) {
+        log.info("Received email notification: {}", record.value());
+
+        EmailNotification emailNotification = JSON.parseObject(record.value(), EmailNotification.class);
+
+        MimeMessage message = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<html><body>");
+        sb.append("<p style='color: #333; font-size: 18px; font-family: Arial, sans-serif;'>");
+        sb.append("你的訂閱作者").append(emailNotification.getSendTo()).append(emailNotification.getOperation()).append("：<strong>").append(emailNotification.getSubject()).append("</strong>");
+        sb.append("</p>");
+        sb.append("<p style='color: #666; font-size: 14px; font-family: Arial, sans-serif;'>");
+        sb.append("寄件內容：").append(emailNotification.getMessage());
+        sb.append("</p>");
+        sb.append("<p style='color: #666; font-size: 14px; font-family: Arial, sans-serif;'>");
+        sb.append("感謝你的訪問！");
+        sb.append("</p>");
+        sb.append("</body></html>");
+        // 將 emailNotification 寫入資料庫
+        try {
+            MailNotificationPo mailNotificationPo = new MailNotificationPo();
+            mailNotificationPo.setEmail(emailNotification.getEmailAddress());
+            mailNotificationPo.setSubject(emailNotification.getSubject());
+            mailNotificationPo.setName(emailNotification.getSendTo());
+            mailNotificationPo.setSendBy(emailNotification.getSendBy());
+            mailNotificationPo.setSendTime(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
+            mailNotificationPo.setSend(true);
+            mailNotificationPoRepository.saveAndFlush(mailNotificationPo);
+
+            helper.setFrom(EMAIL_SENDER);
+            helper.setSubject(emailNotification.getSubject());
+            helper.setText(sb.toString(), true);
+            helper.setTo(emailNotification.getEmailAddress());
+            javaMailSender.send(message);
+        } catch (Exception e) {
+            log.error("存儲 mq 重試對列 郵件訊息 失敗 原因: {}", e.getMessage());
+        }
+    }
+
 }

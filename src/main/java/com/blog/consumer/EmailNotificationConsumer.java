@@ -72,8 +72,11 @@ public class EmailNotificationConsumer {
             mailNotificationPo.setSendTime(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             mailNotificationPo.setSend(true);
             mailNotificationPoRepository.saveAndFlush(mailNotificationPo);
+
+            ack.acknowledge();
         } catch (Exception e) {
             log.error("寄送郵件通知訊息 失敗 原因: {}", e.getMessage());
+            throw new RuntimeException("寄送郵件通知訊息 失敗 原因: " + e.getMessage());
         }
     }
 
@@ -111,8 +114,11 @@ public class EmailNotificationConsumer {
             mailNotificationPo.setContent(emailNotification.getMessage());
             mailNotificationPo.setSendTime(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             mailNotificationPoRepository.saveAndFlush(mailNotificationPo);
+
+            ack.acknowledge();
         } catch (Exception e) {
             log.error("寄送手機驗證碼通知訊息 失敗 原因: {}", e.getMessage());
+            throw new RuntimeException("寄送手機通知訊息 失敗 原因: " + e.getMessage());
         }
     }
 }
