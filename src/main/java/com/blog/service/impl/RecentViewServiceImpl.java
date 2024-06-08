@@ -10,8 +10,11 @@ import com.blog.po.UserPo;
 import com.blog.service.RecentViewService;
 import com.blog.vo.PostVo;
 import com.google.common.base.Strings;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,24 +35,19 @@ public class RecentViewServiceImpl implements RecentViewService {
     private final UserPoRepository userJpaRepository;
     private final PostPoRepository postPoRepository;
     @Override
-    public Page<PostVo> getRecentView(Long postId, String username, Integer page, Integer size) {;
+    public Page<PostVo> getRecentView(String authorName, String authorEmail, String title, Integer page, Integer size) {;
         Pageable pageable = PageRequest.of(page - 1, size);
         //利用username 查詢使用者
-        if(Strings.isNullOrEmpty(username)) {
-            throw new UsernameNotFoundException("找不到該使用者");
+        if(Strings.isNullOrEmpty(authorName)) {
+            throw new UsernameNotFoundException("請輸入作者名稱");
         }
-        Optional<UserPo> user = userJpaRepository.findByUserName(username);
+        Optional<UserPo> user = userJpaRepository.findByUserName(authorName);
         if(user.isEmpty()) {
-            throw new UsernameNotFoundException("找不到該使用者");
+            throw new UsernameNotFoundException("找不到該使用者" + authorName);
         }
         Long userId = user.get().getId();
-        Page<PostVo> postVoPage = recentViewPoRepository.findPostPoByUserId(userId,pageable);
-        if(!postVoPage.getContent().isEmpty()) {
-            for (PostVo postVo : postVoPage) {
-                postVo.setCreateTimeStr(transformDateToString(postVo.getCreateTime()));
-            }
-        }
-        return postVoPage;
+        // 進行where like 查詢
+        return recentViewPoRepository.findPostPoByAuthorNameAndAuthorEmailAndTitleAndUserId(authorName, authorEmail, title, userId, pageable);
     }
 
     @Override

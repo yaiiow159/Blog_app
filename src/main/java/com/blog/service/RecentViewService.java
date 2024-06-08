@@ -6,7 +6,7 @@ import com.blog.vo.PostVo;
 import org.springframework.data.domain.Page;
 
 public interface RecentViewService {
-    Page<PostVo> getRecentView( Long postId, String username, Integer page, Integer size);
+    Page<PostVo> getRecentView(String authorName, String authorEmail, String title, Integer page, Integer size);
 
     void createRecentView(RecentViewDto recentViewDto) throws ResourceNotFoundException;
 

@@ -1,5 +1,6 @@
 package com.blog.dao;
 
+import com.blog.dto.TagDto;
 import com.blog.po.TagPo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -15,4 +16,8 @@ public interface TagPoRepository extends JpaRepository<TagPo, Long>, JpaSpecific
 
     @Query(value = "SELECT t.* FROM tag t WHERE t.id IN (SELECT tp.tag_id FROM post_tag tp WHERE tp.post_id = :id)", nativeQuery = true)
     List<TagPo> findAllTagsByPostId(@Param("id") Long postId);
+
+
+    @Query("SELECT t FROM TagPo t LIMIT 10")
+    List<TagPo> findHotTags();
 }

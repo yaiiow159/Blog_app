@@ -85,5 +85,11 @@ public class TagServiceImpl implements TagService {
         return tagPoRepository.findById(id).map(TagPoMapper.INSTANCE::toDto).orElse(null);
     }
 
+    @Override
+    public List<TagDto> findHotTags() {
+        List<TagPo> hotTags = tagPoRepository.findHotTags();
+        return TagPoMapper.INSTANCE.toDtoList(hotTags);
+    }
+
 }
 

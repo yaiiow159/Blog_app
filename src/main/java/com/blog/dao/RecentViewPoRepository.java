@@ -29,4 +29,18 @@ public interface RecentViewPoRepository extends JpaRepository<RecentViewPo, Long
             "JOIN rv.posts p " +
             "WHERE p.id = :id ")
     Optional<PostVo> findPostVoById(@Param("id") Long id);
+
+    @Query("SELECT " +
+            "NEW com.blog.vo.PostVo(p.id, p.title, p.authorName, p.authorEmail, p.content, rv.createTime) " +
+            "FROM RecentViewPo rv " +
+            "JOIN rv.posts p " +
+            "WHERE rv.user.id = :userId " +
+            "AND p.title LIKE %:title% " +
+            "AND p.authorName LIKE %:authorName% " +
+            "AND p.authorEmail LIKE %:authorEmail% ")
+    Page<PostVo> findPostPoByAuthorNameAndAuthorEmailAndTitleAndUserId(@Param("authorName") String authorName,
+                                                                       @Param("authorEmail") String authorEmail,
+                                                                       @Param("title") String title,
+                                                                       @Param("userId") Long userId,
+                                                                       Pageable pageable);
 }

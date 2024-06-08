@@ -17,4 +17,6 @@ public interface TagService {
     String delete(Long id);
 
     TagDto findById(Long id);
+
+    List<TagDto> findHotTags();
 }

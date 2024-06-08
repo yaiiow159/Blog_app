@@ -37,6 +37,9 @@ public class DlqEmailNotificationConsumer {
             mailNotificationPo.setSendTime(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             mailNotificationPo.setSend(false);
             mailNotificationPoRepository.saveAndFlush(mailNotificationPo);
+
+            ack.acknowledge();
+            log.info("存儲 mq 死信對列 郵件訊息 成功");
         } catch (Exception e) {
             log.error("存儲 mq 死信對列 郵件訊息 失敗 原因: {}", e.getMessage());
         }

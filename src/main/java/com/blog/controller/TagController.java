@@ -39,11 +39,11 @@ public class TagController {
         return new ApiResponse<>(true, "查詢成功", tagDtoPage, HttpStatus.OK);
     }
 
-    @GetMapping("/findList")
+    @GetMapping("/findHotTag")
     @Operation(summary = "查詢所有標籤",description = "查詢所有標籤")
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     public ApiResponse<List<TagDto>> getTagList() {
-        List<TagDto> tagDtoList = tagService.findAll();
+        List<TagDto> tagDtoList = tagService.findHotTags();
         if(CollectionUtils.isEmpty(tagDtoList))
             return new ApiResponse<>(false, "查無資料", null, HttpStatus.NO_CONTENT);
         return new ApiResponse<>(true, "查詢成功", tagDtoList, HttpStatus.OK);

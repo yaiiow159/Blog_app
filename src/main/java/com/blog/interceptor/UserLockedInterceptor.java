@@ -39,6 +39,8 @@ public class UserLockedInterceptor implements HandlerInterceptor {
         if (user.isPresent()) {
             UserPo userPo = user.get();
             if (userPo.isLocked()) {
+                response.setCharacterEncoding("UTF-8");
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "帳號已被鎖戶");
                 return false;
             }

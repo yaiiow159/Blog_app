@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
@@ -27,7 +28,7 @@ public class RetryEmailNotificationConsumer {
 
     @Transactional(rollbackFor = Exception.class)
     @KafkaListener(topics = "email-notification-topic-retry", id = "email-notification-consumer-retry")
-    public void retryEmailNotification(ConsumerRecord<String, String> record) {
+    public void retryEmailNotification(ConsumerRecord<String, String> record, Acknowledgment ack) {
         log.info("Received email notification: {}", record.value());
 
         EmailNotification emailNotification = JSON.parseObject(record.value(), EmailNotification.class);
@@ -63,6 +64,9 @@ public class RetryEmailNotificationConsumer {
             helper.setText(sb.toString(), true);
             helper.setTo(emailNotification.getEmailAddress());
             javaMailSender.send(message);
+
+            ack.acknowledge();
+            log.info("存儲 mq 重試對列 郵件訊息 成功");
         } catch (Exception e) {
             log.error("存儲 mq 重試對列 郵件訊息 失敗 原因: {}", e.getMessage());
         }
@@ -70,7 +74,7 @@ public class RetryEmailNotificationConsumer {
 
     @Transactional(rollbackFor = Exception.class)
     @KafkaListener(topics = "phone-notification-topic-retry", id = "phone-notification-consumer-retry")
-    public void retryPhoneNotification(ConsumerRecord<String, String> record) {
+    public void retryPhoneNotification(ConsumerRecord<String, String> record, Acknowledgment ack) {
         log.info("Received email notification: {}", record.value());
 
         EmailNotification emailNotification = JSON.parseObject(record.value(), EmailNotification.class);
@@ -106,6 +110,9 @@ public class RetryEmailNotificationConsumer {
             helper.setText(sb.toString(), true);
             helper.setTo(emailNotification.getEmailAddress());
             javaMailSender.send(message);
+
+            ack.acknowledge();
+            log.info("存儲 mq 重試對列 郵件訊息 成功");
         } catch (Exception e) {
             log.error("存儲 mq 重試對列 郵件訊息 失敗 原因: {}", e.getMessage());
         }
