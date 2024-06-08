@@ -19,6 +19,7 @@
 - 使用ApplicationEvent 監聽 Authetication 驗證狀況，如登入驗證成功，則記錄當下登入時間以及其他訊息，並保存置db中 並在登出時寫入登出時間
 - 使用Jsoup 過濾前端文章內文，避免sql注入等問題
 - 使用OpenApi生成文件以及後端測試接口
+- kafka 使用手動提交ack確保商業邏輯處理正確後才確認消費該筆消息成功，設置retry機制保證消息可正確消費成功，添加死信對列若消息消費失敗紀錄致database中顯示於前端提示
 <hr>
 
 ## 系統介紹：
@@ -29,11 +30,11 @@
 
 前端項目網址: https://github.com/yaiiow159/blog-frontend
 
-目前正在進行: 撰寫前端後端的CI/CD流程、部屬GCP上 <br>
+目前正在進行: 撰寫前端後端的CI/CD流程<br>
 
 ## 系統流程說明 (構思說明)
 前端使用axios來傳遞前端資料至後端，後端使用dto接收資料，並使用mapstructer來轉換dto至po物件並在dao層進行crud操作<br>
-系統可以針對容器化配置以及本地化配置有分別使用不同配置檔進行設定
+系統可以針對容器化配置以及本地化配置有分別使用不同配k
 
 流程圖: <br>
 ![blog_app系統流程圖 drawio](https://github.com/yaiiow159/Blog_app/assets/39752246/5c30b0b1-34f4-4314-b819-e65416abdecc)
