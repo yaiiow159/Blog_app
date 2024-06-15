@@ -2,7 +2,6 @@ package com.blog.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,7 +14,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @Setter
 @Getter
-public class ResetPasswordRequest implements Serializable {
+public class ResetPasswordDto implements Serializable {
 
     @Schema(description = "驗證令牌")
     @NotBlank(message = "令牌不得為空")

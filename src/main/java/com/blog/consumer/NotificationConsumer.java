@@ -1,23 +1,31 @@
 package com.blog.consumer;
 
 import com.alibaba.fastjson2.JSON;
+import com.blog.dao.CommentPoRepository;
 import com.blog.dao.MailNotificationPoRepository;
+import com.blog.dao.UserPoRepository;
+import com.blog.dao.UserReportPoRepository;
+import com.blog.dto.CommentDto;
 import com.blog.dto.EmailNotification;
+import com.blog.enumClass.CommentReport;
+import com.blog.exception.ResourceNotFoundException;
+import com.blog.po.CommentPo;
 import com.blog.po.MailNotificationPo;
+import com.blog.po.UserPo;
+import com.blog.po.UserReportPo;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.retry.annotation.Backoff;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.net.SocketTimeoutException;
 import java.time.LocalDateTime;
@@ -26,14 +34,17 @@ import java.time.ZoneId;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class EmailNotificationConsumer {
+public class NotificationConsumer {
     private static final String EMAIL_SENDER = "TimmyChung";
     private final JavaMailSender javaMailSender;
     private final MailNotificationPoRepository mailNotificationPoRepository;
+    private final CommentPoRepository commentPoRepository;
+    private final UserPoRepository userPoRepository;
+    private final UserReportPoRepository userReportPoRepository;
 
     @KafkaListener(topics = "email-notification-topic", id = "email-notification-consumer")
     @RetryableTopic(attempts = "5", backoff = @Backoff(multiplier = 2, maxDelay = 3000L),
-            include = SocketTimeoutException.class,dltTopicSuffix = "dlt",retryTopicSuffix = "retry")
+            include = {SocketTimeoutException.class},dltTopicSuffix = "dlt",retryTopicSuffix = "retry")
     @Transactional(rollbackFor = Exception.class)
     public void getMailNotification(ConsumerRecord<String, String> record, Acknowledgment ack) {
         log.info("Received email notification: {}", record.value());
@@ -72,7 +83,6 @@ public class EmailNotificationConsumer {
             mailNotificationPo.setSendTime(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             mailNotificationPo.setSend(true);
             mailNotificationPoRepository.saveAndFlush(mailNotificationPo);
-
             ack.acknowledge();
         } catch (Exception e) {
             log.error("寄送郵件通知訊息 失敗 原因: {}", e.getMessage());
@@ -118,6 +128,31 @@ public class EmailNotificationConsumer {
             ack.acknowledge();
         } catch (Exception e) {
             log.error("寄送手機驗證碼通知訊息 失敗 原因: {}", e.getMessage());
+            throw new RuntimeException("寄送手機通知訊息 失敗 原因: " + e.getMessage());
+        }
+    }
+
+    @KafkaListener(topics = "review-notification-topic", id = "review-notification-consumer")
+    @RetryableTopic(attempts = "5", backoff = @Backoff(multiplier = 2, maxDelay = 3000L),
+            include = SocketTimeoutException.class, dltTopicSuffix = "dlt",retryTopicSuffix = "retry")
+    @Transactional(rollbackFor = Exception.class)
+    public void getReviewCommentNotification(ConsumerRecord<String, String> record, Acknowledgment ack) {
+        log.info("Received review comment notification: {}", record.value());
+        CommentDto commentDto = JSON.parseObject(record.value(), CommentDto.class);
+        try {
+            UserPo userPo = userPoRepository.findByUserName(commentDto.getName()).orElseThrow(() -> new UsernameNotFoundException("找不到使用者資料"));
+            CommentPo commentPo = commentPoRepository.findById(commentDto.getId()).orElseThrow(() -> new ResourceNotFoundException("找不到該留言"));
+            // 建立 通知訊息
+            UserReportPo userReportPo = new UserReportPo();
+            userReportPo.setUser(userPo);
+            userReportPo.setComment(commentPo);
+            userReportPo.setStatus(CommentReport.NOT_REPORTED.getStatus());
+            userReportPo.setReason(commentDto.getReason());
+            userReportPo.setReportTime(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
+            userReportPoRepository.saveAndFlush(userReportPo);
+            ack.acknowledge();
+        } catch (Exception e) {
+            log.error("寄送手機通知訊息 失敗 原因: {}", e.getMessage());
             throw new RuntimeException("寄送手機通知訊息 失敗 原因: " + e.getMessage());
         }
     }

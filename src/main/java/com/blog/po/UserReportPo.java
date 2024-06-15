@@ -24,13 +24,21 @@ public class UserReportPo implements java.io.Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "user_id",foreignKey = @ForeignKey(name = "fk_user_report_user_id"),referencedColumnName = "id")
     @ToString.Exclude
     private UserPo user;
 
+    @Column(name = "status", nullable = false)
+    private boolean status;
+
     @Column(name = "reason", nullable = false)
     private String reason;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "comment_id",foreignKey = @ForeignKey(name = "fk_user_report_comment_id"),referencedColumnName = "id")
+    @ToString.Exclude
+    private CommentPo comment;
 
     @Column(name = "report_time", nullable = false)
     @CreationTimestamp

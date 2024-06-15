@@ -59,11 +59,9 @@ public interface PostPoRepository extends JpaRepository<PostPo, Long>, JpaSpecif
     @Modifying
     @Query("UPDATE PostPo p SET p.views =+ 1 WHERE p.id = ?1")
     void addPostView(Long id);
-    
 
     @Query("SELECT p FROM PostPo p WHERE p.views > 0 ORDER BY p.views DESC LIMIT 10")
     List<PostPo> findPopularPost();
-
 
     @Query("SELECT p FROM PostPo p JOIN p.tags t WHERE t.id = ?1")
     List<PostPo> findAllByTagId(Long tagId);
@@ -71,6 +69,14 @@ public interface PostPoRepository extends JpaRepository<PostPo, Long>, JpaSpecif
 
     @Query("SELECT p.dislikes FROM PostPo p WHERE p.id = ?1")
     Integer getDislikeCount(Long postId);
+
+    @Query("SELECT p FROM PostPo p WHERE p.authorName = ?1")
+    List<PostPo> getPersonalPost(String username);
+
+    @Query("SELECT p FROM PostPo p " +
+           " INNER JOIN SubscriptionPo s ON p.authorName = s.authorName " +
+            " WHERE s.user.userName = ?1")
+    List<PostPo> getFavoritePost(String username);
 
 //    List<PostPo> getBookmarkList(String username);
 }

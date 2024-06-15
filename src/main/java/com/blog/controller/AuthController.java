@@ -3,7 +3,7 @@ package com.blog.controller;
 import com.blog.annotation.NoResubmit;
 import com.blog.dto.ApiResponse;
 import com.blog.dto.ForgotPasswordDto;
-import com.blog.dto.ResetPasswordRequest;
+import com.blog.dto.ResetPasswordDto;
 import com.blog.dto.UserDto;
 import com.blog.exception.ValidateFailedException;
 import com.blog.jwt.JwtRequestBody;
@@ -118,18 +118,10 @@ public class AuthController {
         authService.forgotPassword(request.getEmail());
         return new ApiResponse<>(true, "發送電子郵件成功", HttpStatus.OK);
     }
-
-    @NoResubmit(delaySecond = 5)
-    @PostMapping("/forgetPassword/{token}")
-    @Operation(summary = "重設密碼", description = "重設密碼並更新密碼", tags = {"JWT認證相關功能"})
-    public ApiResponse<String> resetPassword(@PathVariable String token, @Validated @RequestBody ResetPasswordRequest request) {
-        authService.resetPassword(token, request.getNewPassword());
-        return new ApiResponse<>(true, "重設密碼成功", HttpStatus.OK);
-    }
     @NoResubmit(delaySecond = 5)
     @Operation(summary = "重設密碼", description = "重設密碼並更新密碼")
     @PostMapping("/resetPassword")
-    public ApiResponse<String> resetPassword(@Validated @RequestBody ResetPasswordRequest request) {
+    public ApiResponse<String> resetPassword(@Validated @RequestBody ResetPasswordDto request) {
         authService.resetPassword(request.getToken(), request.getNewPassword());
         return new ApiResponse<>(true, "重設密碼成功", HttpStatus.OK);
     }

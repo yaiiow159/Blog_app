@@ -15,7 +15,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "通用", description = "通用相關API")
+import java.util.Map;
+import java.util.Set;
+
+@Tag(name = "通用API", description = "通用功能相關API")
 @RestController
 @RequestMapping("/api/v1/common")
 @RequiredArgsConstructor

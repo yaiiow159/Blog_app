@@ -55,4 +55,8 @@ public interface PostService {
     List<PostDto> searchByTag(Long id);
 
     Integer getDislikesCount(Long postId);
+
+    List<PostDto> getPersonalPost();
+
+    List<PostDto> getFavoritePost();
 }

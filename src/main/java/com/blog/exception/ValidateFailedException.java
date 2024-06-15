@@ -61,7 +61,8 @@ public class ValidateFailedException extends RuntimeException {
         USER_ALREADY_EXISTS("U001","用戶已存在"),
         EMAIL_ALREADY_EXISTS("U002","電子郵箱已存在"),
 
-        USER_REGISTER_FAILED("U003", "註冊失敗"),;
+        USER_REGISTER_FAILED("U003", "註冊失敗"),
+        USER_LOCKED("U004", "用戶已被鎖定"),;
         private String message;
         private final String code;
 

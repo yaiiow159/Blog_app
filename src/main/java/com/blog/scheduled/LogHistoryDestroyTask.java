@@ -11,9 +11,7 @@ import java.time.LocalDateTime;
 @Slf4j
 @RequiredArgsConstructor
 public class LogHistoryDestroyTask {
-
     private final LoginHistoryService loginHistoryService;
-
     // 每五分鐘清理一次
     @Scheduled(cron = "0 0/5 * * * ?")
     public void executeLogHistoryDestroyTask() {

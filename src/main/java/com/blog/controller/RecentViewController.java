@@ -27,11 +27,12 @@ public class RecentViewController {
     public ApiResponse<Page<PostVo>> getRecentView (
             @Parameter(description = "頁數", example = "0") @RequestParam(name = "page", defaultValue = "1") Integer page,
             @Parameter(description = "每頁筆數", example = "10") @RequestParam(name = "size", defaultValue = "10") Integer size,
+            @Parameter(description = "使用者名稱", example = "Timmy") @RequestParam(name = "username", required = false) String username,
             @Parameter(description = "作者名稱", example = "Timmy") @RequestParam(name = "authorName", required = false) String authorName,
             @Parameter(description = "作者郵箱", example = "Timmy@qq.com") @RequestParam(name = "authorEmail", required = false) String authorEmail,
             @Parameter(description = "文章名稱", example = "文章名稱") @RequestParam(name = "title", required = false) String title) {
 
-            Page<PostVo> postVos = recentViewService.getRecentView(authorName, authorEmail, title, page, size);
+            Page<PostVo> postVos = recentViewService.getRecentView(username,authorName, authorEmail, title, page, size);
         if (CollectionUtils.isEmpty(postVos.getContent()))
             return new ApiResponse<>(false, "查無資料", null, HttpStatus.NO_CONTENT);
         return new ApiResponse<>(true, "查詢成功", postVos, HttpStatus.OK);

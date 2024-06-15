@@ -43,6 +43,19 @@ public class PostController {
     public ApiResponse<List<PostDto>> getHotPost(){
         return new ApiResponse<>(true, "查詢成功", postService.getHotPost(), HttpStatus.OK);
     }
+
+    @GetMapping("/personal")
+    @Operation(summary = "查詢個人文章",description = "查詢個人文章")
+    public ApiResponse<List<PostDto>> getPersonalPost(){
+        return new ApiResponse<>(true, "查詢成功", postService.getPersonalPost(), HttpStatus.OK);
+    }
+
+    @GetMapping("/favorite")
+    @Operation(summary = "查詢個人收藏文章",description = "查詢個人收藏文章")
+    public ApiResponse<List<PostDto>> getFavoritePost(){
+        return new ApiResponse<>(true, "查詢成功", postService.getFavoritePost(), HttpStatus.OK);
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "查詢文章",description = "利用id查詢文章")
     public ApiResponse<PostDto> getPost(@Parameter(description = "文章id",example = "1") @PathVariable Long id) throws ResourceNotFoundException {

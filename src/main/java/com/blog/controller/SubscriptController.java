@@ -62,9 +62,10 @@ public class SubscriptController {
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @GetMapping("/checkSubscription")
     @Operation(summary = "檢查是否訂閱", description = "檢查是否訂閱", tags = {"訂閱相關功能"})
-    public ApiResponse<String> checkSubscription(
+    public ApiResponse<Boolean> checkSubscription(
             @Parameter(description = "使用者名稱", required = true) @RequestParam String username,
             @Parameter(description = "文章id", required = true) @RequestParam Long postId) {
-        return new ApiResponse<>(true, "檢查成功", subscriptionService.checkSubscription(username, postId), HttpStatus.OK);
+        boolean isSubscribed = subscriptionService.checkSubscription(username, postId);
+        return new ApiResponse<>(true, null, isSubscribed, HttpStatus.OK);
     }
 }

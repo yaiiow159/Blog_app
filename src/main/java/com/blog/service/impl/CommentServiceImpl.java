@@ -14,6 +14,7 @@ import com.blog.po.CommentPo;
 import com.blog.po.PostPo;
 import com.blog.po.UserPo;
 import com.blog.po.UserReportPo;
+import com.blog.producer.NotificationProducer;
 import com.blog.service.CommentService;
 import com.blog.utils.SpringSecurityUtil;
 
@@ -42,6 +43,9 @@ public class CommentServiceImpl implements CommentService {
     private UserPoRepository userJpaRepository;
     @Resource
     private UserReportPoRepository userReportPoRepository;
+
+    @Resource
+    private NotificationProducer notificationProducer;
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
@@ -103,18 +107,8 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void reportComment(CommentDto commentDto) throws ResourceNotFoundException {
-        UserPo userPo = userJpaRepository.findByUserName(commentDto.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("找不到該用戶" + commentDto.getName() + "的留言"));
-        CommentPo commentPo = commentPoRepository.findById(commentDto.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("找不到序號為" + commentDto.getId() + "的留言"));
-        commentPo.setIsReport(CommentReport.IS_REPORTED.getStatus());
-        commentPoRepository.saveAndFlush(commentPo);
-
-        UserReportPo userReportPo = new UserReportPo();
-        userReportPo.setUser(userPo);
-        userReportPo.setReason(commentDto.getReason());
-        userReportPoRepository.saveAndFlush(userReportPo);
+    public void reportComment(CommentDto commentDto) {
+        notificationProducer.sendReviewNotification(commentDto);
     }
 
     @Override

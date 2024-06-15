@@ -65,7 +65,8 @@ public class MailNotificationServiceImpl implements MailNotificationService {
 
     @Override
     public String updateMailNotification(MailNotificationDto mailNotificationDto) {
-        MailNotificationPo mailNotificationPo = mailNotificationPoRepository.findById(mailNotificationDto.getId()).orElseThrow(() -> new ResourceNotFoundException("找不到該筆資料"));
+        MailNotificationPo mailNotificationPo = mailNotificationPoRepository.findById(mailNotificationDto.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("找不到該筆資料"));
         mailNotificationPo.setRead(mailNotificationDto.getIsRead());
         mailNotificationPoRepository.saveAndFlush(mailNotificationPo);
         return "更新狀態成功";

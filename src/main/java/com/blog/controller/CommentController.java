@@ -51,7 +51,7 @@ public class CommentController {
     @PostMapping("/posts/{postId}/comments")
     @Operation(summary = "創建評論",description = "創建一篇文章底下的評論")
     public ApiResponse<CommentDto> createComment(@Parameter(description = "文章id",example = "1") @PathVariable Long postId,
-                                                    @Parameter(description = "評論內容",example = "評論內容")@Validated @RequestBody CommentDto commentDto){
+                                                 @Parameter(description = "評論內容",example = "評論內容")@Validated @RequestBody CommentDto commentDto){
         try {
             commentService.add(postId, commentDto);
         } catch (Exception e) {

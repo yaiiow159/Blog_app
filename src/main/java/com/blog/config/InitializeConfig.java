@@ -76,7 +76,6 @@ public class InitializeConfig {
             userJpaRepository.saveAndFlush(userPo);
 
             log.info("初始化管理員帳號成功....");
-
         }
     }
 

@@ -42,8 +42,6 @@ public class JwtAuthenticatePreFilter extends OncePerRequestFilter {
             jwtToken = token.substring(7);
             try {
                 username = jwtTokenUtil.getUsername(jwtToken);
-                // 將 username 放入 threadLocal 中
-                ThreadLocalUtil.set(username);
                 logger.info("username:" + username);
             } catch (IllegalArgumentException e) {
                 logger.info("無法取得token");

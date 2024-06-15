@@ -44,7 +44,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
      * @param postId 被訂閱的文章id
      */
     @Override
-    @Transactional(rollbackFor = Exception.class,isolation = Isolation.REPEATABLE_READ)
+    @Transactional(rollbackFor = Exception.class)
     public String subscribe(String username, Long postId, String authorName, String email) throws ResourceNotFoundException {
         SubscriptionDto subscriptionDto = new SubscriptionDto();
         subscriptionDto.setAuthorName(authorName);
@@ -56,7 +56,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         if(Boolean.TRUE.equals(stringRedisTemplate.hasKey("bookmark" + username + "_" + postId))){
             return "已訂閱、請勿重複操作";
         }
-        stringRedisTemplate.opsForValue().set("bookmark" + username + "_" + postId, "true", 1, TimeUnit.DAYS);
+        stringRedisTemplate.opsForValue().set("bookmark" + username + "_" + postId, "true");
         subscriptionPoRepository.saveAndFlush(subscriptionPo);
         return "訂閱成功";
     }
@@ -86,10 +86,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public String checkSubscription(String username, Long postId) {
+    public boolean checkSubscription(String username, Long postId) {
         if(Boolean.TRUE.equals(stringRedisTemplate.hasKey("bookmark" + username + "_" + postId))){
-            return "已訂閱";
+            return true;
         }
-        return "未訂閱";
+        return false;
     }
 }

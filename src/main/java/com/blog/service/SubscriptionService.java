@@ -13,5 +13,5 @@ public interface SubscriptionService {
     String unSubscribe(String username, Long postId);
     List<SubscriptionDto> findByAuthorNameOrAuthorEmail(String authorName, String authorEmail);
 
-    String checkSubscription(String username, Long postId);
+    boolean checkSubscription(String username, Long postId);
 }

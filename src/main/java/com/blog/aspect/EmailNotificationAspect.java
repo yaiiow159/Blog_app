@@ -8,7 +8,7 @@ import com.blog.dto.PostDto;
 import com.blog.dto.SubscriptionDto;
 import com.blog.exception.ResourceNotFoundException;
 import com.blog.po.PostPo;
-import com.blog.producer.EmailNotificationProducer;
+import com.blog.producer.NotificationProducer;
 import com.blog.service.SubscriptionService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ import java.util.List;
 @Slf4j
 public class EmailNotificationAspect {
     @Resource
-    private EmailNotificationProducer emailNotificationProducer;
+    private NotificationProducer emailNotificationProducer;
     @Resource
     private SubscriptionService subscriptionService;
 

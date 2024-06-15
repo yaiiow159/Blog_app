@@ -256,10 +256,6 @@ public class PostServiceImpl implements PostService {
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "dislikeCount", key = "#postId")
     public void disLike(Long postId) {
-        if(Boolean.FALSE.equals(stringRedisTemplate.hasKey("like:" + postId))) {
-            return;
-        }
-        stringRedisTemplate.delete("like:" + postId);
         postPoRepository.disLike(postId);
     }
     @Override
@@ -319,6 +315,32 @@ public class PostServiceImpl implements PostService {
     @Cacheable(value = "dislikeCount", key = "#postId")
     public Integer getDislikesCount(Long postId) {
         return postPoRepository.getDislikeCount(postId);
+    }
+
+    @Override
+    public List<PostDto> getPersonalPost() {
+        List<PostPo> postPos = postPoRepository.getPersonalPost(SpringSecurityUtil.getCurrentUser());
+        List<PostDto> postDtoList = new ArrayList<>();
+        for (PostPo postPo : postPos) {
+            PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
+            postDto.setTagDtoList(TagPoMapper.INSTANCE.toDtoList(tagPoRepository.findAllTagsByPostId(postPo.getId())));
+            postDto.setCategoryDto(postPo.getCategory() != null ? CategoryPoMapper.INSTANCE.toDto(postPo.getCategory()) : null);
+            postDtoList.add(postDto);
+        }
+        return postDtoList;
+    }
+
+    @Override
+    public List<PostDto> getFavoritePost() {
+        List<PostPo> postPos = postPoRepository.getFavoritePost(SpringSecurityUtil.getCurrentUser());
+        List<PostDto> postDtoList = new ArrayList<>();
+        for (PostPo postPo : postPos) {
+            PostDto postDto = PostPoMapper.INSTANCE.toDto(postPo);
+            postDto.setTagDtoList(TagPoMapper.INSTANCE.toDtoList(tagPoRepository.findAllTagsByPostId(postPo.getId())));
+            postDto.setCategoryDto(postPo.getCategory() != null ? CategoryPoMapper.INSTANCE.toDto(postPo.getCategory()) : null);
+            postDtoList.add(postDto);
+        }
+        return postDtoList;
     }
 
     @Override

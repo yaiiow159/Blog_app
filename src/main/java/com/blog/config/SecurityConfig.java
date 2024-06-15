@@ -52,7 +52,7 @@ public class SecurityConfig {
 
     @Bean
     @ConditionalOnMissingBean(PasswordEncoder.class)
-    public static PasswordEncoder getInstance() {
+    public static PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
@@ -79,7 +79,6 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(httpSecurityCorsConfigurer ->
                         httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource()))
-                .httpBasic(Customizer.withDefaults())
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests.requestMatchers(
                                         "/swagger-ui/**",
@@ -89,8 +88,8 @@ public class SecurityConfig {
                                         "/api/v1/auth/register",
                                         "/api/v1/auth/captchaCode",
                                         "/websocket/**",
-                                        "/api/v1/auth/forget",
-                                        "/api/v1/auth/reset",
+                                        "/api/v1/auth/forgetPassword",
+                                        "/api/v1/auth/resetPassword",
                                         "/api/v1/mailNotification/**",
                                         "/static/**").permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -112,6 +111,7 @@ public class SecurityConfig {
                                 .deleteCookies("JSESSIONID")
                                 .permitAll()
                 )
+                .passwordManagement(passwordManagement -> passwordEncoder())
                 .addFilterBefore(jwtAuthenticatePreFilter, UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(sessionManagement ->
                         sessionManagement

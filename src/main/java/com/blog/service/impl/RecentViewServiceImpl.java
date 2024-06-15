@@ -35,7 +35,7 @@ public class RecentViewServiceImpl implements RecentViewService {
     private final UserPoRepository userJpaRepository;
     private final PostPoRepository postPoRepository;
     @Override
-    public Page<PostVo> getRecentView(String authorName, String authorEmail, String title, Integer page, Integer size) {;
+    public Page<PostVo> getRecentView(String username,String authorName, String authorEmail, String title, Integer page, Integer size) {;
         Pageable pageable = PageRequest.of(page - 1, size);
         //利用username 查詢使用者
         if(Strings.isNullOrEmpty(authorName)) {

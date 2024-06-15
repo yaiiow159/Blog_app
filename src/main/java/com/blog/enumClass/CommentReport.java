@@ -1,10 +1,8 @@
 package com.blog.enumClass;
 
 public enum CommentReport {
-
     IS_REPORTED(true),
     NOT_REPORTED(false);
-
     private boolean status;
 
     CommentReport(boolean status) {
@@ -19,7 +17,4 @@ public enum CommentReport {
         this.status = status;
     }
 
-    public static boolean getReportStatus(boolean status) {
-        return status;
-    }
 }

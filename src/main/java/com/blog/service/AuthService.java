@@ -1,6 +1,5 @@
 package com.blog.service;
 
-import com.blog.dto.UserDto;
 import jakarta.mail.MessagingException;
 
 import java.security.NoSuchAlgorithmException;
