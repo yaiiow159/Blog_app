@@ -85,12 +85,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void changePassword(String oldPassword, String newPassword) {
+    public void changePassword(String oldPassword, String newPassword) throws ValidateFailedException {
         String username = SpringSecurityUtil.getCurrentUser();
-        userJpaRepository.changePassword(passwordEncoder.encode(newPassword), username);
-        // 查詢新使用者密碼
+        // 檢驗舊密碼是否相同
         userJpaRepository.findByUserName(username).ifPresent(userPo -> {
-            // 更新spring-security的數據
+            if (!passwordEncoder.matches(oldPassword, userPo.getPassword())) {
+                throw new ValidateFailedException("舊密碼不相同，請重新再試一次");
+            }
+            userJpaRepository.changePassword(passwordEncoder.encode(newPassword), username);
             var userDetails = userDetailsService.loadUserByUsername(username);
             var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null,userDetails.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
@@ -150,10 +152,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(rollbackFor = Exception.class, isolation = Isolation.REPEATABLE_READ)
     public void add(UserDto userDto) throws AuthenticationNotSupportedException, ValidateFailedException {
-        if (userJpaRepository.findByUserName(userDto.getUserName()).isPresent()) {
-            throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.RESOURCE_ALREADY_EXISTS);
-        }
-        if (userJpaRepository.findByEmail(userDto.getEmail()).isPresent()) {
+        if (userJpaRepository.findByUserNameOrEmail(userDto.getUserName(),userDto.getEmail()).isPresent()) {
             throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.RESOURCE_ALREADY_EXISTS);
         }
         validateUser(userDto);

@@ -6,14 +6,11 @@ import com.blog.dao.PostPoRepository;
 import com.blog.dao.UserPoRepository;
 import com.blog.dao.UserReportPoRepository;
 import com.blog.dto.CommentDto;
-import com.blog.enumClass.CommentReport;
 import com.blog.exception.ResourceNotFoundException;
-import com.blog.exception.ValidateFailedException;
 import com.blog.mapper.CommentPoMapper;
 import com.blog.po.CommentPo;
 import com.blog.po.PostPo;
 import com.blog.po.UserPo;
-import com.blog.po.UserReportPo;
 import com.blog.producer.NotificationProducer;
 import com.blog.service.CommentService;
 import com.blog.utils.SpringSecurityUtil;
@@ -22,7 +19,6 @@ import jakarta.annotation.Resource;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -61,7 +57,6 @@ public class CommentServiceImpl implements CommentService {
         CommentPo commentPo = CommentPoMapper.INSTANCE.toPo(commentDto);
         commentPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
         commentPo.setCreatUser(SpringSecurityUtil.getCurrentUser());
-        commentPo.setIsReport(CommentReport.NOT_REPORTED.getStatus());
         commentPo.setDislikes(0L);
         commentPo.setLikes(0L);
         commentPo.setPost(postPo);
@@ -77,7 +72,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    @SendMail(type = "comment",operation = "edit")
+    //@SendMail(type = "comment",operation = "edit")
     @Transactional(rollbackFor = Exception.class)
     public void edit(Long postId, Long id, CommentDto commentDto) throws ResourceNotFoundException {
         PostPo postPo = postPoRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException("找不到文章序號為" + postId + "的留言"));
@@ -91,7 +86,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void delete(Long postId, Long id) throws ResourceNotFoundException {
+    public void delete(Long postId, Long id){
         commentPoRepository.deleteById(id);
     }
 

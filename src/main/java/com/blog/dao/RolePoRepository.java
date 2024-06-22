@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RolePoRepository extends JpaRepository<RolePo, Long>, JpaSpecificationExecutor<RolePo> {
-
     @Query(value = "SELECT * FROM roles WHERE name = ?1", nativeQuery = true)
     Optional<RolePo> findByName(String roleName);
 
@@ -17,6 +16,4 @@ public interface RolePoRepository extends JpaRepository<RolePo, Long>, JpaSpecif
     List<RolePo> findByUserId(long userId);
 
     Optional<RolePo> findByRoleName(String string);
-
-
 }

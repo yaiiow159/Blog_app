@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionManager;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -45,7 +46,7 @@ public class LogoutHandler extends SecurityContextLogoutHandler {
         log.info("username: " + username);
 
         if(StringUtils.containsWhitespace(jwtToken)){
-            throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.JWT_AUTHENTICATION_ACCESS_ERROR);
+            throw new ValidateFailedException("登出時驗證token錯誤");
         } else if (StringUtils.hasText(jwtToken)) {
             CacheUtil.remove(username);// 取得最近一筆的登入時間
             // 按照登入時間排序 取最新的一筆

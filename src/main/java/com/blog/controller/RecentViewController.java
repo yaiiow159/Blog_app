@@ -34,17 +34,19 @@ public class RecentViewController {
 
             Page<PostVo> postVos = recentViewService.getRecentView(username,authorName, authorEmail, title, page, size);
         if (CollectionUtils.isEmpty(postVos.getContent()))
-            return new ApiResponse<>(false, "查無資料", null, HttpStatus.NO_CONTENT);
+            return new ApiResponse<>(false, "暫無資料", null, HttpStatus.NO_CONTENT);
         return new ApiResponse<>(true, "查詢成功", postVos, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "取得最近瀏覽紀錄", description = "取得最近瀏覽紀錄", tags = {"瀏覽紀錄"})
     public ApiResponse<PostVo> getRecentView(@PathVariable(name = "id") Long id) {
-        PostVo postVo = recentViewService.getRecentViewById(id);
-        if (postVo == null)
-            return new ApiResponse<>(false, "查無資料", null, HttpStatus.NO_CONTENT);
-        return new ApiResponse<>(true, "查詢成功", postVo, HttpStatus.OK);
+        try {
+            PostVo postVo = recentViewService.getRecentViewById(id);
+            return new ApiResponse<>(true, "查詢成功", postVo, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "查無資料" + e.getMessage(), null, HttpStatus.BAD_REQUEST);
+        }
     }
 
     @Operation(summary = "新增最近瀏覽紀錄", description = "新增最近瀏覽紀錄", tags = {"瀏覽紀錄"})
@@ -53,7 +55,7 @@ public class RecentViewController {
         try {
             recentViewService.createRecentView(recentViewDto);
         } catch (Exception e) {
-            return new ApiResponse<>(false, e.getMessage(), null, HttpStatus.BAD_REQUEST);
+            return new ApiResponse<>(false, "新增失敗" + e.getMessage(), null, HttpStatus.BAD_REQUEST);
             }
         return new ApiResponse<>(true, "新增成功", null, HttpStatus.CREATED);
     }

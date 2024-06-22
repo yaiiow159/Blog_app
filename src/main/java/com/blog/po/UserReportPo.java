@@ -30,7 +30,7 @@ public class UserReportPo implements java.io.Serializable {
     private UserPo user;
 
     @Column(name = "status", nullable = false)
-    private boolean status;
+    private String status;
 
     @Column(name = "reason", nullable = false)
     private String reason;

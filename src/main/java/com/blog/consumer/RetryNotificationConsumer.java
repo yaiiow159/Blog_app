@@ -18,16 +18,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.annotation.RetryableTopic;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.retry.annotation.Backoff;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.net.SocketTimeoutException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
@@ -145,7 +142,7 @@ public class RetryNotificationConsumer {
             UserReportPo userReportPo = new UserReportPo();
             userReportPo.setUser(userPo);
             userReportPo.setComment(commentPo);
-            userReportPo.setStatus(CommentReport.IS_REPORTED.getStatus());
+            userReportPo.setStatus(CommentReport.PENDING.getStatus());
             userReportPo.setReason(commentDto.getReason());
             userReportPo.setReportTime(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             userReportPoRepository.saveAndFlush(userReportPo);

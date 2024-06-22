@@ -16,13 +16,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PostPoRepository extends JpaRepository<PostPo, Long>, JpaSpecificationExecutor<PostPo> {
-    
-
     // 增加讚數 + 1
     @Modifying
     @Query("UPDATE PostPo p SET p.likes =+ 1 WHERE p.id = ?1")
     void addLike(long postId);
-
     // 減少讚數 - 1
     @Modifying
     @Query("UPDATE PostPo p SET p.dislikes =+ 1 WHERE p.id = ?1")
@@ -30,7 +27,6 @@ public interface PostPoRepository extends JpaRepository<PostPo, Long>, JpaSpecif
 
     @Query("SELECT p.likes FROM PostPo p WHERE p.id = ?1")
     Integer getLikeCount(long postId);
-    
 
     @Query("SELECT p.views FROM  PostPo p WHERE p.id = ?1")
     Long getViewsCountById(Long postId);

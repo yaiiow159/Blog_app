@@ -28,7 +28,6 @@ public class EmailNotificationAspect {
     private NotificationProducer emailNotificationProducer;
     @Resource
     private SubscriptionService subscriptionService;
-
     @Resource
     private PostPoRepository postPoRepository;
 
@@ -46,13 +45,13 @@ public class EmailNotificationAspect {
         }
         for (Object arg : args) {
             if (arg instanceof PostDto postDto) {
-                EmailNotification emailNotification = getEmailNotification(postDto, operation, type);
+                EmailNotification emailNotification = sendToEmailWhenArticleChange(postDto, operation, type);
                 if(!ObjectUtils.isEmpty(emailNotification)) {
                     emailNotificationProducer.sendMailNotification(emailNotification);
                 }
             }
             if(arg instanceof CommentDto commentDto) {
-                EmailNotification emailNotification = getEmailNotification(commentDto, operation, type);
+                EmailNotification emailNotification = sendToEmailWhenCommentChange(commentDto, operation, type);
                 if(!ObjectUtils.isEmpty(emailNotification)) {
                     emailNotificationProducer.sendMailNotification(emailNotification);
                 }
@@ -60,14 +59,13 @@ public class EmailNotificationAspect {
         }
         log.info("notifyEmail afterReturning ending...");
     }
-    private EmailNotification getEmailNotification(PostDto postDto, String operation, String type) {
+    private EmailNotification sendToEmailWhenArticleChange(PostDto postDto, String operation, String type) {
         EmailNotification emailNotification = new EmailNotification();
         emailNotification.setSendTo(postDto.getAuthorEmail());
         emailNotification.setSubject("文章通知");
         emailNotification.setSendBy(postDto.getAuthorName());
         emailNotification.setOperation(operation);
-
-        // 如果文章被收藏才需要通知
+        // 當前使用者有收藏 文章時，發送通知
         List<SubscriptionDto> subscriptionDtos = subscriptionService.findByAuthorNameOrAuthorEmail(postDto.getAuthorName(), postDto.getAuthorEmail());
         if(!CollectionUtils.isEmpty(subscriptionDtos)) {
             if("add".equals(operation)) {
@@ -81,25 +79,19 @@ public class EmailNotificationAspect {
         return emailNotification;
     }
 
-    private EmailNotification getEmailNotification(CommentDto commentDto, String operation, String type) throws ResourceNotFoundException {
+    private EmailNotification sendToEmailWhenCommentChange(CommentDto commentDto, String operation, String type) throws ResourceNotFoundException {
         PostPo postPo = postPoRepository.findById(commentDto.getPostId()).orElseThrow(() -> new ResourceNotFoundException("文章不存在"));
         EmailNotification emailNotification = new EmailNotification();
-        // 如果文章被收藏才需要通知
-        List<SubscriptionDto> subscriptionDtos = subscriptionService.findByAuthorNameOrAuthorEmail(postPo.getAuthorName(), postPo.getAuthorEmail());
-        if(!CollectionUtils.isEmpty(subscriptionDtos)) {
-            if("comment".equals(type)) {
+        if("comment".equals(type)) {
+            // 新增留言通知
+            emailNotification.setSendTo(postPo.getAuthorEmail());
+            emailNotification.setSubject("留言通知");
+            emailNotification.setSendBy(commentDto.getName());
+            emailNotification.setOperation(operation);
+            emailNotification.setEmailAddress(postPo.getAuthorEmail());
+            if ("add".equals(operation)) {
                 // 新增留言通知
-                emailNotification.setSendTo(postPo.getAuthorEmail());
-                emailNotification.setSubject("留言通知");
-                emailNotification.setSendBy(commentDto.getName());
-                emailNotification.setOperation(operation);
-                if ("add".equals(operation)) {
-                    // 新增留言通知
-                    emailNotification.setMessage("您的文章 " + postPo.getTitle() + "新增了一則留言，請前往查看");
-                }
-                if ("edit".equals(operation)) {
-                    emailNotification.setMessage("您的文章" + postPo.getTitle() + "留言已經更新" + "請前往查看");
-                }
+                emailNotification.setMessage("您的文章 " + postPo.getTitle() + "新增了一則留言，請前往查看");
             }
         }
         return emailNotification;

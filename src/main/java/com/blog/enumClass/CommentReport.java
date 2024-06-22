@@ -1,20 +1,15 @@
 package com.blog.enumClass;
 
+import lombok.Getter;
+
+@Getter
 public enum CommentReport {
-    IS_REPORTED(true),
-    NOT_REPORTED(false);
-    private boolean status;
+    ACCEPT("accept"),
+    REJECT("reject"),
+    PENDING("pending");
+    private final String status;
 
-    CommentReport(boolean status) {
+    CommentReport(String status) {
         this.status = status;
     }
-
-    public boolean getStatus() {
-        return status;
-    }
-
-    public void setStatus(boolean status) {
-        this.status = status;
-    }
-
 }

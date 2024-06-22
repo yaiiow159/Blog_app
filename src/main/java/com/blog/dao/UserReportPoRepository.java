@@ -13,4 +13,6 @@ public interface UserReportPoRepository extends JpaRepository<UserReportPo, Long
     @Query("SELECT u FROM UserReportPo u WHERE u.user.id = :userId")
     List<UserReportPo> findByUserId(@Param("userId") Long userId);
 
+    @Query("SELECT u FROM UserReportPo u WHERE u.status = :status")
+    List<UserReportPo> findByStatus(@Param("status") String status);
 }

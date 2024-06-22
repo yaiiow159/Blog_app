@@ -25,7 +25,7 @@ public class HibernateIndexBuild implements ApplicationListener<ApplicationEvent
         SearchSession searchSession = Search.session(entityManager);
         MassIndexer indexer = searchSession.massIndexer();
         indexer.idFetchSize(100);
-        indexer.threadsToLoadObjects(10);
+        indexer.threadsToLoadObjects(2);
         indexer.batchSizeToLoadObjects(25);
         indexer.cacheMode(CacheMode.REFRESH);
         try {

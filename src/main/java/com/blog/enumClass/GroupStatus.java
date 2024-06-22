@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum GroupStatus {
-    NORMAL("一般使用者"),
+    USER("一般使用者"),
     ADMIN("管理員"),;
 
     private final String status;

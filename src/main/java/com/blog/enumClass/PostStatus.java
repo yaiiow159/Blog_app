@@ -6,7 +6,7 @@ import lombok.Getter;
 public enum PostStatus {
 
     DRAFT("草稿"),
-    PUBLISHED("已發佈"),
+    PUBLISHED("發佈"),
     RECYCLE("回收站");
 
     private final String status;

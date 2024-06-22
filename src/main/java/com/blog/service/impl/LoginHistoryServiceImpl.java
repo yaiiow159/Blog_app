@@ -15,6 +15,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class LoginHistoryServiceImpl implements LoginHistoryService {
 
     private final LoginHistoryPoRepository loginHistoryPoRepository;
@@ -36,7 +37,6 @@ public class LoginHistoryServiceImpl implements LoginHistoryService {
     }
 
     @Override
-    @Transactional
     public void deleteLogBefore(LocalDateTime localDateTime) {
         loginHistoryPoRepository.deleteByLoginTimestampBefore(localDateTime);
     }

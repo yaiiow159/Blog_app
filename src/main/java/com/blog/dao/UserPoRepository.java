@@ -56,4 +56,7 @@ public interface UserPoRepository extends JpaRepository<UserPo, Long>, JpaSpecif
     @Modifying
     @Query(value = "UPDATE users SET avatar_name = :imageName WHERE username = :username", nativeQuery = true)
     void updateImageName(@Param("imageName") String imageName,@Param("username") String username);
+
+    @Query(value = "SELECT * FROM users WHERE username = :userName OR email = :email", nativeQuery = true)
+    Optional<UserPo> findByUserNameOrEmail(@Param("userName") String userName,@Param("email") String email);
 }
