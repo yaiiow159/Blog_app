@@ -20,7 +20,9 @@ import java.util.Arrays;
 import java.util.Date;
 
 /**
- * 紀錄Request日誌訊息
+ * @author TimmyChung
+ *
+ * 記錄請求
  */
 @Aspect
 @Component

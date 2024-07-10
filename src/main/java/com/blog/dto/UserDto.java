@@ -25,7 +25,6 @@ import java.util.Set;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
 public class UserDto extends BaseDto implements Serializable {
 
     @Schema(description = "使用者群組ID")
@@ -34,23 +33,19 @@ public class UserDto extends BaseDto implements Serializable {
     @Schema(description = "使用者群組名稱",example = "admin")
     private String groupName;
 
-    @Schema(description = "使用者密碼",example = "admin1234")
+    @Schema(description = "使用者密碼",example = "admin1234",requiredMode = Schema.RequiredMode.REQUIRED)
     @Pattern(regexp = "^[a-zA-Z0-9_-]{6,16}$",message = "密碼格式錯誤")
     String password;
 
     @Schema(description = "電子郵件地址",example = "admin1234@example.com")
-    @Email(message = "電子郵件格式錯誤")
+    @Email(message = "電子郵件格式錯誤",regexp = "^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$")
     String email;
 
     @Schema(description = "是否鎖定",example = "false")
     Boolean isLocked;
 
-    @Schema(description = "使用者名稱",example = "admin")
+    @Schema(description = "使用者名稱",example = "admin",requiredMode = Schema.RequiredMode.REQUIRED)
     private String userName;
-
-    @Schema(description = "生日",example = "2022-01-01 00:00:00")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime birthday;
 
     @Schema(description = "使用者暱稱",example = "admin")
     private String nickName;
@@ -59,7 +54,7 @@ public class UserDto extends BaseDto implements Serializable {
     private String address;
 
     @Schema(description = "使用者電話",example = "0912345678")
-    private String phone;
+    private String phoneNumber;
 
     @Schema(description = "使用者角色")
     Set<RoleDto> roles;

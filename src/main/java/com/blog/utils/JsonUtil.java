@@ -7,10 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component
 public class JsonUtil {
 
-    public static String toJsonString(Object obj) throws JsonProcessingException {
+    public static String toJsonString(Object obj) {
          return JSON.toJSONString(obj);
     }
 
@@ -18,7 +17,7 @@ public class JsonUtil {
         return JSON.parseObject(json, clazz);
     }
 
-    public static <T> T parseObject(String json, TypeReference<T> typeReference) throws JsonProcessingException {
+    public static <T> T parseObject(String json, TypeReference<T> typeReference) {
         return JSON.parseObject(json, typeReference);
     }
 

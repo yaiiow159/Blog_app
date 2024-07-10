@@ -1,7 +1,7 @@
 package com.blog.controller;
 
 import com.blog.annotation.NoResubmit;
-import com.blog.dto.ApiResponse;
+import com.blog.response.ResponseBody;
 import com.blog.dto.CommentDto;
 import com.blog.exception.ResourceNotFoundException;
 import com.blog.service.CommentService;
@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,129 +20,126 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RequestMapping("/api/v1/")
+
+@RequestMapping("/api/v1/comments")
+@RequiredArgsConstructor
 @RestController
-@Slf4j
 @Tag(name = "評論相關功能", description = "評論相關功能")
 public class CommentController {
-    @Resource
-    private CommentService commentService;
 
-    @GetMapping("/posts/{postId}/comments/{id}")
+    private final CommentService commentService;
+
+    @GetMapping("/{id}")
     @Operation(summary = "查詢評論",description = "查詢一篇文章底下的特定評論")
-    public ApiResponse<CommentDto> getComment(@Parameter(description = "文章id",example = "1")@PathVariable Long postId,
-                                                  @Parameter(description = "評論id",example = "1")@PathVariable Long id) throws ResourceNotFoundException {
-        CommentDto commentDto = commentService.findComment(postId,id);
-        if (ObjectUtils.isEmpty(commentDto))
-            return new ApiResponse<>(false, "查無資料", commentDto, HttpStatus.NO_CONTENT);
-        return new ApiResponse<>(true, "查詢成功", commentDto, HttpStatus.OK);
+    public ResponseBody<CommentDto> getComment(@Parameter(description = "評論id",example = "1")@PathVariable Long id){
+        CommentDto commentDto;
+        try {
+            commentDto = commentService.findById(id);
+        } catch (Exception e) {
+            return new ResponseBody<>(false, "查詢時出錯誤, 錯誤原因" + e.getMessage(), null, HttpStatus.NO_CONTENT);
+        }
+        return new ResponseBody<>(true, "查詢成功", commentDto, HttpStatus.OK);
     }
 
-    @GetMapping("/posts/{postId}/comments")
-    @Operation(summary = "查詢評論",description = "查詢一篇文章底下的評論")
-    public ApiResponse<List<CommentDto>> getComments(@Parameter(description = "文章id",example = "1")@PathVariable Long postId) throws ResourceNotFoundException {
-        List<CommentDto> commentDtoList = commentService.findAllComments(postId);
-        if (CollectionUtils.isEmpty(commentDtoList))
-            return new ApiResponse<>(false, "查無資料", commentDtoList, HttpStatus.NO_CONTENT);
-        return new ApiResponse<>(true, "查詢成功", commentDtoList, HttpStatus.OK);
+    @GetMapping("/post/{postId}")
+    @Operation(summary = "查詢評論",description = "查詢一篇評論")
+    public ResponseBody<List<CommentDto>> getComments(@Parameter(description = "文章id",example = "1")@PathVariable Long postId){
+        List<CommentDto> commentDtoList;
+        try {
+            commentDtoList = commentService.findAll(postId);
+        } catch (Exception e) {
+            return new ResponseBody<>(false, "查詢時出錯誤, 錯誤原因" + e.getMessage(), null, HttpStatus.NO_CONTENT);
+        }
+        return new ResponseBody<>(true, "查詢成功", commentDtoList, HttpStatus.OK);
     }
 
     @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    @PostMapping("/posts/{postId}/comments")
+    @PostMapping
     @Operation(summary = "創建評論",description = "創建一篇文章底下的評論")
-    public ApiResponse<CommentDto> createComment(@Parameter(description = "文章id",example = "1") @PathVariable Long postId,
-                                                 @Parameter(description = "評論內容",example = "評論內容")@Validated @RequestBody CommentDto commentDto){
+    public ResponseBody<CommentDto> createComment (@Parameter(description = "評論內容",example = "評論內容")@RequestBody @Validated CommentDto commentDto){
         try {
-            commentService.add(postId, commentDto);
+            commentService.save(commentDto);
         } catch (Exception e) {
-            return new ApiResponse<>(false, "創建失敗", HttpStatus.BAD_REQUEST);
+            return new ResponseBody<>(false, "創建失敗, 失敗原因為: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-        return new ApiResponse<>(true, "創建成功", HttpStatus.OK);
+        return new ResponseBody<>(true, "創建成功", HttpStatus.OK);
     }
+
     @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    @PutMapping("/posts/{postId}/comments/{id}")
+    @PutMapping
     @Operation(summary = "更新評論",description = "更新一篇文章底下的評論")
-    public ApiResponse<CommentDto> updateComment(@Parameter(description = "文章id",example = "1")@PathVariable Long postId,
-                                                 @Parameter(description = "評論id",example = "1")@PathVariable Long id,
-                                                 @Parameter(description = "評論內容",example = "評論內容")@Validated @RequestBody CommentDto commentDto){
+    public ResponseBody<CommentDto> updateComment(@Parameter(description = "評論內容",example = "評論內容")@RequestBody @Validated CommentDto commentDto){
         try {
-            commentService.edit(postId, id, commentDto);
+            commentService.update(commentDto);
         } catch (Exception e) {
-            return new ApiResponse<>(false, "更新失敗", HttpStatus.BAD_REQUEST);
+            return new ResponseBody<>(false, "更新失敗, 失敗原因為: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-        return new ApiResponse<>(true, "更新成功", HttpStatus.OK);
+        return new ResponseBody<>(true, "更新成功", HttpStatus.OK);
     }
     @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    @DeleteMapping("/posts/{postId}/comments/{id}")
+    @DeleteMapping("/{id}")
     @Operation(summary = "刪除評論",description = "刪除一篇文章底下的評論")
-    public ApiResponse<String> deleteComment(
-            @Parameter(description = "文章id",example = "1")@PathVariable Long postId,
-            @Parameter(description = "評論id",example = "1")@PathVariable Long id){
+    public ResponseBody<String> deleteComment(@Parameter(description = "評論id",example = "1")@PathVariable Long id){
         try {
-            commentService.delete(postId, id);
+            commentService.delete(id);
         } catch (Exception e) {
-            return new ApiResponse<>(false, "刪除失敗", HttpStatus.BAD_REQUEST);
+            return new ResponseBody<>(false, "刪除失敗, 失敗原因為: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-        return new ApiResponse<>(true, "刪除成功",HttpStatus.OK);
+        return new ResponseBody<>(true, "刪除成功",HttpStatus.OK);
     }
 
     @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    @PostMapping("/posts/{postId}/comments/report/{id}")
+    @PostMapping("/report")
     @Operation(summary = "檢舉評論",description = "檢舉一篇文章底下的評論")
-    public ApiResponse<String> reportComment(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "被檢舉評論")@Validated @RequestBody
-            CommentDto commentDto) {
+    public ResponseBody<String> reportComment(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "被檢舉評論") @RequestBody
+            @Validated CommentDto commentDto) {
         try {
-            commentService.reportComment(commentDto);
+            commentService.report(commentDto);
         } catch (Exception e) {
-            return new ApiResponse<>(false, "檢舉失敗", HttpStatus.BAD_REQUEST);
+            return new ResponseBody<>(false, "檢舉失敗, 失敗原因為: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-        return new ApiResponse<>(true, "檢舉成功",HttpStatus.OK);
+        return new ResponseBody<>(true, "檢舉成功",HttpStatus.OK);
     }
 
     @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    @PostMapping("/posts/{postId}/comments/{id}/likes")
+    @PostMapping("/{id}/like")
     @Operation(summary = "按讚評論",description = "按讚一篇文章底下的評論")
-    public ApiResponse<String> likeComment(
-            @Parameter(description = "文章id",example = "1")@PathVariable Long postId,
-            @Parameter(description = "評論id",example = "1")@PathVariable Long id){
+    public ResponseBody<String> likeComment(@Parameter(description = "評論id",example = "1")@PathVariable Long id){
         try {
-            commentService.addCommentlike(postId, id);
+            commentService.like(id);
         } catch (Exception e) {
-            return new ApiResponse<>(false, "按讚失敗", HttpStatus.BAD_REQUEST);
+            return new ResponseBody<>(false, "按讚失敗, 失敗原因為: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-        return new ApiResponse<>(true, "按讚成功",HttpStatus.OK);
+        return new ResponseBody<>(true, "按讚成功",HttpStatus.OK);
     }
 
     @NoResubmit(delaySecond = 3)
-    @DeleteMapping("/posts/{postId}/comments/{id}/likes")
+    @DeleteMapping("/{id}/like")
     @Operation(summary = "取消按讚評論",description = "取消按讚一篇文章底下的評論")
-    public ApiResponse<String> cancelLikeComment(
-            @Parameter(description = "文章id",example = "1")@PathVariable Long postId,
-            @Parameter(description = "評論id",example = "1")@PathVariable Long id){
+    public ResponseBody<String> cancelLikeComment(@Parameter(description = "評論id",example = "1")@PathVariable Long id){
         try {
-            commentService.addCommentDislike(postId, id);
+            commentService.cancelLike(id);
         } catch (Exception e) {
-            return new ApiResponse<>(false, "取消按讚失敗", HttpStatus.BAD_REQUEST);
+            return new ResponseBody<>(false, "取消按讚失敗", HttpStatus.BAD_REQUEST);
         }
-        return new ApiResponse<>(true, "取消按讚成功",HttpStatus.OK);
+        return new ResponseBody<>(true, "取消按讚成功",HttpStatus.OK);
     }
 
     // 查詢按讚數
-    @GetMapping("/posts/{postId}/comments/{id}/likeCount")
+    @GetMapping("/{id}/likeCount")
     @Operation(summary = "查詢評論按讚數",description = "查詢評論按讚數")
-    public ApiResponse<Integer> likeCountComment(
-            @Parameter(description = "文章id",example = "1")@PathVariable Long postId,
-            @Parameter(description = "評論id",example = "1")@PathVariable Long id){
+    public ResponseBody<Integer> likeCountComment(@Parameter(description = "評論id",example = "1")@PathVariable Long id){
         try {
-            return new ApiResponse<>(true, "查詢成功",commentService.findLikeCount(postId, id),HttpStatus.OK);
+            Integer likeCount = commentService.queryLikeCount(id);
+            return new ResponseBody<>(true, "查詢成功",likeCount,HttpStatus.OK);
         } catch (Exception e) {
-            return new ApiResponse<>(false, "查詢失敗",HttpStatus.BAD_REQUEST);
+            return new ResponseBody<>(false, "查詢失敗, 失敗原因為: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 

@@ -11,6 +11,7 @@ import org.hibernate.proxy.HibernateProxy;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Objects;
 
 @Entity
@@ -49,7 +50,7 @@ public class MailNotificationPo implements Serializable {
 
     @Column(name = "email")
     @NotBlank(message = "電子郵件不得為空")
-    @Email(message = "電子郵件格式錯誤")
+    @Email(message = "電子郵件格式錯誤",regexp = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$")
     private String email;
 
     @Column(name = "content")
@@ -58,8 +59,7 @@ public class MailNotificationPo implements Serializable {
     @Column(name = "subject")
     private String subject;
 
-    @Column(name = "send_time")
-    @CreationTimestamp
+    @Column(name = "send_time",updatable = false)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",shape = JsonFormat.Shape.STRING)
     private LocalDateTime sendTime;
 
@@ -72,6 +72,11 @@ public class MailNotificationPo implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
+    @PrePersist
+    public void prePersist() {
+        this.sendTime = LocalDateTime.now(ZoneId.of("Asia/Taipei"));
+    }
 
     @Override
     public final boolean equals(Object o) {

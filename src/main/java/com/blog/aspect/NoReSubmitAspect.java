@@ -1,7 +1,7 @@
 package com.blog.aspect;
 
 import com.blog.annotation.NoResubmit;
-import com.blog.dto.ApiResponse;
+import com.blog.response.ResponseBody;
 import com.blog.utils.RedisLockUtil;
 import jakarta.annotation.Resource;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -18,6 +18,12 @@ import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * @author TimmyChung
+ * @version 1.0
+ *
+ * 使用redis lock 避免重複提交
+ */
 @Aspect
 @Component
 public class NoReSubmitAspect {
@@ -36,7 +42,7 @@ public class NoReSubmitAspect {
         final String key = generateKey(joinPoint);
         final boolean success = redisLockUtil.getLock(key, null, noResubmit.delaySecond(), TimeUnit.SECONDS);
         if(!success){
-            return new ApiResponse<>(false, "重複提交，請稍後 "+ noResubmit.delaySecond() + "秒在試", null, HttpStatus.BAD_REQUEST);
+            return new ResponseBody<>(false, "重複提交，請稍後 "+ noResubmit.delaySecond() + "秒在試", null, HttpStatus.BAD_REQUEST);
         }
         return joinPoint.proceed();
     }

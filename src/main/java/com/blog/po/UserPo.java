@@ -7,6 +7,7 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -47,24 +48,26 @@ public class UserPo extends BasicPo implements Serializable {
     private String nickName;
 
     @Column(name = "password")
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",message = "密碼格式錯誤")
     private String password;
 
     @Column(name = "email")
-    @Email(message = "Email格式錯誤")
+    @Email(message = "Email格式錯誤",regexp = "^[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*\\.[a-zA-Z0-9]{2,6}$")
     private String email;
 
-    @Column(name = "phone")
-    private String phone;
+    @Column(name = "phone_number")
+    @Pattern(regexp = "^09[0-9]{8}$",message = "手機格式錯誤")
+    private String phoneNumber;
 
     @Column(name = "address")
     private String address;
 
     // 圖片存儲地址
-    @Column(name = "avatar_name")
-    private String avatarName;
+    @Column(name = "image_url")
+    private String imageUrl;
 
-    @Column(name = "avatar_path")
-    private String avatarPath;
+    @Column(name = "image_name")
+    private String imageName;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_group_po_id",nullable = false,

@@ -13,7 +13,6 @@ import java.util.Optional;
 
 public interface TagPoRepository extends JpaRepository<TagPo, Long>, JpaSpecificationExecutor<TagPo> {
     Optional<TagPo> findByName(String name);
-
     @Query(value = "SELECT t.* FROM tag t WHERE t.id IN (SELECT tp.tag_id FROM post_tag tp WHERE tp.post_id = :id)", nativeQuery = true)
     List<TagPo> findAllTagsByPostId(@Param("id") Long postId);
     @Query("SELECT t FROM TagPo t ORDER BY t.createDate DESC LIMIT 10")

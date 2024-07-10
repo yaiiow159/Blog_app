@@ -13,13 +13,13 @@ public class ValidateFailedException extends RuntimeException {
     public ValidateFailedException(String message){
         super(message);
     }
-    private final List<DomainErrorStatus> errors = new ArrayList<>();
+        private final List<DomainErrorStatus> errors = new ArrayList<>();
 
     public ValidateFailedException(DomainErrorStatus... errors) {
-        super("Validation failed");
-        if (errors != null && errors.length > 0)
-            this.errors.addAll(Arrays.asList(errors));
-    }
+            super("Validation failed");
+            if (errors != null && errors.length > 0)
+                this.errors.addAll(Arrays.asList(errors));
+        }
 
     public ValidateFailedException(DomainErrorStatus error, String message) {
         super("Validation failed");

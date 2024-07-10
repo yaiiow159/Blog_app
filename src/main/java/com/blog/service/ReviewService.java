@@ -5,20 +5,13 @@ import org.springframework.data.domain.Page;
 
 import java.util.List;
 
-public interface ReviewService {
-    Page<UserReportDto> findAll(Integer page, Integer pageSize, String reason, Integer status);
-
-    List<UserReportDto> findAll();
-
-    UserReportDto findById(Long id);
-
-    String accept(Long id);
-
-    String reject(Long id);
-
-    String batchAccept(List<Long> ids);
-
-    String batchReject(List<Long> ids);
-
+public interface ReviewService extends BaseService<UserReportDto> {
     List<UserReportDto> findByStatusIsPending();
+    void accept(Long id);
+    void reject(Long id);
+    void batchAccept(List<Long> ids);
+    void batchReject(List<Long> ids);
+    Page<UserReportDto> findAll(Integer page, Integer pageSize, String reason, String status);
+
+    UserReportDto findByUserId(Long userId);
 }

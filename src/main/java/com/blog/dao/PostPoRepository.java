@@ -1,78 +1,69 @@
 package com.blog.dao;
 
-import com.blog.enumClass.PostStatus;
 import com.blog.po.PostPo;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.security.core.parameters.P;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 public interface PostPoRepository extends JpaRepository<PostPo, Long>, JpaSpecificationExecutor<PostPo> {
     // 增加讚數 + 1
     @Modifying
-    @Query("UPDATE PostPo p SET p.likes =+ 1 WHERE p.id = ?1")
-    void addLike(long postId);
+    @Query("UPDATE PostPo p SET p.likes =+ 1 WHERE p.id = :id")
+    void addLike(@Param("id") long postId);
     // 減少讚數 - 1
     @Modifying
-    @Query("UPDATE PostPo p SET p.dislikes =+ 1 WHERE p.id = ?1")
-    void disLike(long postId);
+    @Query("UPDATE PostPo p SET p.dislikes =+ 1 WHERE p.id = :id")
+    void disLike(@Param("id") long postId);
 
-    @Query("SELECT p.likes FROM PostPo p WHERE p.id = ?1")
-    Integer getLikeCount(long postId);
+    @Query("SELECT p.likes FROM PostPo p WHERE p.id = :id")
+    Integer getLikeCount(@Param("id") long postId);
 
-    @Query("SELECT p.views FROM  PostPo p WHERE p.id = ?1")
-    Long getViewsCountById(Long postId);
+    @Query("SELECT p.views FROM  PostPo p WHERE p.id = :id")
+    Long getViewsCountById(@Param("id") Long postId);
 
-    @Query("SELECT p.likes FROM  PostPo p WHERE p.id = ?1")
-    Long getLikesCountById(Long postId);
 
     @Query("SELECT p FROM PostPo p ORDER BY p.createDate DESC limit 10")
-    List<PostPo> findTop5ByOrderByIdDesc();
+    List<PostPo> findTop10ByOrderByIdDesc();
+
+
+    @Query("SELECT p.dislikes FROM PostPo p WHERE p.id = :id")
+    Integer getDislikeCount(@Param("id") Long postId);
 
     @Modifying
-    @Query("UPDATE PostPo p SET p.imageName = ?1 WHERE p.id = ?2")
-    void updateImageName(String imageName, Long postId);
+    @Query("UPDATE PostPo p SET p.bookmarks =+ 1 WHERE p.id = :id")
+    void addBookmark(@Param("id") Long id);
 
     @Modifying
-    @Query("UPDATE PostPo p SET p.bookmarks =+ 1 WHERE p.id = ?1")
-    void addBookmark(Long id);
+    @Query("UPDATE PostPo p SET p.bookmarks =- 1 WHERE p.id = :id")
+    void deleteBookmark(@Param("id") Long id);
+
+    @Query("SELECT p.bookmarks FROM PostPo p WHERE p.id = :id")
+    Integer getBookmarkCount(@Param("id") Long postId);
 
     @Modifying
-    @Query("UPDATE PostPo p SET p.bookmarks =- 1 WHERE p.id = ?1")
-    void deleteBookmark(Long id);
+    @Query("UPDATE PostPo p SET p.views =+ 1 WHERE p.id = :id")
+    void addPostView(@Param("id") Long id);
 
-    @Query("SELECT p.bookmarks FROM PostPo p WHERE p.id = ?1")
-    Integer getBookmarkCount(Long postId);
-
-    @Modifying
-    @Query("UPDATE PostPo p SET p.views =+ 1 WHERE p.id = ?1")
-    void addPostView(Long id);
-
-    @Query("SELECT p FROM PostPo p WHERE p.views > 0 ORDER BY p.views DESC LIMIT 10")
+    @Query("SELECT p FROM PostPo p LEFT JOIN FETCH p.category LEFT JOIN FETCH p.tags WHERE p.views > 0 ORDER BY p.views DESC")
     List<PostPo> findPopularPost();
 
-    @Query("SELECT p FROM PostPo p JOIN p.tags t WHERE t.id = ?1")
-    List<PostPo> findAllByTagId(Long tagId);
+    @Query("SELECT p FROM PostPo p LEFT JOIN FETCH p.category LEFT JOIN FETCH p.tags " +
+            "INNER JOIN SubscriptionPo s ON p.authorName = s.authorName "+
+            "WHERE s.user.userName = :username")
+    List<PostPo> getFavoritePost(@Param("username") String username);
 
+    @Query("SELECT p FROM PostPo p LEFT JOIN FETCH p.category LEFT JOIN FETCH p.tags WHERE p.authorName = :username")
+    List<PostPo> getPersonalPost(@Param("username") String username);
 
-    @Query("SELECT p.dislikes FROM PostPo p WHERE p.id = ?1")
-    Integer getDislikeCount(Long postId);
+    @Query("SELECT DISTINCT p FROM PostPo p JOIN p.tags t WHERE t.id = :tagId")
+    List<PostPo> findByTag(@Param("tagId") Long id);
 
-    @Query("SELECT p FROM PostPo p WHERE p.authorName = ?1")
-    List<PostPo> getPersonalPost(String username);
-
-    @Query("SELECT p FROM PostPo p " +
-           " INNER JOIN SubscriptionPo s ON p.authorName = s.authorName " +
-            " WHERE s.user.userName = ?1")
-    List<PostPo> getFavoritePost(String username);
-
-//    List<PostPo> getBookmarkList(String username);
+    @Modifying
+    @Query("UPDATE PostPo p SET p.imageUrl = :imageUrl,p.imageName = :imageName WHERE p.authorName = :currentUser")
+    void updatePostImage(@Param("imageUrl") String imageUrl,@Param("imageName") String imageName,@Param("currentUser") String currentUser);
 }

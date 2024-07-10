@@ -9,36 +9,32 @@ import com.blog.po.RecentViewPo;
 import com.blog.po.UserPo;
 import com.blog.service.RecentViewService;
 import com.blog.vo.PostVo;
-import com.google.common.base.Strings;
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.*;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Collections;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class RecentViewServiceImpl implements RecentViewService {
-    //2024-01-01T14:33
-    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final RecentViewPoRepository recentViewPoRepository;
     private final UserPoRepository userJpaRepository;
     private final PostPoRepository postPoRepository;
     @Override
-    public Page<PostVo> getRecentView(String username,String authorName, String authorEmail, String title, Integer page, Integer size) {;
+    public Page<PostVo> getRecentView(String username,String authorName, String authorEmail, String title, Integer page, Integer size) throws UsernameNotFoundException {;
         Pageable pageable = PageRequest.of(page - 1, size);
         //利用username 查詢使用者
-        if(Strings.isNullOrEmpty(authorName)) {
+        if(!StringUtils.hasText(authorName)) {
             throw new UsernameNotFoundException("請輸入作者名稱");
         }
         Optional<UserPo> user = userJpaRepository.findByUserName(authorName);
@@ -46,15 +42,15 @@ public class RecentViewServiceImpl implements RecentViewService {
             throw new UsernameNotFoundException("找不到該使用者" + authorName);
         }
         Long userId = user.get().getId();
-        // 進行where like 查詢
         return recentViewPoRepository.findPostPoByAuthorNameAndAuthorEmailAndTitleAndUserId(authorName, authorEmail, title, userId, pageable);
     }
 
     @Override
-    public void createRecentView(RecentViewDto recentViewDto){
+    @Transactional
+    public void createRecentView(RecentViewDto recentViewDto) throws UsernameNotFoundException {
         // 找出對應使用者
         String userName = recentViewDto.getUserName();
-        if(Strings.isNullOrEmpty(userName)) {
+        if(!StringUtils.hasText(userName)) {
             throw new UsernameNotFoundException("找不到該用戶");
         }
         RecentViewPo recentViewPo = RecentViewPoMapper.INSTANCE.toPo(recentViewDto);
@@ -75,7 +71,4 @@ public class RecentViewServiceImpl implements RecentViewService {
         return recentViewPoRepository.findPostVoById(id).orElse(null);
     }
 
-    private String transformDateToString(LocalDateTime dateTime) {
-        return dateTime.format(dateTimeFormatter);
-    }
 }

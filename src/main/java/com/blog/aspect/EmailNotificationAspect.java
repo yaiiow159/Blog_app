@@ -1,100 +1,134 @@
 package com.blog.aspect;
 
-import com.blog.annotation.SendMail;
+import com.blog.annotation.Notification;
 import com.blog.dao.PostPoRepository;
 import com.blog.dto.CommentDto;
 import com.blog.dto.EmailNotification;
 import com.blog.dto.PostDto;
-import com.blog.dto.SubscriptionDto;
 import com.blog.exception.ResourceNotFoundException;
+import com.blog.po.CommentPo;
 import com.blog.po.PostPo;
 import com.blog.producer.NotificationProducer;
+import com.blog.service.MailService;
 import com.blog.service.SubscriptionService;
+import com.blog.stragety.CommentMailContentStrategy;
+import com.blog.stragety.MailContentStrategy;
+import com.blog.stragety.NotificationContext;
+import com.blog.stragety.PostMailContentStrategy;
+import com.blog.utils.SpringSecurityUtil;
 import jakarta.annotation.Resource;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
 
-import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+/**
+ * @author TimmyChung
+ *
+ * 處理Email通知 的切面
+ */
 @Aspect
 @Component
-@Slf4j
+@RequiredArgsConstructor
 public class EmailNotificationAspect {
-    @Resource
-    private NotificationProducer emailNotificationProducer;
-    @Resource
-    private SubscriptionService subscriptionService;
-    @Resource
-    private PostPoRepository postPoRepository;
+    private final SubscriptionService subscriptionService;
+    private final PostPoRepository postPoRepository;
+    private final MailService mailService;
+    private static final Logger logger = LoggerFactory.getLogger(EmailNotificationAspect.class);
 
-    @Pointcut("@annotation(sendMail)")
-    public void notifyByEmailPointcut(SendMail sendMail) {}
+    @Pointcut("@annotation(notification)")
+    public void notifyByEmailPointcut(Notification notification) {}
     @After(value = "notifyByEmailPointcut(sendMail)", argNames = "joinPoint,sendMail")
-    public void after(JoinPoint joinPoint, SendMail sendMail) throws ResourceNotFoundException {
-        final String type = sendMail.type();
-        final String operation = sendMail.operation();
-        log.info("notifyEmail afterReturning starting...");
+    public void after(JoinPoint joinPoint, Notification sendMail) {
+        Class<?> operatedClass = sendMail.operatedClass();
+        String operation = sendMail.operation();
 
+        PostDto postDto = null;
+        CommentDto commentDto = null;
+        // 從 joinPoint 取得 參數 如 PostPo CommentPo
         Object[] args = joinPoint.getArgs();
-        if(ObjectUtils.isEmpty(args)) {
-            return;
-        }
         for (Object arg : args) {
-            if (arg instanceof PostDto postDto) {
-                EmailNotification emailNotification = sendToEmailWhenArticleChange(postDto, operation, type);
-                if(!ObjectUtils.isEmpty(emailNotification)) {
-                    emailNotificationProducer.sendMailNotification(emailNotification);
-                }
-            }
-            if(arg instanceof CommentDto commentDto) {
-                EmailNotification emailNotification = sendToEmailWhenCommentChange(commentDto, operation, type);
-                if(!ObjectUtils.isEmpty(emailNotification)) {
-                    emailNotificationProducer.sendMailNotification(emailNotification);
-                }
+            if(arg instanceof PostDto) {
+                postDto = (PostDto) arg;
+            } else if(arg instanceof CommentDto) {
+                commentDto = (CommentDto) arg;
             }
         }
-        log.info("notifyEmail afterReturning ending...");
-    }
-    private EmailNotification sendToEmailWhenArticleChange(PostDto postDto, String operation, String type) {
-        EmailNotification emailNotification = new EmailNotification();
-        emailNotification.setSendTo(postDto.getAuthorEmail());
-        emailNotification.setSubject("文章通知");
-        emailNotification.setSendBy(postDto.getAuthorName());
-        emailNotification.setOperation(operation);
-        // 當前使用者有收藏 文章時，發送通知
-        List<SubscriptionDto> subscriptionDtos = subscriptionService.findByAuthorNameOrAuthorEmail(postDto.getAuthorName(), postDto.getAuthorEmail());
-        if(!CollectionUtils.isEmpty(subscriptionDtos)) {
-            if("add".equals(operation)) {
-                // 新增文章通知
-                emailNotification.setMessage("您的訂閱作者新增了一篇文章，請前往查看");
-            }
-            if("edit".equals(operation)) {
-                emailNotification.setMessage("您的訂閱文章已經更新，請前往查看");
-            }
+        logger.info("生產者通知郵件寄送訊息...");
+        if(sendMail.operatedClass() == null || sendMail.operation().isEmpty()) {
+            logger.error("註解參數配置錯誤...");
+            throw new IllegalArgumentException("請確認註解參數是否正確");
         }
-        return emailNotification;
+        if(postDto == null && commentDto == null) {
+            logger.error("找不到欲處理的類型參數");
+            throw new IllegalArgumentException("切面執行參數未查找到正確參數");
+        }
+        // step1. 確認 通類類型
+        if(operatedClass.equals(PostPo.class)) {
+            // 執行 文章新增通知
+            assert postDto != null;
+            final String content = getMailContentStrategy(PostPo.class,operation);
+            // 生產者 負責傳遞 郵件通知 給消費者 進行郵件傳遞 並在db紀錄
+            EmailNotification emailNotification = EmailNotification.builder()
+                    .sendTo(postDto.getAuthorEmail())
+                    .sendBy("system").message(content)
+                    .operation(operation)
+                    .emailAddress(postDto.getAuthorEmail())
+                    .subject("文章變動通知")
+                    .build();
+            CompletableFuture<Void> future = mailService.sendMailAsync(emailNotification);
+            future.thenRun(() -> logger.debug("生產者進行文章新增通知 完成"));
+        } else if(operatedClass.equals(CommentPo.class)) {
+            // 執行 留言新增通知
+            assert commentDto != null;
+            PostPo postPo = postPoRepository.findById(commentDto.getPostId()).orElseThrow(() -> new EntityNotFoundException("找不到欲郵件通知的文章"));
+            final String content = getMailContentStrategy(CommentPo.class,operation);
+            // 生產者 負責傳遞 郵件通知 給消費者 進行郵件傳遞 並在db紀錄
+            EmailNotification emailNotification = EmailNotification.builder()
+                    .sendTo(postPo.getAuthorEmail())
+                    .sendBy("system").message(content)
+                    .operation(operation)
+                    .emailAddress(postPo.getAuthorEmail())
+                    .subject("文章變動通知")
+                    .build();
+            CompletableFuture<Void> future = mailService.sendMailAsync(emailNotification);
+            future.thenRun(() -> logger.debug("生產者進行收藏文章通知 完成"));
+        }
+        // 收藏文章者 可收到 收藏文章變動通知 (如果該作者有更動文章 則會收到郵件通知)
+        if(operatedClass.equals(PostPo.class) && subscriptionService.checkSubscription(SpringSecurityUtil.getCurrentUser(), postDto.getId())) {
+            final String content = "收藏文章" + postDto.getTitle() + "有發生變動,請查看更動內容";
+            // 生產者 負責傳遞 郵件通知 給消費者 進行郵件傳遞 並在db紀錄
+            EmailNotification emailNotification = EmailNotification.builder()
+                    .sendTo(postDto.getAuthorEmail())
+                    .sendBy("system").message(content)
+                    .operation(operation)
+                    .emailAddress(postDto.getAuthorEmail())
+                    .subject("文章變動通知")
+                    .build();
+            CompletableFuture<Void> future = mailService.sendMailAsync(emailNotification);
+            future.thenRun(() -> logger.debug("生產者進行收藏文章通知 完成"));
+        }
+        logger.info("生產者通知郵件寄送結束...");
     }
 
-    private EmailNotification sendToEmailWhenCommentChange(CommentDto commentDto, String operation, String type) throws ResourceNotFoundException {
-        PostPo postPo = postPoRepository.findById(commentDto.getPostId()).orElseThrow(() -> new ResourceNotFoundException("文章不存在"));
-        EmailNotification emailNotification = new EmailNotification();
-        if("comment".equals(type)) {
-            // 新增留言通知
-            emailNotification.setSendTo(postPo.getAuthorEmail());
-            emailNotification.setSubject("留言通知");
-            emailNotification.setSendBy(commentDto.getName());
-            emailNotification.setOperation(operation);
-            emailNotification.setEmailAddress(postPo.getAuthorEmail());
-            if ("add".equals(operation)) {
-                // 新增留言通知
-                emailNotification.setMessage("您的文章 " + postPo.getTitle() + "新增了一則留言，請前往查看");
-            }
+    // 取得 郵件內容
+    private String getMailContentStrategy(Class<?> operatedClass, String operation) {
+        if (operatedClass.equals(PostPo.class)) {
+            NotificationContext notificationContext = new NotificationContext(new PostMailContentStrategy());
+            return notificationContext.execute(operatedClass.getName(), operation);
+        } else if (operatedClass.equals(CommentPo.class)) {
+            NotificationContext notificationContext = new NotificationContext(new CommentMailContentStrategy());
+            return notificationContext.execute(operatedClass.getName(), operation);
         }
-        return emailNotification;
+        throw new IllegalArgumentException("不支援的郵件通知類別: " + operatedClass.getName());
     }
 }
 

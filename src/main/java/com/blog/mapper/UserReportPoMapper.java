@@ -8,30 +8,26 @@ import org.springframework.data.domain.Page;
 
 import java.util.List;
 
-@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface UserReportPoMapper {
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = {UserPoMapper.class, CommentPoMapper.class})
+public interface UserReportPoMapper extends BasicMapper {
 
     UserReportPoMapper INSTANCE = Mappers.getMapper(UserReportPoMapper.class);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     UserReportPo toPo(UserReportDto userReportDto);
 
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     UserReportDto toDto(UserReportPo userReportPo);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "comment", ignore = true)
+    @Mapping(target = "reportTime", ignore = true)
     UserReportPo partialUpdate(UserReportDto userReportDto, @MappingTarget UserReportPo userReportPo);
 
     default List<UserReportDto> toDtoList(List<UserReportPo> entities) {
         return entities.stream().map(this::toDto).toList();
     }
 
-    default List<UserReportPo> toPoList(List<UserReportDto> dtos) {
-        return dtos.stream().map(this::toPo).toList();
-    }
-
-    default Page<UserReportDto> toDtoPage(Page<UserReportPo> poPage) {
-        return poPage.map(this::toDto);
-    }
-
-    default Page<UserReportPo> toPoPage(Page<UserReportDto> dtoPage) {
-        return dtoPage.map(this::toPo);
-    }
 }

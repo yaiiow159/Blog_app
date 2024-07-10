@@ -17,14 +17,23 @@ public class JwtBlackListService {
     private final RedisTemplate<String, String> redisTemplate;
     private static final String BLACKLIST_PREFIX = "jwt:blacklist:"; // 黑名單前綴
 
-    /** 將jwt加入黑名單 */
+    /**
+     * 將jwt加入黑名單
+     *
+     * @param jwtToken jwtToken
+     *
+     * */
     public void addJwtToBlackList(String jwtToken) {
         String key = BLACKLIST_PREFIX + jwtToken;
         Duration expirationDuration  = Duration.ofMillis(jwtExpiration); // 設置存活時間
         redisTemplate.opsForValue().set(key, "true", expirationDuration);
     }
 
-    /** 檢查jwt是否在黑名單中 */
+    /**
+     * 檢查jwt是否在黑名單中
+     * @param jwtToken jwtToken
+     * @return boolean 是否存在
+     * */
     public boolean isJwtInBlackList(String jwtToken) {
         String key = BLACKLIST_PREFIX + jwtToken;
         return redisTemplate.opsForValue().get(key) != null;

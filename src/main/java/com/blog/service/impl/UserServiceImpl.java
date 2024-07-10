@@ -1,297 +1,276 @@
 package com.blog.service.impl;
 
 import com.blog.dao.*;
-import com.blog.dto.*;
-import com.blog.exception.ValidateFailedException;
-import com.blog.enumClass.UserRole;
-import com.blog.mapper.*;
-import com.blog.po.*;
-import com.blog.service.GoogleStorageService;
-import com.blog.service.UserService;
-import com.blog.utils.SpringSecurityUtil;
 
-import com.blog.utils.ThreadLocalUtil;
-import jakarta.annotation.Resource;
+import com.blog.dto.UserDto;
+import com.blog.dto.UserProfileDto;
+import com.blog.exception.ValidateFailedException;
+import com.blog.mapper.UserPoMapper;
+import com.blog.po.RolePo;
+import com.blog.po.UserGroupPo;
+import com.blog.po.UserPo;
+import com.blog.service.UserService;
+
+import com.blog.utils.SpringSecurityUtil;
+import jakarta.mail.MethodNotSupportedException;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.Predicate;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+
 import org.springframework.data.domain.Page;
+
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.util.StringUtils;
 
-import javax.naming.AuthenticationNotSupportedException;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 @Service
-@Slf4j
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    @Resource
-    private StringRedisTemplate stringRedisTemplate;
+    private final UserGroupPoRepository userGroupPoRepository;
+    private final UserPoRepository userJpaRepository;
+    private final RolePoRepository rolePoRepository;
+    private final PasswordEncoder passwordEncoder;
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
-    @Resource
-    private UserGroupPoRepository userGroupPoRepository;
-    @Resource
-    private UserPoRepository userJpaRepository;
-    @Resource
-    private RolePoRepository rolePoRepository;
-    @Resource
-    private PasswordEncoder passwordEncoder;
-    @Resource
-    private GoogleStorageService googleStorageService;
 
-    @Resource
-    @Lazy
-    private UserDetailsService userDetailsService;
-
+    /**
+     * 新增使用者
+     *
+     * @param userDto 使用者資訊
+     * @throws Exception 遇到異常時拋出
+     */
     @Override
-    public UserDto findByUserId(Long userId) {
-        var optionalUserPo  = Optional.of(userJpaRepository.findById(userId))
-                .orElseThrow(() -> new UsernameNotFoundException("找不到使用者: " + userId));
-        UserDto userDto = optionalUserPo.map(UserPoMapper.INSTANCE::toDto).orElse(null);
-        assert userDto != null;
-        userDto.setUserGroupDto(UserGroupPoMapper.INSTANCE.toDto(optionalUserPo.get().getUserGroupPo()));
-        return userDto;
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class,isolation = Isolation.REPEATABLE_READ)
-    public String lockUser(Long userId) {
-        UserPo userPo = userJpaRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("找不到使用者序號: " + userId));
-        userPo.setLocked(true);
-        userJpaRepository.saveAndFlush(userPo);
-        return "鎖戶成功";
-    }
-
-    @Override
-    public void changePassword(String oldPassword, String newPassword) throws ValidateFailedException {
-        String username = SpringSecurityUtil.getCurrentUser();
-        // 檢驗舊密碼是否相同
-        userJpaRepository.findByUserName(username).ifPresent(userPo -> {
-            if (!passwordEncoder.matches(oldPassword, userPo.getPassword())) {
-                throw new ValidateFailedException("舊密碼不相同，請重新再試一次");
-            }
-            userJpaRepository.changePassword(passwordEncoder.encode(newPassword), username);
-            var userDetails = userDetailsService.loadUserByUsername(username);
-            var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null,userDetails.getAuthorities());
-            SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-        });
-    }
-
-    @Override
-    public Page<UserDto> findAll(String userName, String userEmail, int page, int pageSize) {
-        Specification<UserPo> specification = (root, query, criteriaBuilder) -> {
-            List<Predicate> list = new ArrayList<>();
-            if (!ObjectUtils.isEmpty(userName)) {
-                Predicate predicate = criteriaBuilder.like(root.get("userName"), "%" + userName + "%");
-                list.add(predicate);
-            }
-            if (!ObjectUtils.isEmpty(userEmail)) {
-                Predicate predicate = criteriaBuilder.like(root.get("email"), "%" + userEmail + "%");
-                list.add(predicate);
-            }
-            Predicate[] p = new Predicate[list.size()];
-            return criteriaBuilder.and(list.toArray(p));
-        };
-        Pageable pageable = PageRequest.of(page - 1 , pageSize);
-        return userJpaRepository.findAll(specification, pageable).map(UserPoMapper.INSTANCE::toDto).map(
-                userDto -> {
-                    userDto.setRoleNames(userDto.getRoles()
-                            .stream()
-                            .map(RoleDto::getRoleName).collect(Collectors.toSet()));
-                    return userDto;
-                }
-        ).map(userDto -> {
-            userDto.setGroupName(UserGroupPoMapper.INSTANCE.toDto
-                    (userGroupPoRepository.findByUserPoListContaining(userDto.getId())).getGroupName());
-            return userDto;
-        });
-    }
-
-    @Override
-    public void upload(MultipartFile file) throws IOException, ExecutionException, InterruptedException {
-        String imageName = generateImageName(file);
-        CompletableFuture<String> result = googleStorageService.uploadFile(file, imageName);
-        if(result.get() == null) {
-            throw new IOException("上傳圖片失敗");
-        }
-        userJpaRepository.updateImageName(result.get(), SpringSecurityUtil.getCurrentUser());
-    }
-
-    public String unlockUser(Long userId) {
-        return userJpaRepository.findById(userId)
-                .map(userPo -> {
-                    userPo.setLocked(true);
-                    userJpaRepository.saveAndFlush(userPo);
-                    return "解鎖成功";
-                })
-                .orElseThrow(() -> new UsernameNotFoundException("找不到使用者: " + userId));
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class, isolation = Isolation.REPEATABLE_READ)
-    public void add(UserDto userDto) throws AuthenticationNotSupportedException, ValidateFailedException {
-        if (userJpaRepository.findByUserNameOrEmail(userDto.getUserName(),userDto.getEmail()).isPresent()) {
-            throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.RESOURCE_ALREADY_EXISTS);
-        }
-        validateUser(userDto);
-        // 密碼需進行先進行加密處理，Spring security 在驗證階段會使用passwordEncoder比對
-        userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
-        //增加創建使用者名稱與時間
+    public void save(UserDto userDto) throws Exception {
+        logger.debug("新增使用者資訊: {}", userDto);
         UserPo userPo = UserPoMapper.INSTANCE.toPo(userDto);
-        userPo.setCreatUser(SpringSecurityUtil.getCurrentUser());
-        userPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-        userPo.setUserGroupPo(userGroupPoRepository.findById(userDto.getGroupId()).orElseThrow(() -> new ValidateFailedException("找不到群組")));
-        Set<RolePo> rolePoList = new HashSet<>(rolePoRepository.findAllById(userDto.getRoleIds()));
-        userPo.setRoles(CollectionUtils.isEmpty(rolePoList) ? new HashSet<>() : rolePoList);
-        userJpaRepository.saveAndFlush(userPo);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class, isolation = Isolation.REPEATABLE_READ)
-    public void edit(UserDto userDto) throws AuthenticationNotSupportedException {
-        validateUser(userDto);
-        userJpaRepository.findById(userDto.getId()).ifPresent(userPo -> {
-            userPo = UserPoMapper.INSTANCE.partialUpdate(userDto, userPo);
-            userPo.setPassword(passwordEncoder.encode(userDto.getPassword()));
-            userPo.setUpdateUser(SpringSecurityUtil.getCurrentUser());
-            userPo.setUpdDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-            userPo.setUserGroupPo(userGroupPoRepository.findById(userDto.getGroupId()).orElseThrow(() -> new ValidateFailedException("找不到群組")));
-            rolePoRepository.findAll().forEach(userPo.getRoles()::remove);
-            rolePoRepository.findAllById(userDto.getRoleIds()).forEach(userPo.getRoles()::add);
-            userJpaRepository.saveAndFlush(userPo);
+        // 建立群組關聯
+        UserGroupPo userGroupPo = userGroupPoRepository.findById(userDto.getGroupId()).orElseThrow(() -> new EntityNotFoundException("找不到群組資訊"));
+        userPo.setUserGroupPo(userGroupPo);
+        //建立角色關聯
+        Set<RolePo> rolePos = new HashSet<>();
+        userDto.getRoleIds().forEach(roleId -> {
+            RolePo rolePo = rolePoRepository.findById(roleId).orElseThrow(() -> new EntityNotFoundException("找不到角色資訊"));
+            rolePos.add(rolePo);
         });
+        userPo.setRoles(rolePos);
+        //設定密碼
+        userPo.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        userJpaRepository.saveAndFlush(userPo);
+        logger.debug("新增使用者 " + userPo.getUserName() + " 成功");
     }
 
+    /**
+     * 更新使用者
+     *
+     * @param userDto 使用者資訊
+     * @throws Exception 遇到異常時拋出
+     */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public String delete(Long id) {
+    public void update(UserDto userDto) throws Exception {
+        logger.debug("更新使用者資訊: {}", userDto);
+        UserPo userPo = userJpaRepository.findById(userDto.getId()).orElseThrow(() -> new EntityNotFoundException("找不到使用者 " + userDto.getId()));
+        // 建立群組關聯
+        UserGroupPo userGroupPo = userGroupPoRepository.findById(userDto.getGroupId()).orElseThrow(() -> new EntityNotFoundException("找不到群組資訊"));
+        userPo.setUserGroupPo(userGroupPo);
+        //建立角色關聯
+        Set<RolePo> rolePos = new HashSet<>();
+        userDto.getRoleIds().forEach(roleId -> {
+            RolePo rolePo = rolePoRepository.findById(roleId).orElseThrow(() -> new EntityNotFoundException("找不到角色資訊"));
+            rolePos.add(rolePo);
+        });
+        userPo.setRoles(rolePos);
+        //設定密碼
+        userPo.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        userJpaRepository.saveAndFlush(userPo);
+        logger.debug("更新使用者 " + userPo.getUserName() + " 成功");
+    }
+
+    /**
+     * 刪除使用者
+     *
+     * @param userDto 使用者資訊
+     * @throws Exception 遇到異常時拋出
+     */
+    @Override
+    public void delete(UserDto userDto) throws Exception {
+        throw new MethodNotSupportedException("該刪除使用者方法不支援");
+    }
+
+    /**
+     * 刪除使用者
+     *
+     * @param id  使用者序號
+     * @throws Exception 遇到異常時拋出
+     */
+    @Override
+    public void delete(Long id) throws Exception {
+        logger.debug("刪除使用者序號: {}", id);
+        if(id == null) {
+            throw new IllegalArgumentException("刪除使用者資訊不得為空");
+        }
+        if(!userJpaRepository.existsById(id)) {
+            throw new EntityNotFoundException("找不到使用者id " + id + "的資訊");
+        }
         userJpaRepository.deleteById(id);
-        return "刪除成功";
     }
 
+    /**
+     * 搜尋指定id的使用者資訊
+     *
+     * @param id 使用者序號
+     * @return UserDto 使用者資訊
+     * @throws EntityNotFoundException 異常拋出
+     */
     @Override
-    @Transactional(rollbackFor = Exception.class, isolation = Isolation.REPEATABLE_READ)
-    public UserDto findByUserName(String userName) {
-        UserPo userPo = userJpaRepository.findByUserName(userName).orElse(null);
+    public UserDto findById(Long id) throws EntityNotFoundException {
+        logger.debug("查詢使用者序號: {}", id);
+        if(id == null) {
+            throw new IllegalArgumentException("查詢使用者資訊不得為空");
+        }
+        UserPo userPo = userJpaRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("找不到使用者 " + id));
         return UserPoMapper.INSTANCE.toDto(userPo);
     }
+
+    /**
+     * 搜尋 所有使用者
+     *
+     * @return List<UserDto> 使用者資訊
+     * @throws Exception 異常拋出
+     */
     @Override
-    @Transactional(rollbackFor = Exception.class, isolation = Isolation.REPEATABLE_READ)
-    public String register(UserDto userDto) {
-        if (userJpaRepository.findByUserName(userDto.getUserName()).isPresent()) {
-            throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.USER_ALREADY_EXISTS);
-        }
-        if (userJpaRepository.findByEmail(userDto.getEmail()).isPresent()) {
-            throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.EMAIL_ALREADY_EXISTS);
-        }
-        userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
-        userDto.setCreatUser(SpringSecurityUtil.getCurrentUser());
-        userDto.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-        UserPo userPo = UserPoMapper.INSTANCE.toPo(userDto);
-        // 設置使用者群組
-        if (userGroupPoRepository.findByGroupName(userDto.getGroupName()).isPresent()) {
-            userGroupPoRepository.findByGroupName(userDto.getGroupName()).ifPresent(
-                    userPo::setUserGroupPo
-            );
-        } else {
-            userGroupPoRepository.findByGroupName(UserGroupPo.DEFAULT_GROUP_NAME).ifPresent(
-                    userPo::setUserGroupPo
-            );
-        }
-        Set<RolePo> rolePoSet = new HashSet<>();
-        rolePoRepository.findByRoleName(UserRole.ROLE_USER.toString()).ifPresent(rolePoSet::add);
-        userPo.setRoles(rolePoSet);
+    public List<UserDto> findAll() throws Exception {
+        logger.debug("查詢所有使用者");
+        List<UserPo> userPos = userJpaRepository.findAll();
+        return UserPoMapper.INSTANCE.toDtoList(userPos);
+    }
+
+    /**
+     * 搜尋所有的分頁集合
+     *
+     * @param page  當前頁數
+     * @param pageSize 每頁筆數
+     * @return Page<UserDto> 條件分頁使用者集合
+     * @throws Exception 遭遇異常時拋出
+     */
+    @Override
+    public Page<UserDto> findAll(Integer page, Integer pageSize) throws Exception {
+        logger.debug("查詢所有使用者");
+        Page<UserPo> userPos = userJpaRepository.findAll(PageRequest.of(page, pageSize));
+        return userPos.map(UserPoMapper.INSTANCE::toDto);
+    }
+
+
+    /**
+     * 鎖定帳戶
+     *
+     * @param id 使用者序號
+     */
+    @Override
+    public void lock(long id){
+        UserPo userPo = userJpaRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("查無此使用者"));
+        userPo.setLocked(true);
         userJpaRepository.saveAndFlush(userPo);
-        return "註冊成功";
     }
 
+    /**
+     * 解鎖使用者
+     *
+     * @param id 使用者序號
+     */
     @Override
-    public void logout (String token) throws ValidateFailedException {
-        if (null == token || token.isEmpty()) {
-            throw new ValidateFailedException(
-                    ValidateFailedException.DomainErrorStatus.JWT_AUTHENTICATION_TOKEN_EXPIRED, "令牌為空");
-        }
+    public void unlock(long id){
+        UserPo userPo = userJpaRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("查無此使用者"));
+        userPo.setLocked(false);
+        userJpaRepository.saveAndFlush(userPo);
     }
 
+    /**
+     * 更新個人資訊
+     *
+     * @param userProfileDto 個人資訊
+     */
     @Override
-    @Transactional(rollbackFor = Exception.class, isolation = Isolation.REPEATABLE_READ)
-    public UserProfileDto updateUserProfile (UserProfileDto userProfileDto)  {
-        UserPo userPo = userJpaRepository.findByUserName(userProfileDto.getUsername())
-                .orElseThrow(() -> new UsernameNotFoundException("找不到使用者 " + userProfileDto.getUsername()));
-
-        userPo.setUserName(userProfileDto.getUsername());
-        userPo.setEmail(userProfileDto.getEmail());
-        userPo.setNickName(userProfileDto.getNickname());
-        userPo.setAddress(userProfileDto.getAddress());
-        userPo = userJpaRepository.saveAndFlush(userPo);
-        // 從s3 取回圖片
-        return getUserProfile(userPo.getUserName());
+    public void updateProfile(UserProfileDto userProfileDto){
+        UserPo userPo = userJpaRepository.findById(userProfileDto.getId()).orElseThrow(() -> new EntityNotFoundException("查無此使用者"));
+        BeanUtils.copyProperties(userProfileDto, userPo, "id", "createUser", "createDate");
+        userJpaRepository.saveAndFlush(userPo);
     }
 
+    /**
+     * 搜尋個人資訊
+     *
+     * @param username 使用者名稱
+     * @return UserProfileDto 使用者資訊
+     */
     @Override
-    public UserProfileDto getUserProfile (String username) {
-        UserPo userPo = userJpaRepository.findByUserName(username)
-                .orElseThrow(() -> new ValidateFailedException("找不到使用者 " + username));
+    public UserProfileDto queryProfile(String username) {
+        UserPo userPo = userJpaRepository.findByUserName(username).orElseThrow(() -> new EntityNotFoundException("查無此使用者"));
         UserProfileDto userProfileDto = new UserProfileDto();
-        userProfileDto.setEmail(userPo.getEmail());
-        userProfileDto.setUsername(userPo.getUserName());
-        userProfileDto.setPassword(userPo.getPassword());
-        userProfileDto.setAddress(userPo.getAddress());
-        userProfileDto.setNickname(userPo.getNickName());
-        userProfileDto.setAvatarName(userPo.getAvatarName());
-        userProfileDto.setAvatarPath(userPo.getAvatarPath());
+        BeanUtils.copyProperties(userPo, userProfileDto, "id", "createUser", "createDate");
         return userProfileDto;
     }
 
+    /**
+     * 更新使用者密碼
+     *
+     * @param oldPassword 舊密碼
+     * @param newPassword 新密碼
+     */
     @Override
-    @Transactional(rollbackFor = Exception.class, isolation = Isolation.REPEATABLE_READ)
-    public List<UserDto> findUsersByRoleName (long id){
-        List<UserPo> userPos = userJpaRepository.findUsersByRoleName(id);
-        return userPos.stream().map(UserPoMapper.INSTANCE::toDto).toList();
+    public void changePassword(String oldPassword, String newPassword) {
+        UserPo userPo = userJpaRepository.findByUserName(SpringSecurityUtil.getCurrentUser()).orElseThrow(() -> new EntityNotFoundException("查無此使用者"));
+        if(!userPo.getPassword().equals(passwordEncoder.encode(oldPassword))) {
+            throw new ValidateFailedException("舊密碼錯誤");
+        }
+        userPo.setPassword(passwordEncoder.encode(newPassword));
+        userJpaRepository.saveAndFlush(userPo);
     }
 
-    private void validateUser (UserDto userDto) throws AuthenticationNotSupportedException {
-        if (userDto.getGroupId() == 0) {
-            throw new AuthenticationNotSupportedException("此名使用者沒有關聯的群組");
-        }
-        if(userDto.getRoleIds().isEmpty()) {
-            throw new AuthenticationNotSupportedException("使用者沒有關聯的角色");
-        }
-        // 判斷是否建立群組
-        if (userGroupPoRepository.findById(userDto.getGroupId()).isEmpty()) {
-            throw new AuthenticationNotSupportedException("此名使用者沒有關聯的群組，請先建立關聯群組");
-        }
+    /**
+     * 搜尋指定名稱使用者
+     *
+     * @param key 使用者名稱
+     * @return UserDto 使用者資訊
+     */
+    @Override
+    public UserDto findByName(String key) {
+        UserPo userPo = userJpaRepository.findByUserName(key).orElseThrow(() -> new EntityNotFoundException("查無此使用者"));
+        return UserPoMapper.INSTANCE.toDto(userPo);
     }
 
-    private String generateImageName(MultipartFile imgFile) {
-        String originalFilename = imgFile.getOriginalFilename();
-        String extension = "";
-        if (Objects.requireNonNull(originalFilename).lastIndexOf(".") > -1) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        }
-        return UUID.randomUUID() + extension;
+    /**
+     * 搜尋符合條件的分頁集合
+     *
+     * @param page 當前頁數
+     * @param pageSize 每頁筆數
+     * @param userName 使用者名稱
+     * @param userEmail 使用者信箱
+     * @return Page<UserDto> 條件分頁使用者集合
+     */
+    @Override
+    public Page<UserDto> findAll(Integer page, Integer pageSize, String userName, String userEmail) {
+        // 實現動態查詢
+        Specification<UserPo> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if(StringUtils.hasText(userName)) {
+                predicates.add(criteriaBuilder.like(root.get("userName"), "%" + userName + "%"));
+            }
+            if(StringUtils.hasText(userEmail)) {
+                predicates.add(criteriaBuilder.like(root.get("email"), "%" + userEmail + "%"));
+            }
+            return query.where(predicates.toArray(new Predicate[0])).getRestriction();
+        };
+        Pageable pageable = PageRequest.of(page - 1, pageSize);
+        return userJpaRepository.findAll(specification, pageable).map(UserPoMapper.INSTANCE::toDto);
     }
-
 }

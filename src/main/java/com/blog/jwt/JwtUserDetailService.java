@@ -5,6 +5,7 @@ import com.blog.dto.UserDto;
 import com.blog.service.UserService;
 import com.blog.utils.CacheUtil;
 import com.blog.utils.JsonUtil;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -32,16 +33,19 @@ public class JwtUserDetailService implements UserDetailsService {
                 String userInfo = CacheUtil.get(username);
                 userDto = JsonUtil.parseObject(userInfo, UserDto.class);
             } catch (JsonProcessingException e) {
-                log.error("JsonProcessingException: {}", e.getMessage());
+                log.error("Json格式轉換時時發生錯誤: {}", e.getMessage());
             }
         } else {
-            userDto = userService.findByUserName(username);
-            if(null == userDto)
-                throw new UsernameNotFoundException("該使用者不存在" + username);
             try {
+                userDto = userService.findByName(username);
                 cacheUserInfo(userDto);
+            } catch (UsernameNotFoundException e) {
+                log.error("Exception: {}", e.getMessage());
+                throw new UsernameNotFoundException("該使用者不存在" + username);
             } catch (JsonProcessingException e) {
-                log.error("JsonProcessingException: {}", e.getMessage());
+                log.error("Json格式轉換時時發生錯誤: {}", e.getMessage());
+            } catch (Exception e) {
+                log.error("錯誤異常: {}", e.getMessage());
             }
         }
         assert userDto != null;
@@ -50,7 +54,7 @@ public class JwtUserDetailService implements UserDetailsService {
 
         Set<GrantedAuthority> authoritySet = new HashSet<>();
         userDto.getRoles().forEach(role -> {
-            authoritySet.add((GrantedAuthority) () -> role.getRoleName());
+            authoritySet.add((GrantedAuthority) role::getRoleName);
         });
         return new User(userName, email, authoritySet);
     }

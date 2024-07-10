@@ -3,18 +3,18 @@ package com.blog.enumClass;
 import lombok.Getter;
 
 @Getter
-public enum GroupStatus {
+public enum GroupAuthEnum {
     USER("一般使用者"),
     ADMIN("管理員"),;
 
     private final String status;
 
-    GroupStatus(String status) {
+    GroupAuthEnum(String status) {
         this.status = status;
     }
 
-    public static GroupStatus fromString(String status) {
-        for (GroupStatus groupStatus : GroupStatus.values()) {
+    public static GroupAuthEnum fromString(String status) {
+        for (GroupAuthEnum groupStatus : GroupAuthEnum.values()) {
             if (groupStatus.getStatus().equalsIgnoreCase(status)) {
                 return groupStatus;
             }

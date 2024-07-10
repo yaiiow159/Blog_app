@@ -11,6 +11,7 @@ import java.io.Serializable;
 @Setter
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Builder
 public class EmailNotification implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

@@ -6,32 +6,28 @@ import com.blog.dto.EmailNotification;
 import com.blog.handler.KafkaSendReqHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class NotificationProducer {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final KafkaSendReqHandler kafkaSendReqHandler;
+    private static final Logger logger = LoggerFactory.getLogger(NotificationProducer.class);
 
     public void sendMailNotification(EmailNotification emailNotification) {
         kafkaTemplate.setProducerListener(kafkaSendReqHandler);
-        log.info("Sending email notification: {}", emailNotification.toString());
+        logger.info("發送 郵件通知: {}", emailNotification.toString());
         kafkaTemplate.send("email-notification-topic", JSON.toJSONString(emailNotification));
-    }
-
-    public void sendPhoneNotification(EmailNotification emailNotification) {
-        kafkaTemplate.setProducerListener(kafkaSendReqHandler);
-        log.info("Sending phone notification: {}", emailNotification.toString());
-        kafkaTemplate.send("phone-notification-topic", JSON.toJSONString(emailNotification));
     }
 
     public void sendReviewNotification(CommentDto commentDto) {
         kafkaTemplate.setProducerListener(kafkaSendReqHandler);
-        log.info("Sending reviewComment notification: {}" , commentDto.toString());
+        logger.info("發送評論審核通知: {}" , commentDto.toString());
         kafkaTemplate.send("review-notification-topic", JSON.toJSONString(commentDto));
     }
 }

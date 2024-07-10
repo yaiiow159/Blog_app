@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.hibernate.mapping.Set;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.Serializable;
@@ -21,15 +22,11 @@ import java.util.List;
 @Getter
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
-@ToString
 public class PostDto extends BaseDto implements Serializable {
 
     @NotBlank(message = "文章內文不得為空")
     @Schema(description = "文章內文",requiredMode = Schema.RequiredMode.REQUIRED)
     private String content;
-
-    @Schema(description = "文章圖片名稱")
-    private String imageUrl;
 
     @Schema(description = "標籤IDS")
     private List<Long> tagIds;
@@ -37,6 +34,9 @@ public class PostDto extends BaseDto implements Serializable {
     @NotBlank(message = "文章標題不得為空")
     @Schema(description = "文章標題",requiredMode = Schema.RequiredMode.REQUIRED)
     private String title;
+
+    @Schema(description = "文章圖片")
+    private MultipartFile file;
 
     @Schema(description = "文章描述")
     private String description;

@@ -1,40 +1,45 @@
 package com.blog.service.impl;
 
-import com.alibaba.fastjson2.JSONObject;
 import com.blog.dao.MailNotificationPoRepository;
 import com.blog.dto.MailNotificationDto;
 import com.blog.mapper.MailNotificationPoMapper;
 import com.blog.po.MailNotificationPo;
 import com.blog.service.MailNotificationService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.apache.kafka.common.errors.ResourceNotFoundException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class MailNotificationServiceImpl implements MailNotificationService {
 
     private final MailNotificationPoRepository mailNotificationPoRepository;
+    private static final Logger logger = LoggerFactory.getLogger(MailNotificationServiceImpl.class);
     @Override
     public void sendMailNotification(MailNotificationDto mailNotificationDto) {
+        if(mailNotificationDto == null){
+            throw new IllegalArgumentException("參數為空");
+        }
+        logger.debug("新增 郵件通知 {}", mailNotificationDto);
         MailNotificationPo mailNotificationPo = MailNotificationPoMapper.INSTANCE.toPo(mailNotificationDto);
         mailNotificationPoRepository.saveAndFlush(mailNotificationPo);
     }
 
     @Override
-    public void sendMailNotification(List<MailNotificationDto> mailNotificationDtoList) {
+    public void sendMailNotification(List<MailNotificationDto> mailNotificationDtoList){
+        if(mailNotificationDtoList == null){
+            throw new IllegalArgumentException("參數為空");
+        }
         for (MailNotificationDto mailNotificationDto : mailNotificationDtoList) {
+            logger.debug("新增 郵件通知 {}", mailNotificationDto);
             MailNotificationPo mailNotificationPo = MailNotificationPoMapper.INSTANCE.toPo(mailNotificationDto);
             mailNotificationPoRepository.saveAndFlush(mailNotificationPo);
         }
@@ -42,36 +47,37 @@ public class MailNotificationServiceImpl implements MailNotificationService {
 
     @Override
     public Page<MailNotificationDto> getAllMailNotification(String username,String name, String subject, String email, boolean isRead, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+
         Specification<MailNotificationPo> specification = (root, query, criteriaBuilder) -> {
-            if (username != null) {
+            if (StringUtils.hasText(username)) {
                 query.where(criteriaBuilder.equal(root.get("username"), username));
             }
-            if (name != null) {
-                query.where(criteriaBuilder.like(root.get("name"), "%" + name + "%"));
+            if (StringUtils.hasText(name)) {
+                query.where(criteriaBuilder.equal(root.get("name"), name));
             }
-            if (subject != null) {
-                query.where(criteriaBuilder.like(root.get("subject"), "%" + subject + "%"));
+            if (StringUtils.hasText(subject)) {
+                query.where(criteriaBuilder.equal(root.get("subject"), subject));
             }
-            if (email != null) {
-                query.where(criteriaBuilder.like(root.get("email"), "%" + email + "%"));
+            if (StringUtils.hasText(email)) {
+                query.where(criteriaBuilder.equal(root.get("email"), email));
             }
             if (isRead) {
-                query.where(criteriaBuilder.equal(root.get("isRead"), isRead));
+                query.where(criteriaBuilder.equal(root.get("isRead"), true));
             }
             return query.getRestriction();
         };
-        PageRequest pageRequest = PageRequest.of(page - 1, size);
-        Page<MailNotificationPo> mailNotificationPos = mailNotificationPoRepository.findAll(specification, pageRequest);
-        return new PageImpl<>(MailNotificationPoMapper.INSTANCE.toDtoList(mailNotificationPos.getContent()), pageRequest, mailNotificationPos.getTotalElements());
+
+        Page<MailNotificationPo> mailNotificationPoPage = mailNotificationPoRepository.findAll(specification, pageable);
+        return mailNotificationPoPage.map(MailNotificationPoMapper.INSTANCE::toDto);
     }
 
     @Override
-    public String updateMailNotification(MailNotificationDto mailNotificationDto) {
+    public void updateMailNotification(MailNotificationDto mailNotificationDto) throws EntityNotFoundException {
         MailNotificationPo mailNotificationPo = mailNotificationPoRepository.findById(mailNotificationDto.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("找不到該筆資料"));
+                .orElseThrow(() -> new EntityNotFoundException("找不到該筆資料"));
         mailNotificationPo.setRead(mailNotificationDto.getIsRead());
         mailNotificationPoRepository.saveAndFlush(mailNotificationPo);
-        return "更新狀態成功";
     }
 
     @Override
@@ -80,7 +86,8 @@ public class MailNotificationServiceImpl implements MailNotificationService {
     }
 
     @Override
-    public MailNotificationDto getMailNotification(Long id) {
-        return MailNotificationPoMapper.INSTANCE.toDto(mailNotificationPoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("找不到該筆資料")));
+    public MailNotificationDto queryNotification(Long id) throws EntityNotFoundException{
+        return MailNotificationPoMapper.INSTANCE.toDto(mailNotificationPoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("找不到該筆資料")));
     }
 }

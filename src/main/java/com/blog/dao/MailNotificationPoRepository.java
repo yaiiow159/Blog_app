@@ -9,8 +9,6 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface MailNotificationPoRepository extends JpaRepository<MailNotificationPo, Long>, JpaSpecificationExecutor<MailNotificationPo> {
-    @Query("SELECT COUNT(m)" +
-            "FROM MailNotificationPo m " +
-            "WHERE m.isRead = false")
+    @Query("SELECT COUNT(m) FROM MailNotificationPo m WHERE m.isRead = false")
     Long countByIsReadFalse();
 }

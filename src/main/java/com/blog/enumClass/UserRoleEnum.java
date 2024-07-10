@@ -2,23 +2,20 @@ package com.blog.enumClass;
 
 import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Getter
-public enum UserRole {
+public enum UserRoleEnum {
     ROLE_ADMIN("ROLE_ADMIN"),
     ROLE_USER("ROLE_USER"),
-    ONLY_SEARCH("ONLY_SEARCH");
+    SEARCH("ROLE_SEARCH");
 
     private final String roleName;
 
-    UserRole(String roleName) {
+    UserRoleEnum(String roleName) {
         this.roleName = roleName;
     }
 
-    public static UserRole fromString(String roleName) {
-        for (UserRole role : UserRole.values()) {
+    public static UserRoleEnum fromString(String roleName) {
+        for (UserRoleEnum role : UserRoleEnum.values()) {
             if (role.getRoleName().equalsIgnoreCase(roleName)) {
                 return role;
             }

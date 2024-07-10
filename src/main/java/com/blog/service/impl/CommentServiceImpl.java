@@ -1,140 +1,207 @@
 package com.blog.service.impl;
 
-import com.blog.annotation.SendMail;
 import com.blog.dao.CommentPoRepository;
 import com.blog.dao.PostPoRepository;
 import com.blog.dao.UserPoRepository;
-import com.blog.dao.UserReportPoRepository;
 import com.blog.dto.CommentDto;
-import com.blog.exception.ResourceNotFoundException;
+
 import com.blog.mapper.CommentPoMapper;
 import com.blog.po.CommentPo;
 import com.blog.po.PostPo;
 import com.blog.po.UserPo;
 import com.blog.producer.NotificationProducer;
 import com.blog.service.CommentService;
-import com.blog.utils.SpringSecurityUtil;
+import com.blog.service.CrudLikeService;
 
-import jakarta.annotation.Resource;
 
-import lombok.extern.slf4j.Slf4j;
+import jakarta.mail.MethodNotSupportedException;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
-import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
-@Slf4j
+@RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
-    @Resource
-    private PostPoRepository postPoRepository;
-    @Resource
-    private CommentPoRepository commentPoRepository;
-    @Resource
-    private UserPoRepository userJpaRepository;
-    @Resource
-    private UserReportPoRepository userReportPoRepository;
+    private final PostPoRepository postPoRepository;
+    private final CommentPoRepository commentPoRepository;
+    private final UserPoRepository userJpaRepository;
+    private final NotificationProducer notificationProducer;
 
-    @Resource
-    private NotificationProducer notificationProducer;
+    private static final Logger logger = LoggerFactory.getLogger(CommentServiceImpl.class);
 
-    @Resource
-    private StringRedisTemplate stringRedisTemplate;
-    // 每當有人創建新評論，通知該作者 該文章有新評論了
+
+    /**
+     * 新增評論
+     *
+     * @param commentDto 評論資訊
+     * @throws Exception 遭遇異常時拋出
+     */
     @Override
-    @SendMail(type = "comment",operation = "add")
-    @Transactional(rollbackFor = Exception.class)
-    public void add(Long postId, CommentDto commentDto) throws ResourceNotFoundException {
-            PostPo postPo = postPoRepository.findById(postId)
-                .orElseThrow(() -> new ResourceNotFoundException("找不到該文章序號" + postId + "的資料"));
-        // 使用NAME 查詢 使用者
-        UserPo userPo = userJpaRepository.findByUserName(commentDto.getName()).orElseThrow(() -> new ResourceNotFoundException("找不到該使用者" + commentDto.getName() + "的資料"));
+    @Transactional
+    public void save(CommentDto commentDto) throws Exception {
+        if(commentDto == null) {
+            throw new IllegalArgumentException("新增評論資訊不得為空");
+        }
         CommentPo commentPo = CommentPoMapper.INSTANCE.toPo(commentDto);
-        commentPo.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-        commentPo.setCreatUser(SpringSecurityUtil.getCurrentUser());
-        commentPo.setDislikes(0L);
-        commentPo.setLikes(0L);
+        // 建立與文章的關聯
+        PostPo postPo = postPoRepository.findById(commentDto.getPostId()).orElseThrow(() -> new EntityNotFoundException("找不到文章"));
+        UserPo userPO = userJpaRepository.findByUserName(commentDto.getName()).orElseThrow(() -> new EntityNotFoundException("找不到使用者"));
         commentPo.setPost(postPo);
-        commentPo.setUser(userPo);
+        commentPo.setUser(userPO);
+
+        logger.debug("新增評論資訊: {}", commentPo);
         commentPoRepository.saveAndFlush(commentPo);
+        logger.debug("新增評論成功, id {}", commentPo.getId());
     }
 
+    /**
+     * 更新評論
+     *
+     * @param commentDto 評論資訊
+     * @throws Exception 遭遇異常時拋出
+     */
     @Override
-    public CommentDto findComment(Long postId,Long id) throws ResourceNotFoundException {
-        PostPo postPo = postPoRepository.findById(postId).orElseThrow(ResourceNotFoundException::new);
-        CommentPo commentPo = postPo.getComments().stream().filter(c -> c.getId().equals(id)).findFirst().orElseThrow(() -> new ResourceNotFoundException("找不到該留言"));
-        return CommentPoMapper.INSTANCE.toDto(commentPo);
-    }
-
-    @Override
-    //@SendMail(type = "comment",operation = "edit")
-    @Transactional(rollbackFor = Exception.class)
-    public void edit(Long postId, Long id, CommentDto commentDto) throws ResourceNotFoundException {
-        PostPo postPo = postPoRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException("找不到文章序號為" + postId + "的留言"));
-        CommentPo commentPo = commentPoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("找不到留言序號為" + id + "的留言"));
+    public void update(CommentDto commentDto) throws Exception {
+        if(commentDto == null) {
+            throw new IllegalArgumentException("更新評論資訊不得為空");
+        }
+        CommentPo commentPo = commentPoRepository.findById(commentDto.getId()).orElseThrow(() -> new EntityNotFoundException("找不到評論"));
         commentPo = CommentPoMapper.INSTANCE.partialUpdate(commentDto, commentPo);
-        commentPo.setUpdDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-        commentPo.setUpdateUser(SpringSecurityUtil.getCurrentUser());
-        commentPo.setPost(postPo);
+
+        logger.debug("更新評論資訊: {}", commentPo);
         commentPoRepository.saveAndFlush(commentPo);
+        logger.debug("更新評論成功, id {}", commentPo.getId());
     }
 
+    /**
+     * 刪除評論
+     *
+     * @param commentDto 評論資訊
+     * @throws Exception 遭遇異常時拋出
+     */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void delete(Long postId, Long id){
+    public void delete(CommentDto commentDto) throws Exception {
+        throw new MethodNotSupportedException("該刪除評論方法不支援");
+    }
+
+    /**
+     * 刪除評論
+     *
+     * @param id 評論序號
+     * @throws Exception 遭遇異常時拋出
+     */
+    @Override
+    public void delete(Long id) throws Exception {
+        if(id == null) {
+            throw new IllegalArgumentException("刪除評論資訊不得為空");
+        }
+        if(!commentPoRepository.existsById(id)) {
+            throw new EntityNotFoundException("找不到評論id " + id + "的資料");
+        }
         commentPoRepository.deleteById(id);
     }
 
+    /**
+     * 搜尋指定序號的評論
+     *
+     * @param id 評論序號
+     * @return CommentDto 評論資訊
+     * @throws EntityNotFoundException 遇到異常則拋出
+     */
     @Override
-    public List<CommentDto> findAllComments(Long postId) throws ResourceNotFoundException {
-        postPoRepository.findById(postId)
-                .orElseThrow(() -> new ResourceNotFoundException("找不到文章序號為" + postId + "的留言"));
-        List<CommentPo> commentPoList = commentPoRepository.findAllByPostId(postId);
-        if(CollectionUtils.isEmpty(commentPoList))
-            return null;
-        return CommentPoMapper.INSTANCE.toDtoList(commentPoList);
+    public CommentDto findById(Long id) throws EntityNotFoundException {
+        if(id == null) {
+            throw new IllegalArgumentException("查詢評論資訊不得為空");
+        }
+        CommentPo commentPo = commentPoRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("找不到評論"));
+        return CommentPoMapper.INSTANCE.toDto(commentPo);
     }
 
+    /**
+     * 搜尋所有評論
+     *
+     * @return List<CommentDto> 所有評論集合
+     * @throws Exception 遭遇異常時拋出
+     */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void reportComment(CommentDto commentDto) {
+    public List<CommentDto> findAll() throws Exception {
+        return commentPoRepository.findAll().stream().map(CommentPoMapper.INSTANCE::toDto).collect(Collectors.toList());
+    }
+
+    /**
+     * 搜尋所有 分頁評論
+     *
+     * @param page 當前頁數
+     * @param pageSize 每頁顯示筆數
+     * @return Page<CommentDto> 分頁評論
+     * @throws Exception 遭遇異常時拋出
+     */
+    @Override
+    public Page<CommentDto> findAll(Integer page, Integer pageSize) throws Exception {
+        Pageable pageable = PageRequest.of(page, pageSize);
+        return commentPoRepository.findAll(pageable).map(CommentPoMapper.INSTANCE::toDto);
+    }
+
+    /**
+     * 檢舉評論內容
+     *
+     * @param commentDto 評論資訊
+     */
+    @Override
+    public void report(CommentDto commentDto) {
+        // 交給生產者 傳遞 待審核評論
         notificationProducer.sendReviewNotification(commentDto);
     }
 
+    /**
+     * 根據文章序號查詢評論
+     *
+     * @param postId 文章序號
+     * @return List<CommentDto> 評論列表
+     */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void addCommentlike(Long postId, Long id){
-        // 確認同一使用者只能按讚一次
-        Boolean isLikeCheck = stringRedisTemplate.opsForSet()
-                .isMember("commentLike" + id, Objects.requireNonNull(SpringSecurityUtil.getCurrentUser()));
-        if(Boolean.TRUE.equals(isLikeCheck)) {
-            return;
-        }
-        stringRedisTemplate.opsForSet().add("commentLike" + id, Objects.requireNonNull(SpringSecurityUtil.getCurrentUser()));
-        commentPoRepository.addCommentLike(postId, id);
+    public List<CommentDto> findAll(Long postId) {
+        return commentPoRepository.findAllByPostId(postId).stream().map(CommentPoMapper.INSTANCE::toDto).collect(Collectors.toList());
     }
 
+    /**
+     * 增加 按讚數
+     *
+     * @param id 評論序號
+     */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void addCommentDislike(Long postId, Long id) {
-        // 確認同一使用者只能按讚一次
-        Boolean isDislikeCheck = stringRedisTemplate.opsForSet()
-                .isMember("commentDislike" + id, Objects.requireNonNull(SpringSecurityUtil.getCurrentUser()));
-        if(Boolean.TRUE.equals(isDislikeCheck)) {
-            return;
-        }
-        stringRedisTemplate.opsForSet().add("commentDislike" + id, Objects.requireNonNull(SpringSecurityUtil.getCurrentUser()));
-        commentPoRepository.addCommentDisLike(postId, id);
+    public void like(Long id) {
+        commentPoRepository.addCommentLike(id);
     }
 
+    /**
+     * 減少 按讚數
+     *
+     * @param id 評論序號
+     */
     @Override
-    public Integer findLikeCount(Long postId, Long id) {
-        return commentPoRepository.findLikeCount(postId, id);
+    public void cancelLike(Long id) {
+        commentPoRepository.addCommentDisLike(id);
     }
 
+    /**
+     * 搜尋按讚數
+     *
+     * @param id 評論序號
+     * @return Integer 按讚數
+     */
+    @Override
+    public Integer queryLikeCount(Long id) {
+        return commentPoRepository.getCommentLike(id);
+    }
 }

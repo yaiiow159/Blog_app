@@ -1,23 +1,12 @@
 package com.blog.service;
 
+
 import com.blog.dto.CommentDto;
-import com.blog.exception.ResourceNotFoundException;
 
 import java.util.List;
 
-public interface CommentService {
-    void add(Long postId, CommentDto commentDto) throws ResourceNotFoundException;
-    void edit(Long postId, Long id , CommentDto commentDto) throws ResourceNotFoundException;
-    void delete(Long postId , Long id) throws ResourceNotFoundException;
-    CommentDto findComment(Long postId,Long id) throws ResourceNotFoundException;
+public interface CommentService extends CrudLikeService<CommentDto> {
+    void report(CommentDto commentDto);
 
-    List<CommentDto> findAllComments(Long postId) throws ResourceNotFoundException;
-
-    void reportComment(CommentDto commentDto) throws ResourceNotFoundException;
-
-    void addCommentlike(Long postId, Long id);
-
-    void addCommentDislike(Long postId, Long id);
-
-    Integer findLikeCount(Long postId, Long id);
+    List<CommentDto> findAll(Long postId);
 }

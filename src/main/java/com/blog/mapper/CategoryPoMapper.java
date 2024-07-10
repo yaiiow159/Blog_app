@@ -9,20 +9,21 @@ import org.springframework.data.domain.PageImpl;
 
 import java.util.List;
 
-@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface CategoryPoMapper {
+@Mapper
+public interface CategoryPoMapper extends BasicMapper {
     CategoryPoMapper INSTANCE = Mappers.getMapper(CategoryPoMapper.class);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     CategoryPo toPo(CategoryDto categoryDto);
 
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     CategoryDto toDto(CategoryPo categoryPo);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @InheritConfiguration(name = "ignoreBaseEntityField")
     CategoryPo partialUpdate(CategoryDto categoryDto, @MappingTarget CategoryPo categoryPo);
 
     default List<CategoryDto> toDtoList(List<CategoryPo> content){
         return content.stream().map(this::toDto).toList();
-    }
-    default Page<CategoryDto> toDtoPage(Page<CategoryPo> content){
-        return new PageImpl<>(toDtoList(content.getContent()), content.getPageable(), content.getTotalElements());
     }
 }

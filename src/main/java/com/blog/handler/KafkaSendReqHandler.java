@@ -13,10 +13,10 @@ import java.util.Objects;
 public class KafkaSendReqHandler implements ProducerListener {
     @Override
     public void onSuccess(ProducerRecord producerRecord, RecordMetadata recordMetadata) {
-        log.info("producerRecord 寄送成功 offset: {} record:{}", recordMetadata.offset() , producerRecord.toString());
+        log.info("recordMetadata 寄送成功 內容: {}", recordMetadata.toString());
     }
     @Override
     public void onError(ProducerRecord producerRecord, RecordMetadata recordMetadata, Exception exception) {
-        log.info("producerRecord 寄送失敗錯誤原因: {}", exception.getMessage());
+        log.error("生產者 寄送消息 : {} 出現異常 ,寄送失敗錯誤原因: {}", Objects.requireNonNull(recordMetadata) ,exception.getMessage());
     }
 }

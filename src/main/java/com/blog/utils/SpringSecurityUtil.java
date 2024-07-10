@@ -1,6 +1,7 @@
 package com.blog.utils;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
@@ -8,8 +9,9 @@ import org.springframework.security.core.userdetails.User;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Slf4j
 public class SpringSecurityUtil {
+
+    private final static Logger logger = LoggerFactory.getLogger(SpringSecurityUtil.class);
     private static final String DEFAULT_USER = "admin";
     public static String getCurrentUser(){
         try {
@@ -19,7 +21,7 @@ public class SpringSecurityUtil {
         }
         return DEFAULT_USER;
     } catch (Exception e) {
-        log.warn("cannot get the current user ");
+        logger.warn("找不到該 用戶的資訊");
     }
         return null;
     }
@@ -27,7 +29,7 @@ public class SpringSecurityUtil {
         try {
             return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         } catch (Exception e) {
-            log.warn("cannot get the current user ");
+            logger.warn("找不到該 用戶的資訊");
         }
         return null;
     }
@@ -37,7 +39,7 @@ public class SpringSecurityUtil {
             User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             return user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
         } catch (Exception e) {
-            log.warn("cannot get the current user ");
+            logger.warn("找不到該 用戶的權限");
         }
         return null;
     }

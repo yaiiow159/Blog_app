@@ -22,7 +22,7 @@ public class KapchaConfig {
         properties.put("kaptcha.session.key", "code");
         properties.put("kaptcha.textproducer.char.length", "4");
         properties.put("kaptcha.textproducer.font.names", "Arial,Courier New,monospaced");
-        properties.setProperty("kaptcha.noise.impl","com.google.code.kaptcha.impl.DefaultNoise");
+        properties.setProperty("kaptcha.noise.impl", "com.google.code.kaptcha.impl.DefaultNoise");
 
         DefaultKaptcha defaultKaptcha = new DefaultKaptcha();
         Config config = new Config(properties);

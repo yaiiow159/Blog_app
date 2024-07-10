@@ -40,7 +40,6 @@ public class UserReportPo implements java.io.Serializable {
     @ToString.Exclude
     private CommentPo comment;
 
-    @Column(name = "report_time", nullable = false)
-    @CreationTimestamp
+    @Column(name = "report_time", nullable = false,updatable = false)
     private LocalDateTime reportTime;
 }

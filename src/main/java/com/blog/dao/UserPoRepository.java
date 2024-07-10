@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +28,6 @@ public interface UserPoRepository extends JpaRepository<UserPo, Long>, JpaSpecif
 
     @Query(value = "SELECT * FROM users WHERE email = ?1", nativeQuery = true)
     Optional<UserPo> findByEmail(String email);
-
 
     @Query(value = "SELECT * FROM users INNER JOIN user_roles ON users.id = user_roles.user_id WHERE user_roles.role_id = :id", nativeQuery = true)
     List<UserPo> findUsersByRoleName(@Param("id") long id);
@@ -53,10 +53,11 @@ public interface UserPoRepository extends JpaRepository<UserPo, Long>, JpaSpecif
     @Query(value = "UPDATE users SET password = :newPassword WHERE username = :username", nativeQuery = true)
     void changePassword(@Param("newPassword") String newPassword,@Param("username") String username);
 
-    @Modifying
-    @Query(value = "UPDATE users SET avatar_name = :imageName WHERE username = :username", nativeQuery = true)
-    void updateImageName(@Param("imageName") String imageName,@Param("username") String username);
-
     @Query(value = "SELECT * FROM users WHERE username = :userName OR email = :email", nativeQuery = true)
     Optional<UserPo> findByUserNameOrEmail(@Param("userName") String userName,@Param("email") String email);
+
+    @Modifying
+    @Query(value = "UPDATE UserPo SET imageUrl = :avatarUrl, imageName = :imageName WHERE userName = :username")
+    @Transactional
+    void updateUserAvatar(@Param("avatarUrl") String avatarUrl,@Param("imageName") String imageName, @Param("username") String username);
 }

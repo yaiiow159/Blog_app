@@ -13,6 +13,6 @@ public interface LoginHistoryPoMapper {
 
     LoginHistoryDto toDto(LoginHistoryPo loginHistoryPo);
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, ignoreUnmappedSourceProperties = "id")
     LoginHistoryPo partialUpdate(LoginHistoryDto loginHistoryDto, @MappingTarget LoginHistoryPo loginHistoryPo);
 }

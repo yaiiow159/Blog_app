@@ -1,10 +1,12 @@
 package com.blog.po;
 
 
-import com.blog.enumClass.PostStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
@@ -67,15 +69,14 @@ public class PostPo extends BasicPo implements java.io.Serializable {
     private Set<TagPo> tags = new HashSet<>();
 
     //文章作者名稱
-    @Column(name = "author_name")
+    @Column(name = "author_name",nullable = false)
     @FullTextField(name = "author_name")
     private String authorName;
 
     // 文章作者郵件 (收件用)
-    @Email(message = "請輸入正確的郵件格式")
+    @Email(message = "請輸入正確的郵件格式", regexp = "\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*")
     @Column(name = "author_email")
     private String authorEmail;
-
     // 預設為0
     @Column(name = "likes",columnDefinition = "bigint default 0",nullable = false)
     private Long likes;

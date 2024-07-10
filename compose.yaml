@@ -1,12 +1,11 @@
 version: '3.7'
 services:
-  blog_app:
+  test-blog:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: blog_app
     external_links:
-      - mysql
       - redis
       - zookeeper
       - kafka
@@ -16,7 +15,6 @@ services:
     ports:
       - "9090:9090"
     depends_on:
-      - mysql
       - redis
       - zookeeper
       - kafka
@@ -27,29 +25,29 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-  mysql:
-    image: mysql:8.0.30
-    container_name: mysql
-    restart: on-failure
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - mysql_conf:/etc/mysql/conf.d
-    deploy:
-      replicas: 1
-    environment:
-      - MYSQL_DATABASE=blog_app
-      - MYSQL_ROOT_PASSWORD=Timmy@870728
-      - MYSQL_ROOT_USER=root
-      - MYSQL_ROOT_HOST=%
-    ports:
-      - "3305:3306"
-    networks:
-      - blog_network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      retries: 3
-      timeout: 5s
+#  mysql:
+#    image: mysql:8.0.30
+#    container_name: mysql
+#    restart: on-failure
+#    volumes:
+#      - mysql_data:/var/lib/mysql
+#      - mysql_conf:/etc/mysql/conf.d
+#    deploy:
+#      replicas: 1
+#    environment:
+#      - MYSQL_DATABASE=blog_app
+#      - MYSQL_ROOT_PASSWORD=Timmy@870728
+#      - MYSQL_ROOT_USER=root
+#      - MYSQL_ROOT_HOST=%
+#    ports:
+#      - "3305:3306"
+#    networks:
+#      - blog_network
+#    healthcheck:
+#      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+#      interval: 10s
+#      retries: 3
+#      timeout: 5s
   redis:
     image: redis:7.2.1-alpine
     container_name: redis
@@ -89,7 +87,7 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
       KAFKA_BROKER_ID: 1
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CREATE_TOPICS: "email-notification-topic:3:1,phone-notification-topic:3:1,review-notification-topic:3:1"
+      KAFKA_CREATE_TOPICS: "email-notification-topic:3:1,review-notification-topic:3:1"
     volumes:
       - kafka_data:/var/lib/kafka
     depends_on:
@@ -112,11 +110,8 @@ networks:
             kafka: 172.18.0.2
             zookeeper: 172.18.0.3
             redis: 172.18.0.4
-            mysql: 172.18.0.5
             blog_app: 172.18.0.6
 volumes:
-  mysql_data:
-  mysql_conf:
   redis_conf:
   zookeeper_data:
   zookeeper_conf:

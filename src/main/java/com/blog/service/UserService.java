@@ -1,47 +1,18 @@
 package com.blog.service;
 
-import com.blog.dto.UserProfileDto;
-import com.blog.dto.UserProfileRequestBody;
-import com.blog.exception.ResourceNotFoundException;
-import com.blog.exception.ValidateFailedException;
 import com.blog.dto.UserDto;
+import com.blog.dto.UserProfileDto;
 import org.springframework.data.domain.Page;
-import org.springframework.web.multipart.MultipartFile;
 
-import javax.naming.AuthenticationNotSupportedException;
-import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
-public interface UserService {
-    UserDto findByUserId(Long userId);
-
-    void add(UserDto userDto) throws AuthenticationNotSupportedException, ValidateFailedException;
-
-    void edit(UserDto userDto) throws AuthenticationNotSupportedException;
-
-    String delete(Long userId);
-
-    UserDto findByUserName(String userName);
-
-    String register(UserDto body) throws AuthenticationNotSupportedException;
-
-    void logout(String token) throws AuthenticationNotSupportedException;
-
-    UserProfileDto updateUserProfile(UserProfileDto userProfileDto) throws IOException, ExecutionException, InterruptedException, TimeoutException;
-
-    UserProfileDto getUserProfile(String username) throws ResourceNotFoundException, ExecutionException, InterruptedException, IOException, Exception;
-
-    List<UserDto> findUsersByRoleName(long id);
-
-    String unlockUser(Long userId);
-
-    String lockUser(Long userId);
-
+public interface UserService extends BaseService<UserDto> {
+    void lock(long id) throws Exception;
+    void unlock(long id) throws Exception;
+    void updateProfile(UserProfileDto userProfileDto) throws Exception;
+    UserProfileDto queryProfile(String username) throws Exception;
     void changePassword(String oldPassword, String newPassword);
 
-    Page<UserDto> findAll(String userName, String userEmail, int page, int pageSize);
-
-    void upload(MultipartFile file) throws IOException, ExecutionException, InterruptedException;
+    UserDto findByName(String key) throws Exception;
+    Page<UserDto> findAll(Integer page, Integer pageSize, String userName, String userEmail);
 }

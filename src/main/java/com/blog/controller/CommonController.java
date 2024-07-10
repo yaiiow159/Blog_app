@@ -1,6 +1,6 @@
 package com.blog.controller;
 
-import com.blog.dto.ApiResponse;
+import com.blog.response.ResponseBody;
 import com.blog.service.CommonService;
 import com.blog.vo.UserCommentLikeVo;
 import com.blog.vo.UserPostLikeCountVo;
@@ -15,9 +15,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
-import java.util.Set;
-
 @Tag(name = "通用API", description = "通用功能相關API")
 @RestController
 @RequestMapping("/api/v1/common")
@@ -29,13 +26,13 @@ public class CommonController {
 
     @GetMapping("/userCommentLikeCount/{username}")
     @Operation(summary = "查詢使用者評論按讚數", description = "查詢使用者評論按讚數")
-    public ApiResponse<UserCommentLikeVo> getUserCommentLikeCount(@Parameter(description = "使用者名稱", required = true) @PathVariable String username) {
-        return new ApiResponse<>(true, "查詢成功", commonService.getUserCommentLikeCount(username), HttpStatus.OK);
+    public ResponseBody<UserCommentLikeVo> getUserCommentLikeCount(@Parameter(description = "使用者名稱", required = true) @PathVariable String username) {
+        return new ResponseBody<>(true, "查詢成功", commonService.getUserCommentLikeCount(username), HttpStatus.OK);
     }
 
     @GetMapping("/userPostLikeCount/{username}")
     @Operation(summary = "查詢使用者文章按讚數", description = "查詢使用者文章按讚數")
-    public ApiResponse<UserPostLikeCountVo> getUserLikeCount(@Parameter(description = "使用者名稱", required = true) @PathVariable String username) {
-        return new ApiResponse<>(true, "查詢成功", commonService.getUserPostLikeCount(username), HttpStatus.OK);
+    public ResponseBody<UserPostLikeCountVo> getUserLikeCount(@Parameter(description = "使用者名稱", required = true) @PathVariable String username) {
+        return new ResponseBody<>(true, "查詢成功", commonService.getUserPostLikeCount(username), HttpStatus.OK);
     }
 }

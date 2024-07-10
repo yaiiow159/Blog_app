@@ -67,7 +67,7 @@ public class SecurityConfig {
             CorsConfiguration config = new CorsConfiguration();
             config.addAllowedMethod(CorsConfiguration.ALL); // 允許所有方法
             config.addAllowedHeader(CorsConfiguration.ALL); // 允許所有請求
-            config.setAllowCredentials(true); // 預檢請求
+            config.setAllowCredentials(true);
             config.setMaxAge(3600L);
             config.setAllowedOriginPatterns(Collections.singletonList("*"));
             return config;

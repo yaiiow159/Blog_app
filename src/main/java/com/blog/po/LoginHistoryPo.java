@@ -45,12 +45,12 @@ public class LoginHistoryPo implements Serializable {
     @Column(name = "user_agent")
     private String userAgent;
 
-    @Column(name = "login_timeStamp")
+    @Column(name = "login_timeStamp",updatable = false)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime loginTimestamp;
 
-    @Column(name = "logout_timeStamp")
+    @Column(name = "logout_timeStamp",updatable = false)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime logoutTimestamp;

@@ -7,6 +7,8 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -15,10 +17,12 @@ import java.util.concurrent.TimeUnit;
 /**
  * 利用guava cache實現本地緩存 工具類
  */
+
 @Component
-@Slf4j
 public class CacheUtil {
     private static UserService userService;
+
+    private final static Logger logger = LoggerFactory.getLogger(CacheUtil.class);
 
     @Autowired
     public void setUserService(UserService userService) {
@@ -26,7 +30,7 @@ public class CacheUtil {
     }
     private static final LoadingCache<String, String> quavaCache = CacheBuilder.newBuilder()
             .initialCapacity(10)
-            .maximumSize(100)
+            .maximumSize(1000)
             .expireAfterAccess(15, TimeUnit.MINUTES)
             .recordStats()
             .refreshAfterWrite(3, TimeUnit.MINUTES)
@@ -40,16 +44,16 @@ public class CacheUtil {
                 }
             });
 
-    private static String getUserInfo(String key) {
+    private static String getUserInfo(final String key) {
         UserDto userDto;
         try {
-            userDto = userService.findByUserName(key);
+            userDto = userService.findByName(key);
             if(null == userDto) {
                 return null;
             }
             return JsonUtil.toJsonString(userDto);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Json 序列化 錯誤 原因為: {}", e.getMessage());
         }
         return null;
     }
@@ -69,7 +73,7 @@ public class CacheUtil {
 
         public static void clear() {
         quavaCache.cleanUp();
-        System.out.println("清除緩存...");
+        logger.info("清除緩存");
     }
 
 }

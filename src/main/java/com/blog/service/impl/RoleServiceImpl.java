@@ -5,10 +5,13 @@ import com.blog.dto.RoleDto;
 import com.blog.mapper.RolePoMapper;
 import com.blog.po.RolePo;
 import com.blog.service.RoleService;
-import com.blog.utils.SpringSecurityUtil;
 
-import jakarta.annotation.Resource;
+import jakarta.mail.MethodNotSupportedException;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.Predicate;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -16,87 +19,143 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 @Service
+@RequiredArgsConstructor
 public class RoleServiceImpl implements RoleService {
 
-    @Resource
-    private RolePoRepository rolePoRepository;
+    private final RolePoRepository rolePoRepository;
+    private final Logger logger = LoggerFactory.getLogger(RoleServiceImpl.class);
 
+    /**
+     * 新增角色
+     *
+     * @param  roleDto 新增角色資訊
+     * @see RoleDto
+     */
     @Override
-    public RoleDto findByRoleName(String roleName) {
-        if(rolePoRepository.findByName(roleName).isPresent()){
-            return RolePoMapper.INSTANCE.toDto(rolePoRepository.findByName(roleName).get());
+    public void save(RoleDto roleDto) {
+        logger.info("新增角色資訊: {}", roleDto);
+        if(roleDto == null) {
+            throw new IllegalArgumentException("新增角色資訊不得為空");
         }
-        return null;
+        if(rolePoRepository.existsByName(roleDto.getRoleName())) {
+            throw new IllegalArgumentException("角色名稱重複");
+        }
+        RolePo rolePo = RolePoMapper.INSTANCE.toPo(roleDto);
+        rolePoRepository.saveAndFlush(rolePo);
     }
 
+    /**
+     * 更新角色
+     *
+     * @param  roleDto 更新角色資訊
+     * @see RoleDto
+     */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void add(RoleDto roleDto) {
-        RolePo po = RolePoMapper.INSTANCE.toPo(roleDto);
-        po.setCreateDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-        po.setCreatUser(SpringSecurityUtil.getCurrentUser());
-        rolePoRepository.saveAndFlush(po);
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public void update(RoleDto roleDto) {
+        logger.debug("更新角色資訊: {}", roleDto);
+        if(roleDto == null) {
+            throw new IllegalArgumentException("更新角色資訊不得為空");
+        }
+        if(rolePoRepository.existsByName(roleDto.getRoleName())) {
+            throw new IllegalArgumentException("角色名稱重複");
+        }
+        RolePo rolePo = rolePoRepository.findById(roleDto.getId()).orElseThrow(() -> new EntityNotFoundException("找不到該角色序號" + roleDto.getId() + "的資料"));
+        RolePoMapper.INSTANCE.partialUpdate(roleDto, rolePo);
+        rolePoRepository.saveAndFlush(rolePo);
     }
 
+    /**
+     * 刪除角色
+     *
+     * @param  roleDto 刪除角色資訊
+     * @see RoleDto
+     */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void edit(RoleDto roleDto) {
-        rolePoRepository.findByName(roleDto.getRoleName()).ifPresent(rolePo -> {
-            RolePo po = RolePoMapper.INSTANCE.partialUpdate(roleDto, rolePo);
-            po.setUpdDate(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
-            po.setUpdateUser(SpringSecurityUtil.getCurrentUser());
-            rolePoRepository.saveAndFlush(po);
-        });
+    public void delete(RoleDto roleDto) throws Exception {
+        throw new MethodNotSupportedException("該刪除角色方法不支援");
     }
 
+    /**
+     * 依照角色序號刪除角色
+     *
+     * @param id  角色id
+     * @throws Exception 遇到異常則抛到
+     */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public String delete(Long id) {
+    public void delete(Long id) throws Exception {
+        logger.debug("刪除角色序號: {}", id);
+        if(id == null) {
+            throw new IllegalArgumentException("刪除角色資訊不得為空");
+        }
+        if(!rolePoRepository.existsById(id)) {
+            throw new EntityNotFoundException("找不到該角色序號" + id + "的資料");
+        }
         rolePoRepository.deleteById(id);
-        return "刪除成功";
     }
 
+    /**
+     * 搜尋對應序號的角色資訊
+     *
+     * @param id 角色id
+     * @return RoleDto 角色資訊
+     * @throws EntityNotFoundException 遇到異常則抛到
+     */
     @Override
-    public Page<RoleDto> findAll(String name,int page, int size) {
-        Specification<RolePo> specification = (root, query, criteriaBuilder) -> {
-            List<Predicate> list = new ArrayList<>();
-            if(!ObjectUtils.isEmpty(name)){
-                Predicate predicate = criteriaBuilder.like(root.get("name"), "%" + name + "%");
-                list.add(predicate);
-            }
-            Predicate[] p = new Predicate[list.size()];
-            return criteriaBuilder.and(list.toArray(p));
-        };
-        Pageable pageable = PageRequest.of(page - 1, size);
-        Page<RolePo> rolePos = rolePoRepository.findAll(specification, pageable);
-        if(!rolePos.isEmpty()){
-            return new PageImpl<>(RolePoMapper.INSTANCE.toDtoList(rolePos.getContent()), pageable, rolePos.getTotalElements());
-        } else{
-            return Page.empty();
+    public RoleDto findById(Long id) throws EntityNotFoundException {
+        logger.debug("查詢角色序號: {}", id);
+        if(id == null) {
+            throw new IllegalArgumentException("查詢角色資訊不得為空");
         }
+        RolePo rolePo = rolePoRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("找不到該角色序號" + id + "的資料"));
+        return RolePoMapper.INSTANCE.toDto(rolePo);
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public List<RoleDto> findAll() {
-        return rolePoRepository.findAll().stream().map(RolePoMapper.INSTANCE::toDto).toList();
+        logger.debug("查詢所有角色");
+        List<RolePo> rolePos = rolePoRepository.findAll();
+        return RolePoMapper.INSTANCE.toDtoList(rolePos);
     }
 
+    /**
+     * @param page 當前頁數
+     * @param pageSize 每頁筆數
+     * @return Page<RoleDto> 分頁物件
+     *
+     * @throws Exception 遇到異常則抛到
+     */
     @Override
-    public List<RoleDto> getRoleByUserId(long id) {
-        return RolePoMapper.INSTANCE.toDtoList(rolePoRepository.findByUserId(id));
+    public Page<RoleDto> findAll(Integer page, Integer pageSize) throws Exception {
+        Pageable pageable = PageRequest.of(page - 1, pageSize);
+        Page<RolePo> rolePos = rolePoRepository.findAll(pageable);
+        return rolePos.map(RolePoMapper.INSTANCE::toDto);
     }
 
+    /**
+     * 搜尋符合條件的分頁角色內容
+     *
+     * @param page     頁碼
+     * @param pageSize 每頁筆數
+     * @param name   查詢條件(可傳空)
+     * @return Page<RoleDto> 分頁物件
+     */
     @Override
-    public RoleDto findById(Long id) {
-        return RolePoMapper.INSTANCE.toDto(rolePoRepository.findById(id).orElse(null));
+    public Page<RoleDto> findAll(Integer page, Integer pageSize, String name) {
+        Pageable pageable = PageRequest.of(page - 1, pageSize);
+        Specification<RolePo> specification = (root, query, criteriaBuilder) -> {
+            if (name != null) {
+                query.where(criteriaBuilder.equal(root.get("roleName"), name));
+            }
+            return query.getRestriction();
+        };
+        Page<RolePo> rolePos = rolePoRepository.findAll(specification, pageable);
+        return rolePos.map(RolePoMapper.INSTANCE::toDto);
     }
-
 }

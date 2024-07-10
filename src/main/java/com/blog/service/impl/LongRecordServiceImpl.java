@@ -5,6 +5,7 @@ import com.blog.dto.LoginHistoryDto;
 import com.blog.mapper.LoginHistoryPoMapper;
 import com.blog.po.LoginHistoryPo;
 import com.blog.service.LongRecordService;
+import com.blog.utils.SpringSecurityUtil;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,9 +15,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class LongRecordServiceImpl implements LongRecordService {
     private final LoginHistoryPoRepository loginHistoryRepository;
@@ -25,16 +26,16 @@ public class LongRecordServiceImpl implements LongRecordService {
     public Page<LoginHistoryDto> getLoginRecords(String username, String ipAddress, String action, Integer page, Integer pageSize) {
         Specification<LoginHistoryPo> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
-            if (!ObjectUtils.isEmpty(username)) {
+            if (!StringUtils.hasText(username)) {
                 predicate = criteriaBuilder.and(predicate, criteriaBuilder.equal(root.get("username"), username));
             }
-            if (!ObjectUtils.isEmpty(ipAddress)) {
+            if (!StringUtils.hasText(ipAddress)) {
                 predicate = criteriaBuilder.and(predicate, criteriaBuilder.equal(root.get("ipAddress"), ipAddress));
             }
-            if (!ObjectUtils.isEmpty(action)) {
+            if (!StringUtils.hasText(action)) {
                 predicate = criteriaBuilder.and(predicate, criteriaBuilder.equal(root.get("action"), action));
             }
-            return predicate;
+            return query.where(predicate).getRestriction();
         };
         Pageable pageable = PageRequest.of(page - 1, pageSize);
         Page<LoginHistoryPo> loginHistoryPos = loginHistoryRepository.findAll(specification, pageable);
@@ -43,6 +44,10 @@ public class LongRecordServiceImpl implements LongRecordService {
 
     @Override
     public LoginHistoryDto getLoginRecord(Long id) {
-        return LoginHistoryPoMapper.INSTANCE.toDto(loginHistoryRepository.findById(id).orElse(null));
+        if(id == null){
+            throw new IllegalArgumentException("參數 id 不能為 null");
+        }
+        String username = SpringSecurityUtil.getCurrentUser();
+        return LoginHistoryPoMapper.INSTANCE.toDto(loginHistoryRepository.findByIdAndUsername(id,username).orElse(null));
     }
 }

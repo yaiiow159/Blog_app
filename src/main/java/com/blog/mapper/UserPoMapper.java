@@ -11,14 +11,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = {RolePoMapper.class, UserGroupPoMapper.class})
-public interface UserPoMapper {
+public interface UserPoMapper extends BasicMapper {
     UserPoMapper INSTANCE = Mappers.getMapper(UserPoMapper.class);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @InheritConfiguration(name = "ignoreBaseFieldId")
     UserPo partialUpdate(UserDto userDto, @MappingTarget UserPo userPo);
 
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     UserDto toDto(UserPo entity);
 
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     UserPo toPo(UserDto dto);
 
     default List<UserDto> toDtoList(List<UserPo> entities) {
@@ -27,15 +30,5 @@ public interface UserPoMapper {
 
     default List<UserPo> toPoList(List<UserDto> dtoList) {
         return dtoList.stream().map(this::toPo).collect(Collectors.toList());
-    }
-
-    default Page<UserDto> toDtoPage(Page<UserPo> pageEntity) {
-        List<UserDto> dtos = toDtoList(pageEntity.getContent());
-        return new PageImpl<>(dtos, pageEntity.getPageable(), pageEntity.getTotalElements());
-    }
-
-    default Page<UserPo> toPoPage(Page<UserDto> pageDto) {
-        List<UserPo> entities = toPoList(pageDto.getContent());
-        return new PageImpl<>(entities, pageDto.getPageable(), pageDto.getTotalElements());
     }
 }

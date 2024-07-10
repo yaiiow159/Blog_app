@@ -10,20 +10,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface UserGroupPoMapper {
+public interface UserGroupPoMapper extends BasicMapper {
     UserGroupPoMapper INSTANCE = Mappers.getMapper(UserGroupPoMapper.class);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @InheritConfiguration(name = "ignoreBaseFieldId")
     UserGroupPo partialUpdate(UserGroupDto userGroupDto, @MappingTarget UserGroupPo userGroupPo);
 
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     UserGroupDto toDto(UserGroupPo entity);
 
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     UserGroupPo toPo(UserGroupDto dto);
     default List<UserGroupDto> toDtoList(List<UserGroupPo> entities) {
         return entities.stream().map(this::toDto).collect(Collectors.toList());
     }
 
-    default List<UserGroupPo> toPoList(List<UserGroupDto> dtoList) {
-        return dtoList.stream().map(this::toPo).collect(Collectors.toList());
-    }
 }

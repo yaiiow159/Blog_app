@@ -15,21 +15,20 @@ public interface CommentPoRepository extends JpaRepository<CommentPo, Long>, Jpa
 
     // 增加特定文章的評論的按讚數
     @Modifying
-    @Query("UPDATE CommentPo c SET c.likes = c.likes + 1 WHERE c.post.id = ?1 AND c.id = ?2")
-    void addCommentLike(Long postId, Long commentId);
+    @Query("UPDATE CommentPo c SET c.likes = c.likes + 1 WHERE c.id = ?1")
+    void addCommentLike(Long commentId);
 
     @Modifying
-    @Query("UPDATE CommentPo c SET c.dislikes = c.dislikes + 1 WHERE c.post.id = ?1 AND c.id = ?2")
-    void addCommentDisLike(Long postId, Long commentId);
+    @Query("UPDATE CommentPo c SET c.dislikes = c.dislikes + 1 WHERE c.id = ?1")
+    void addCommentDisLike(Long commentId);
 
     @Query("SELECT c.likes FROM CommentPo c WHERE c.id = ?1")
-    Long getCommentLike(Long id);
+    Integer getCommentLike(Long id);
 
     @Query("SELECT c.dislikes FROM CommentPo c WHERE c.id = ?1")
-    Long getCommentDisLike(Long id);
+    Integer getCommentDisLike(Long id);
 
-    @Query("SELECT count(c.likes) FROM CommentPo c WHERE c.post.id = ?1 AND c.id = ?2")
+    @Query("SELECT count(c.likes) FROM CommentPo c WHERE c.id = ?1")
     Integer findLikeCount(Long postId, Long id);
-
 
 }

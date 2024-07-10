@@ -22,6 +22,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -33,7 +34,7 @@ public class JwtAuthenticatePreFilter extends OncePerRequestFilter {
     private final StringRedisTemplate redisTemplate;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException, ServletException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
         final String token = request.getHeader("Authorization");
         String username = null;
         String jwtToken = null;
@@ -60,9 +61,7 @@ public class JwtAuthenticatePreFilter extends OncePerRequestFilter {
                 log.debug("jwtToken:" + jwtToken);
                 // 驗證該筆token是否被加入進redis中的黑名單中
                 if(jwtBlackListService.isJwtInBlackList(jwtToken)) {
-                    throw new ValidateFailedException(
-                            ValidateFailedException.DomainErrorStatus.JWT_AUTHENTICATION_TOKEN_EXPIRED,
-                            "JWT令牌已失效，請重新登入");
+                    throw new ValidateFailedException("JWT令牌已失效，請重新登入");
                 }
                 var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

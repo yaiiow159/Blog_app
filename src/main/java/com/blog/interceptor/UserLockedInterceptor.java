@@ -9,6 +9,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.stereotype.Component;
@@ -21,9 +22,9 @@ import java.util.Optional;
 public class UserLockedInterceptor implements HandlerInterceptor {
 
     private final AutowireCapableBeanFactory beanFactory;
+
     @Resource
     private UserPoRepository userJpaRepository;
-
     public UserLockedInterceptor(AutowireCapableBeanFactory beanFactory) {
         this.beanFactory = beanFactory;
     }
@@ -40,7 +41,7 @@ public class UserLockedInterceptor implements HandlerInterceptor {
         if (user.isPresent()) {
             UserPo userPo = user.get();
             if (userPo.isLocked()) {
-                throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.USER_LOCKED);
+                throw new ValidateFailedException("帳號已被鎖定");
             }
         }
         return true;
