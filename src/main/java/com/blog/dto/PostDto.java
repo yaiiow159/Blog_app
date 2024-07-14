@@ -35,11 +35,26 @@ public class PostDto extends BaseDto implements Serializable {
     @Schema(description = "文章標題",requiredMode = Schema.RequiredMode.REQUIRED)
     private String title;
 
-    @Schema(description = "文章圖片")
-    private MultipartFile file;
-
     @Schema(description = "文章描述")
     private String description;
+
+    @Schema(description = "文章作者名稱")
+    private String authorName;
+
+    @Schema(description = "文章作者電子郵件")
+    private String authorEmail;
+
+    @Schema(description = "文章按讚數")
+    private Long likeCount;
+
+    @Schema(description = "文章瀏覽數")
+    private Long viewCount;
+
+    @Schema(description = "文章狀態",requiredMode = Schema.RequiredMode.REQUIRED)
+    private String status;
+
+    @Schema(description = "文章圖片")
+    private String imageUrl;
 
     @Schema(description = "文章分類id")
     @NotNull(message = "文章分類id不得為空")
@@ -57,18 +72,4 @@ public class PostDto extends BaseDto implements Serializable {
     @Valid
     private List<TagDto> tagDtoList;
 
-    @Schema(description = "文章作者名稱")
-    private String authorName;
-
-    @Schema(description = "文章作者電子郵件")
-    private String authorEmail;
-
-    @Schema(description = "文章按讚數")
-    private Long likeCount;
-
-    @Schema(description = "文章瀏覽數")
-    private Long viewCount;
-
-    @Schema(description = "文章狀態",requiredMode = Schema.RequiredMode.REQUIRED)
-    private String status;
 }

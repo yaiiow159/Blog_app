@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 public interface LoginHistoryService {
     void addLog(LoginHistoryDto loginHistoryDto);
 
-    void deleteLogBefore(LocalDateTime localDateTime);
+    void deleteLogBefore();
 
     LoginHistoryDto findLastLoginHistoryByUsername(String username);
 }

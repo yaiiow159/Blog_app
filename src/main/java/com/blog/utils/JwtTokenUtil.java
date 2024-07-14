@@ -86,13 +86,13 @@ public class JwtTokenUtil {
                     .parse(token);
             return Boolean.TRUE;
         } catch (MalformedJwtException ex) {
-            throw new JwtDomainException(HttpStatus.BAD_REQUEST,"Invalid JWT token");
+            throw new JwtDomainException(HttpStatus.BAD_REQUEST,"不正確的jwt-token格式");
         } catch (ExpiredJwtException ex) {
-            throw new JwtDomainException(HttpStatus.BAD_REQUEST,"Expired JWT token");
+            throw new JwtDomainException(HttpStatus.BAD_REQUEST,"jwt-token 已過期");
         } catch (UnsupportedJwtException ex) {
-            throw new JwtDomainException(HttpStatus.BAD_REQUEST, "Unsupported JWT token");
+            throw new JwtDomainException(HttpStatus.BAD_REQUEST, "不支援的jwt-token類型");
         } catch (IllegalArgumentException ex) {
-            throw new JwtDomainException(HttpStatus.BAD_REQUEST, "JWT claims string is empty.");
+            throw new JwtDomainException(HttpStatus.BAD_REQUEST, "Jwt-token的payload為空");
         }
     }
 }

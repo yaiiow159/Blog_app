@@ -29,5 +29,4 @@ public interface UserReportPoMapper extends BasicMapper {
     default List<UserReportDto> toDtoList(List<UserReportPo> entities) {
         return entities.stream().map(this::toDto).toList();
     }
-
 }

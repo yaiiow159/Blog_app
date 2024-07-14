@@ -7,7 +7,11 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class FileUtil {
-    // 生成文件名
+
+
+    /*
+     * 生成檔案名稱
+     */
     public static String getFileName(String originalFilename) {
         String extension = "";
         int i = originalFilename.lastIndexOf('.');
@@ -21,8 +25,10 @@ public class FileUtil {
         return uniqueFileName;
     }
 
-    // 生成 publicId (檔案名稱hash(sha-256) + 當前時間戳)
+    /*
+     * 生成檔案公鑰 (圖片存儲服務器) 生成方式 (檔案名稱hash(sha-256) + 當前時間戳)
+     */
     public static String generatePublicId(String originalFilename) {
-        return DigestUtils.sha256Hex(originalFilename) + "_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy:MM:dd:HH:mm:ss"));
+        return DigestUtils.md5Hex(originalFilename) + "_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy:MM:dd:HH:mm:ss"));
     }
 }

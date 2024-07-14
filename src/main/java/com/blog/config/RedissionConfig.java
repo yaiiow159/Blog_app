@@ -1,5 +1,6 @@
 package com.blog.config;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
@@ -19,6 +20,7 @@ import java.util.logging.Logger;
 /**
  * redission 配置類
  */
+@Getter
 @ConfigurationProperties(prefix = "redisson.config")
 @Configuration
 @Slf4j
@@ -45,15 +47,10 @@ public class RedissionConfig {
         return Redisson.create(config);
     }
 
-    public String getAddress() {
-        return address;
-    }
     public void setAddress(String address) {
         this.address = address;
     }
-    public String getPassword() {
-        return password;
-    }
+
     public void setPassword(String password) {
         this.password = password;
     }
@@ -62,7 +59,4 @@ public class RedissionConfig {
         this.database = database;
     }
 
-    public int getDatabase() {
-        return database;
-    }
 }

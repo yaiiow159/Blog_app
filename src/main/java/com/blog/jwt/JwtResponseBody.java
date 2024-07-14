@@ -13,14 +13,20 @@ import java.util.Set;
 @Setter
 @Builder
 public class JwtResponseBody implements Serializable {
+
     @Serial
     private static final long serialVersionUID = 1L;
-    @Schema(description = "使用者帳戶")
+
+    @Schema(description = "使用者帳戶",requiredMode = Schema.RequiredMode.REQUIRED)
     private String account;
+
     @Schema(description = "jwt類型",defaultValue = "bearer")
     private String type;
-    @Schema(description = "jwt令牌")
+
+    @Schema(description = "jwt令牌",requiredMode = Schema.RequiredMode.REQUIRED)
     private String token;
-    @Schema(description = "使用者角色")
+
+    @Schema(description = "使用者角色",requiredMode = Schema.RequiredMode.REQUIRED)
     private Set<String> roles;
+
 }

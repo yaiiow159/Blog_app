@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
+import org.hibernate.validator.constraints.Length;
 
 
 import java.io.Serial;
@@ -24,10 +25,11 @@ public class JwtRequestBody implements Serializable {
     private String username;
 
     @NotBlank(message = "密碼不得為空")
-    @Pattern(regexp = "^[a-zA-Z0-9_-]{6,16}$",message = "密碼格式錯誤")
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",message = "密碼格式錯誤")
     @Schema(description = "使用者密碼",example = "admin1234",requiredMode = Schema.RequiredMode.REQUIRED)
     private String password;
 
-    @Schema(description = "圖形驗證碼")
+    @Schema(description = "圖形驗證碼",maxLength = 4,requiredMode = Schema.RequiredMode.REQUIRED)
+    @Length(max = 4)
     private String captchaCode;
 }

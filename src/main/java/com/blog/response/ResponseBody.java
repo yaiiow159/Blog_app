@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus;
 /**
  * 統一回應物件
  * @param <T> 響應物件
- * @authr Timmy
  */
 @Setter
 @Getter

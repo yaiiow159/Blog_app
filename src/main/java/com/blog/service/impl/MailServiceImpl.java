@@ -18,6 +18,7 @@ public class MailServiceImpl implements MailService {
     private final NotificationProducer emailNotificationProducer;
 
     private static final Logger logger = LoggerFactory.getLogger(MailServiceImpl.class);
+
     /**
      * 寄送郵件 (交由 異步執行 )
      *

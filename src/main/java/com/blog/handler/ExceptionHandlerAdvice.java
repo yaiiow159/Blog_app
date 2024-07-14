@@ -7,6 +7,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ValidationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.mail.MailException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -18,6 +19,7 @@ import org.springframework.web.client.ResourceAccessException;
 
 import javax.naming.AuthenticationNotSupportedException;
 import java.util.List;
+import java.util.Objects;
 
 @RestControllerAdvice
 public class ExceptionHandlerAdvice {
@@ -48,12 +50,13 @@ public class ExceptionHandlerAdvice {
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseBody<BadCredentialsException> handle(BadCredentialsException e) {
-        return new ResponseBody<>(false,e.getMessage(),HttpStatus.UNAUTHORIZED);
+        return new ResponseBody<>(false,"帳號密碼驗證失敗",HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseBody<MethodArgumentNotValidException> handleArgumentNotValid(MethodArgumentNotValidException e) {
-        return new ResponseBody<>(false,e.getMessage(),HttpStatus.BAD_REQUEST);
+        return new ResponseBody<>(false,"請求參數驗證失敗 原因: " + Objects.requireNonNull(e.getFieldError()).getDefaultMessage() ,
+                HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
@@ -86,11 +89,16 @@ public class ExceptionHandlerAdvice {
 
     @ExceptionHandler(ValidationException.class)
     public ResponseBody<ValidationException> handleException(ValidationException e) {
-        return new ResponseBody<>(false,e.getMessage(),HttpStatus.BAD_REQUEST);
+        return new ResponseBody<>(false,"驗證時出現異常 原因: " + e.getMessage(),HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseBody<IllegalArgumentException> handleException(IllegalArgumentException e) {
-        return new ResponseBody<>(false,e.getMessage(),HttpStatus.BAD_REQUEST);
+        return new ResponseBody<>(false,"參數錯誤 原因: " + e.getMessage(),HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MailException.class)
+    public ResponseBody<MailException> handleException(MailException e) {
+        return new ResponseBody<>(false,"發送郵件失敗 原因: " + e.getMessage(),HttpStatus.BAD_REQUEST);
     }
 }

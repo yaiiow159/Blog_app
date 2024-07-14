@@ -86,8 +86,8 @@ public class MailNotificationServiceImpl implements MailNotificationService {
     }
 
     @Override
-    public MailNotificationDto queryNotification(Long id) throws EntityNotFoundException{
+    public MailNotificationDto queryNotification(Long id) {
         return MailNotificationPoMapper.INSTANCE.toDto(mailNotificationPoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("找不到該筆資料")));
+                .orElseThrow(() -> new EntityNotFoundException("找不到id為" + id + "的資料")));
     }
 }

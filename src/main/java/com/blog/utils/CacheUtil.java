@@ -6,12 +6,14 @@ import com.blog.service.UserService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -39,8 +41,8 @@ public class CacheUtil {
             .removalListener(new RemovalCustomerListener())
             .build(new CacheLoader<>() {
                 @Override
-                public String load(String key) {
-                    return getUserInfo(key);
+                public @NonNull String load(@NonNull String key) {
+                    return Objects.requireNonNull(getUserInfo(key));
                 }
             });
 

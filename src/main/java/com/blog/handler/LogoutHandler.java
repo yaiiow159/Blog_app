@@ -58,15 +58,15 @@ public class LogoutHandler extends SecurityContextLogoutHandler {
                 loginHistoryDo.setLogoutTimestamp(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
                 loginHistoryService.addLog(loginHistoryDo);
 
-                // 将JWT添加到黑名单
+                // 将JWT添加到黑名單
                 jwtBlackListService.addJwtToBlackList(jwtToken);
 
                 // 删除Redis中的缓存
                 stringRedisTemplate.delete(username);
 
-                log.info("User " + username + "登出成功 登出時間點為:" + LocalDateTime.now(ZoneId.of("Asia/Taipei")));
+                log.info("使用者: " + username + "登出成功 登出時間點為:" + LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             } catch (Exception e) {
-                log.error("Error during logout process for user: " + username, e);
+                log.error("登出時出現異常 使用者名稱: {}: 錯誤異常為: {}", username, e.getMessage());
                 throw new ValidateFailedException("再登出流程中出現異常 " + e.getMessage());
             }
         }

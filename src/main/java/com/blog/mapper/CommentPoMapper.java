@@ -10,8 +10,8 @@ import java.util.stream.Collectors;
 
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface CommentPoMapper extends BasicMapper {
-    CommentPoMapper INSTANCE = Mappers.getMapper(CommentPoMapper.class);
 
+    CommentPoMapper INSTANCE = Mappers.getMapper(CommentPoMapper.class);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     CommentPo toPo(CommentDto commentDto);

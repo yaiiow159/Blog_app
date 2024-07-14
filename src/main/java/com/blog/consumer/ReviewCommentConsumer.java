@@ -40,7 +40,7 @@ public class ReviewCommentConsumer {
     @RetryableTopic(dltStrategy = DltStrategy.ALWAYS_RETRY_ON_ERROR,timeout = "50000")
     @Transactional
     public void getReviewCommentPartition0(ConsumerRecord<String, String> record, Acknowledgment ack) {
-        log.info("Received review comment notification: {}", record.value());
+        log.info("接收到 review-notification-topic 訊息: {}", record.value());
         CommentDto commentDto = JSON.parseObject(record.value(), CommentDto.class);
         try {
             UserPo userPo = userPoRepository.findByUserName(commentDto.getName()).orElseThrow(() -> new UsernameNotFoundException("找不到使用者資料"));
@@ -66,7 +66,7 @@ public class ReviewCommentConsumer {
     @RetryableTopic(dltStrategy = DltStrategy.ALWAYS_RETRY_ON_ERROR,timeout = "50000")
     @Transactional
     public void getReviewCommentPartition1(ConsumerRecord<String, String> record, Acknowledgment ack) {
-        log.info("Received review comment notification: {}", record.value());
+        log.info("接收到 review-notification-topic 訊息: {}", record.value());
         CommentDto commentDto = JSON.parseObject(record.value(), CommentDto.class);
         try {
             UserPo userPo = userPoRepository.findByUserName(commentDto.getName()).orElseThrow(() -> new UsernameNotFoundException("找不到使用者資料"));
@@ -92,7 +92,7 @@ public class ReviewCommentConsumer {
     @RetryableTopic(dltStrategy = DltStrategy.ALWAYS_RETRY_ON_ERROR,timeout = "50000")
     @Transactional
     public void getReviewCommentPartition2(ConsumerRecord<String, String> record, Acknowledgment ack) {
-        log.info("Received review comment notification: {}", record.value());
+        log.info("接收到 review-notification-topic 訊息: {}", record.value());
         CommentDto commentDto = JSON.parseObject(record.value(), CommentDto.class);
         try {
             UserPo userPo = userPoRepository.findByUserName(commentDto.getName()).orElseThrow(() -> new UsernameNotFoundException("找不到使用者資料"));

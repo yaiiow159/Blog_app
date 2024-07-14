@@ -33,9 +33,9 @@ public class CommunicateController {
     @NoResubmit(delaySecond = 3)
     @PostMapping("/contact")
     @Operation(summary = "聯繫我們", description = "聯繫我們", tags = {"聯繫相關功能"})
-    public ResponseBody<String> communicate(@RequestParam("fromUser") String fromUser,
-                                            @RequestParam("email") String email,
-                                            @RequestParam("message") String content) {
+    public ResponseBody<String> communicate(@RequestParam String fromUser,
+                                            @RequestParam String email,
+                                            @RequestParam String content) {
 
         MimeMessage message = javaMailSender.createMimeMessage();
         final String recipientTo = "examyou076@gmail.com";

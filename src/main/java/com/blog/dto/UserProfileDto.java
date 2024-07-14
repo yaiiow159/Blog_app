@@ -40,4 +40,7 @@ public class UserProfileDto implements Serializable {
 
     @Schema(description = "電話", example = "0912345678")
     private String phoneNumber;
+
+    @Schema(description = "使用者頭像圖片")
+    private String imageUrl;
 }

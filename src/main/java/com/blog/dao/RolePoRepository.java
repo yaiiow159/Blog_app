@@ -18,4 +18,7 @@ public interface RolePoRepository extends JpaRepository<RolePo, Long>, JpaSpecif
 
     @Query(value = "SELECT * FROM roles WHERE name = :name", nativeQuery = true)
     boolean existsByName(@Param("name") String roleName);
+
+    @Query("SELECT r FROM RolePo r WHERE r.roleName = :roleName")
+    Optional<RolePo> findByRoleName(@Param("roleName") String roleName);
 }

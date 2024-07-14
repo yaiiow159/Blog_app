@@ -1,7 +1,7 @@
 package com.blog.controller;
 
-import com.blog.response.ResponseBody;
 import com.blog.dto.MailNotificationDto;
+import com.blog.response.ResponseBody;
 import com.blog.service.MailNotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
-import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,7 +35,7 @@ public class MailNotificationController {
         return new ResponseBody<>(true, "查詢成功", mailNotificationDtoPage, HttpStatus.OK);
     }
 
-    @GetMapping("/{username}/{id}")
+    @GetMapping("/{id}")
     @Operation(summary = "取得郵件通知", description = "取得郵件通知", tags = {"郵件通知"})
     public ResponseBody<MailNotificationDto> getMailNotification(@PathVariable(name = "id") Long id) {
         MailNotificationDto mailNotificationDto;

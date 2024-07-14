@@ -3,7 +3,6 @@ package com.blog.controller;
 
 import com.blog.dto.SubscriptReqBody;
 import com.blog.response.ResponseBody;
-import com.blog.exception.ResourceNotFoundException;
 import com.blog.service.SubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

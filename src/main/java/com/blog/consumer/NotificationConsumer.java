@@ -1,18 +1,9 @@
 package com.blog.consumer;
 
 import com.alibaba.fastjson2.JSON;
-import com.blog.dao.CommentPoRepository;
 import com.blog.dao.MailNotificationPoRepository;
-import com.blog.dao.UserPoRepository;
-import com.blog.dao.UserReportPoRepository;
-import com.blog.dto.CommentDto;
 import com.blog.dto.EmailNotification;
-import com.blog.enumClass.CommentReportEnum;
-import com.blog.exception.ResourceNotFoundException;
-import com.blog.po.CommentPo;
 import com.blog.po.MailNotificationPo;
-import com.blog.po.UserPo;
-import com.blog.po.UserReportPo;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,9 +15,6 @@ import org.springframework.kafka.retrytopic.DltStrategy;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Recover;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -80,11 +68,6 @@ public class NotificationConsumer {
         }
     }
 
-    @Recover
-    public void recover(ConsumerRecord<String, String> record, Exception e) {
-        log.error("最大重試次數超過 進入死信對列中進行錯誤處理 遭遇異常為: {}", e.getMessage());
-
-    }
 
     @KafkaListener(topics = "email-notification-topic", groupId = "email-notification-consumer", topicPartitions = @TopicPartition(topic = "email-notification-topic", partitions = {"1"}))
     @RetryableTopic(dltStrategy = DltStrategy.ALWAYS_RETRY_ON_ERROR,timeout = "50000")

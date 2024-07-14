@@ -13,12 +13,14 @@ import java.util.List;
 public interface CategoryPoMapper extends BasicMapper {
     CategoryPoMapper INSTANCE = Mappers.getMapper(CategoryPoMapper.class);
 
+    @Mapping(target = "posts", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     CategoryPo toPo(CategoryDto categoryDto);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     CategoryDto toDto(CategoryPo categoryPo);
 
+    @Mapping(target = "posts", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @InheritConfiguration(name = "ignoreBaseEntityField")
     CategoryPo partialUpdate(CategoryDto categoryDto, @MappingTarget CategoryPo categoryPo);

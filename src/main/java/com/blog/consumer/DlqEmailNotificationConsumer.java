@@ -33,6 +33,7 @@ import java.time.ZoneId;
 @Slf4j
 @RequiredArgsConstructor
 public class DlqEmailNotificationConsumer {
+
     private final MailNotificationPoRepository mailNotificationPoRepository;
     private final UserPoRepository userPoRepository;
     private final UserReportPoRepository userReportPoRepository;
@@ -42,7 +43,7 @@ public class DlqEmailNotificationConsumer {
     @KafkaListener(topics = "email-notification-topic-dlq", id = "email-notification-consumer-dlq")
     @RetryableTopic(timeout = "10000")
     public void dlqEmailNotification(ConsumerRecord<String, String> record, Acknowledgment ack) {
-        log.info("Received email notification: {}", record.value());
+        log.info("死信對列郵寄通知 訊息內容: {}", record.value());
         EmailNotification emailNotification = JSON.parseObject(record.value(), EmailNotification.class);
         // 將 emailNotification 寫入資料庫
         try {
@@ -67,7 +68,7 @@ public class DlqEmailNotificationConsumer {
     @KafkaListener(topics = "review-notification-topic-dlq", id = "review-notification-consumer-dlq")
     @RetryableTopic(timeout = "10000")
     public void getReviewCommentNotification(ConsumerRecord<String, String> record, Acknowledgment ack) {
-        log.info("Received review comment notification: {}", record.value());
+        log.info("留言審核死信對列 訊息內容: {}", record.value());
         CommentDto commentDto = JSON.parseObject(record.value(), CommentDto.class);
         try {
             UserPo userPo = userPoRepository.findByUserName(commentDto.getName()).orElseThrow(() -> new UsernameNotFoundException("找不到使用者資料"));

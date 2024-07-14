@@ -23,8 +23,8 @@ public class LoginHistoryServiceImpl implements LoginHistoryService {
     }
 
     @Override
-    public void deleteLogBefore(LocalDateTime localDateTime) {
-        loginHistoryPoRepository.deleteByLoginTimestampBefore(localDateTime);
+    public void deleteLogBefore() {
+        loginHistoryPoRepository.deleteByLoginTimestampBefore();
     }
 
     @Override

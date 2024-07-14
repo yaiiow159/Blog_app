@@ -8,6 +8,7 @@ import com.blog.utils.JsonUtil;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.annotation.Resource;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -21,12 +22,12 @@ import java.util.Set;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class JwtUserDetailService implements UserDetailsService {
-    @Resource
-    private UserService userService;
+    private final UserService userService;
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        log.info("loadUserByUsername: {}", username);
+        log.info("當前加載使用者: {}", username);
         UserDto userDto = null;
         if (null != CacheUtil.get(username)) {
             try {
@@ -40,7 +41,7 @@ public class JwtUserDetailService implements UserDetailsService {
                 userDto = userService.findByName(username);
                 cacheUserInfo(userDto);
             } catch (UsernameNotFoundException e) {
-                log.error("Exception: {}", e.getMessage());
+                log.error("該使用者不存在: {}", e.getMessage());
                 throw new UsernameNotFoundException("該使用者不存在" + username);
             } catch (JsonProcessingException e) {
                 log.error("Json格式轉換時時發生錯誤: {}", e.getMessage());

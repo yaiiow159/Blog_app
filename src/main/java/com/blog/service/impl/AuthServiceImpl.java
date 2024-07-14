@@ -28,6 +28,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
@@ -55,13 +56,14 @@ public class AuthServiceImpl implements AuthService {
      * @param newPassword 新密碼
      */
     @Override
+    @Transactional
     public void resetPassword(final String token,final String newPassword){
         // 比對存放在redis中的token
         String email = stringRedisTemplate.opsForValue().get(token);
         UserPo userPo = userJpaRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("找不到使用者 " + email));
         userPo.setPassword(passwordEncoder.encode(newPassword));
 
-        logger.debug("新密碼(hash加鹽) " + newPassword);
+        logger.debug("新密碼(hash加鹽): " + newPassword);
 
         userJpaRepository.saveAndFlush(userPo);
         // 更新spring-security的數據
@@ -104,11 +106,14 @@ public class AuthServiceImpl implements AuthService {
      * @throws Exception  遇到異常時通一拋出
      */
     @Override
+    @Transactional
     public void register(UserDto userDto) {
         if (!validateUserInfo(userDto)) {
+            logger.error("註冊失敗, 請檢查使用者資訊");
             throw new ValidateFailedException("註冊失敗, 請檢查使用者資訊");
         }
         if(userJpaRepository.findByUserNameOrEmail(userDto.getUserName(), userDto.getEmail()).isPresent()) {
+            logger.error("註冊失敗, 使用者名稱或電子郵件已經被註冊");
             throw new ValidateFailedException("註冊失敗, 使用者名稱或電子郵件已經被註冊");
         }
         logger.info("註冊使用者: " + userDto.getUserName());

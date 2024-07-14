@@ -34,15 +34,15 @@ public class UserDto extends BaseDto implements Serializable {
     private String groupName;
 
     @Schema(description = "使用者密碼",example = "admin1234",requiredMode = Schema.RequiredMode.REQUIRED)
-    @Pattern(regexp = "^[a-zA-Z0-9_-]{6,16}$",message = "密碼格式錯誤")
-    String password;
+    @Pattern(regexp = "^[A-Za-z][A-Za-z0-9]{5,15}$",message = "密碼格式錯誤")
+    private String password;
 
     @Schema(description = "電子郵件地址",example = "admin1234@example.com")
     @Email(message = "電子郵件格式錯誤",regexp = "^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$")
-    String email;
+    private String email;
 
     @Schema(description = "是否鎖定",example = "false")
-    Boolean isLocked;
+    private Boolean isLocked;
 
     @Schema(description = "使用者名稱",example = "admin",requiredMode = Schema.RequiredMode.REQUIRED)
     private String userName;
