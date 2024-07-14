@@ -1,11 +1,10 @@
 package com.blog.handler;
 
 import com.blog.exception.ResourceNotFoundException;
-import com.blog.response.ResponseBody;
 import com.blog.exception.ValidateFailedException;
+import com.blog.response.ResponseBody;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ValidationException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.MailException;
 import org.springframework.security.access.AccessDeniedException;

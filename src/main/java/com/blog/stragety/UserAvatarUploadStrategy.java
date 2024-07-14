@@ -21,15 +21,21 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 @Component
-@RequiredArgsConstructor
 public class UserAvatarUploadStrategy implements ImageUploadStrategy {
     private final Cloudinary cloudinary;
     private final UserPoRepository userPoRepository;
 
-    @Autowired
-    @Qualifier("defaultThreadPoolExecutor")
-    private ThreadPoolExecutor threadPoolExecutor;
+    private final ThreadPoolExecutor threadPoolExecutor;
     private static final Logger logger = LoggerFactory.getLogger(UserAvatarUploadStrategy.class);
+
+    @Autowired
+    public UserAvatarUploadStrategy(Cloudinary cloudinary,
+                                    UserPoRepository userPoRepository,
+                                    @Qualifier("defaultThreadPoolExecutor") ThreadPoolExecutor threadPoolExecutor) {
+        this.cloudinary = cloudinary;
+        this.userPoRepository = userPoRepository;
+        this.threadPoolExecutor = threadPoolExecutor;
+    }
 
     /**
      * 上傳檔案至服務器
