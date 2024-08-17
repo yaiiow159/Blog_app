@@ -1,20 +1,15 @@
 package com.blog.controller;
 
 import com.blog.annotation.NoResubmit;
-import com.blog.response.ResponseBody;
 import com.blog.dto.CommentDto;
-import com.blog.exception.ResourceNotFoundException;
+import com.blog.response.ResponseBody;
 import com.blog.service.CommentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,7 +25,7 @@ public class CommentController {
     private final CommentService commentService;
 
     @GetMapping("/{id}")
-    @Operation(summary = "查詢評論",description = "查詢一篇文章底下的特定評論")
+    @Operation(summary = "查詢評論",description = "查詢一個特定評論")
     public ResponseBody<CommentDto> getComment(@Parameter(description = "評論id",example = "1")@PathVariable Long id){
         CommentDto commentDto;
         try {
@@ -42,7 +37,7 @@ public class CommentController {
     }
 
     @GetMapping("/post/{postId}")
-    @Operation(summary = "查詢評論",description = "查詢一篇評論")
+    @Operation(summary = "查詢一篇文章底下的評論列表",description = "查詢一篇文章底下的評論列表")
     public ResponseBody<List<CommentDto>> getComments(@Parameter(description = "文章id",example = "1")@PathVariable Long postId){
         List<CommentDto> commentDtoList;
         try {
@@ -108,7 +103,7 @@ public class CommentController {
 
     @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    @PostMapping("/{id}/like")
+    @PutMapping("/{id}/like")
     @Operation(summary = "按讚評論",description = "按讚一篇文章底下的評論")
     public ResponseBody<String> likeComment(@Parameter(description = "評論id",example = "1")@PathVariable Long id){
         try {

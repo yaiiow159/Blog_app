@@ -8,7 +8,6 @@ import com.blog.dao.UserReportPoRepository;
 import com.blog.dto.CommentDto;
 import com.blog.dto.EmailNotification;
 import com.blog.enumClass.CommentReportEnum;
-import com.blog.exception.ResourceNotFoundException;
 import com.blog.exception.ValidateFailedException;
 import com.blog.po.CommentPo;
 import com.blog.po.MailNotificationPo;
@@ -34,6 +33,7 @@ import java.time.ZoneId;
 @Slf4j
 @RequiredArgsConstructor
 public class RetryNotificationConsumer {
+
     private final MailNotificationPoRepository mailNotificationPoRepository;
     private final JavaMailSender javaMailSender;
     private final UserPoRepository userPoRepository;
@@ -41,10 +41,10 @@ public class RetryNotificationConsumer {
     private final CommentPoRepository commentPoRepository;
     private static final String EMAIL_SENDER = "TimmyChung";
 
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional
     @KafkaListener(topics = "email-notification-topic-retry", id = "email-notification-consumer-retry")
     public void retryEmailNotification(ConsumerRecord<String, String> record, Acknowledgment ack) {
-        log.info("Received email notification: {}", record.value());
+        log.info("重試隊列郵件通知 訊息內容: {}", record.value());
 
         EmailNotification emailNotification = JSON.parseObject(record.value(), EmailNotification.class);
 
@@ -75,14 +75,15 @@ public class RetryNotificationConsumer {
             ack.acknowledge();
             log.info("存儲 mq 重試對列 郵件訊息 成功");
         } catch (Exception e) {
-            log.error("存儲 mq 重試對列 郵件訊息 失敗 原因: {}", e.getMessage());
+            log.error("存儲 mq 重試對列 郵件訊息 失敗", e);
+            throw new ValidateFailedException("存儲 mq 重試對列 郵件訊息 失敗");
         }
     }
 
     @KafkaListener(topics = "review-notification-topic-retry", id = "review-notification-consumer-retry")
     @Transactional
     public void getReviewCommentNotification(ConsumerRecord<String, String> record, Acknowledgment ack) {
-        log.info("Received review comment notification: {}", record.value());
+        log.info("重試隊列審核留言 訊息內容: {}", record.value());
         CommentDto commentDto = JSON.parseObject(record.value(), CommentDto.class);
         try {
             UserPo userPo = userPoRepository.findByUserName(commentDto.getName()).orElseThrow(() -> new UsernameNotFoundException("找不到使用者資料"));

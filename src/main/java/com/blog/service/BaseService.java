@@ -17,7 +17,7 @@ public interface BaseService <T> {
 
     void delete(Long id) throws Exception;
 
-    T findById(Long id) throws EntityNotFoundException, Exception;
+    T findById(Long id) throws Exception;
 
     List<T> findAll() throws Exception;
 

@@ -2,6 +2,7 @@ package com.blog.service.impl;
 
 import com.blog.dao.RolePoRepository;
 import com.blog.dto.RoleDto;
+import com.blog.exception.ValidateFailedException;
 import com.blog.mapper.RolePoMapper;
 import com.blog.po.RolePo;
 import com.blog.service.RoleService;
@@ -97,8 +98,13 @@ public class RoleServiceImpl implements RoleService {
         if(!rolePoRepository.existsById(id)) {
             throw new EntityNotFoundException("找不到該角色序號" + id + "的資料");
         }
+        // 驗證是否有其他使用者正在使用該角色，有則不能刪
+        if(rolePoRepository.countByIdIfUserUse(id) > 0) {
+            throw new ValidateFailedException("該角色已被使用，無法刪除");
+        }
         rolePoRepository.deleteById(id);
     }
+
 
     /**
      * 搜尋對應序號的角色資訊

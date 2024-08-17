@@ -10,6 +10,7 @@ import com.blog.jwt.JwtResponseBody;
 import com.blog.service.AuthService;
 import com.blog.utils.JwtTokenUtil;
 
+import com.blog.utils.RedisCacheClient;
 import com.blog.utils.SpringSecurityUtil;
 import com.google.code.kaptcha.Constants;
 import com.google.code.kaptcha.Producer;
@@ -45,11 +46,12 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
+
     private final AuthenticationManager authenticationManager;
     private final AuthService authService;
     private final JwtTokenUtil jwtTokenUtil;
     private final Producer producer;
-    private final StringRedisTemplate stringRedisTemplate;
+    private final RedisCacheClient redisCacheClient;
     private static final String JWT_TYPE = "Bearer";
 
     /*
@@ -66,8 +68,8 @@ public class AuthController {
         response.setDateHeader("Expires", 0);
         String capText = producer.createText();
         BufferedImage bi = producer.createImage(capText);
-        stringRedisTemplate.opsForValue().set(Constants.KAPTCHA_SESSION_KEY, capText);
-        stringRedisTemplate.expire(Constants.KAPTCHA_SESSION_KEY, 60, TimeUnit.SECONDS);
+
+        redisCacheClient.set(Constants.KAPTCHA_SESSION_KEY, capText, 60L, TimeUnit.SECONDS);
 
         ServletOutputStream out = null;
         try {
@@ -95,7 +97,7 @@ public class AuthController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true)
             @RequestBody @Validated JwtRequestBody jwtRequest) {
         // 驗證圖形驗證碼
-        final String captchaCode = stringRedisTemplate.opsForValue().get(Constants.KAPTCHA_SESSION_KEY);
+        final String captchaCode = redisCacheClient.get(Constants.KAPTCHA_SESSION_KEY);
         //驗證圖形驗證碼
         if (Objects.equals(captchaCode, null) || !captchaCode.equalsIgnoreCase(jwtRequest.getCaptchaCode())) {
             throw new ValidateFailedException(ValidateFailedException.DomainErrorStatus.CAPTCHA_VALIDATION_ERROR, "驗證碼錯誤, 請重新輸入");
@@ -114,6 +116,8 @@ public class AuthController {
                 .account(user.getUsername())
                 .roles(roles)
                 .build();
+
+        log.info("登入成功 資訊 : {}", res);
 
         return new ResponseBody<>(true, "登入成功", res, HttpStatus.OK);
     }
@@ -134,7 +138,7 @@ public class AuthController {
             log.error("發送電子郵件失敗 失敗原因 : {}", e.getMessage());
             return new ResponseBody<>(false, "發送電子郵件失敗, 請聯繫管理員", HttpStatus.BAD_REQUEST);
         }
-        return new ResponseBody<>(true, "發送電子郵件成功", HttpStatus.OK);
+        return new ResponseBody<>(true, "重設信件已發送至" + email + "請前去查看", HttpStatus.OK);
     }
 
 

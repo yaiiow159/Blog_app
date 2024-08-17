@@ -5,6 +5,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -17,7 +18,7 @@ public class RedisLockUtil {
     private static final Logger logger = LoggerFactory.getLogger(RedisLockUtil.class);
 
     @Resource(name = "noResubmitThreadPoolExecutor")
-    private ThreadPoolExecutor executor;
+    private ThreadPoolTaskExecutor executor;
 
     @Resource
     private RedissonClient redisson;

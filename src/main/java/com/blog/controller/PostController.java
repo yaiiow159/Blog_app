@@ -144,7 +144,7 @@ public class PostController {
 
     @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "創建發布文章API",description = "創建發布文章API")
     public ResponseBody<PostDto> createPost (@RequestBody @Validated PostDto postDto) {
         try {
@@ -157,7 +157,7 @@ public class PostController {
 
     @NoResubmit(delaySecond = 3)
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    @PutMapping
+    @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "更新發布文章API",description = "更新發布文章API")
     public ResponseBody<PostDto> updatePost(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "文章資訊")

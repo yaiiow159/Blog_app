@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,13 +26,13 @@ public class UserAvatarUploadStrategy implements ImageUploadStrategy {
     private final Cloudinary cloudinary;
     private final UserPoRepository userPoRepository;
 
-    private final ThreadPoolExecutor threadPoolExecutor;
+    private final ThreadPoolTaskExecutor threadPoolExecutor;
     private static final Logger logger = LoggerFactory.getLogger(UserAvatarUploadStrategy.class);
 
     @Autowired
     public UserAvatarUploadStrategy(Cloudinary cloudinary,
                                     UserPoRepository userPoRepository,
-                                    @Qualifier("defaultThreadPoolExecutor") ThreadPoolExecutor threadPoolExecutor) {
+                                    @Qualifier("defaultThreadPoolExecutor") ThreadPoolTaskExecutor threadPoolExecutor) {
         this.cloudinary = cloudinary;
         this.userPoRepository = userPoRepository;
         this.threadPoolExecutor = threadPoolExecutor;

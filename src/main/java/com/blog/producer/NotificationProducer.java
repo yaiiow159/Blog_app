@@ -5,7 +5,6 @@ import com.blog.dto.CommentDto;
 import com.blog.dto.EmailNotification;
 import com.blog.handler.KafkaSendReqHandler;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -15,6 +14,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class NotificationProducer {
+
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final KafkaSendReqHandler kafkaSendReqHandler;
     private static final Logger logger = LoggerFactory.getLogger(NotificationProducer.class);

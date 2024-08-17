@@ -116,6 +116,10 @@ public class CategoriesServiceImpl implements CategoriesService {
         if(id == null) {
             throw new IllegalArgumentException("請輸入分類序號");
         }
+        // 如果該分類下有其他文章則 無法刪除
+        if(categoryPoRepository.countByPostIfExist(id) > 0){
+            throw new ValidateFailedException("該分類下有文章，無法進行刪除");
+        }
         try {
             logger.info("刪除分類中.... {}", id);
             categoryPoRepository.deleteById(id);

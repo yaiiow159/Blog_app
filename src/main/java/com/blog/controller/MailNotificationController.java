@@ -21,7 +21,7 @@ public class MailNotificationController {
     private final MailNotificationService mailNotificationService;
 
     @GetMapping("/{username}")
-    @Operation(summary = "查詢所有郵件通知", description = "查詢所有郵件通知", tags = {"郵件通知"})
+    @Operation(summary = "查詢當前使用者所有郵件通知", description = "查詢當前使用者所有郵件通知", tags = {"郵件通知"})
     public ResponseBody<Page<MailNotificationDto>> getAllMailNotification(
         @Parameter(description = "使用者名稱", example = "John") @PathVariable(name = "username") String username,
         @Parameter(description = "頁數", example = "1") @RequestParam(name = "page", defaultValue = "1") Integer page,

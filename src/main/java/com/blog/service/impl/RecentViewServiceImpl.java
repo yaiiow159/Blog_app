@@ -30,15 +30,16 @@ public class RecentViewServiceImpl implements RecentViewService {
     private final RecentViewPoRepository recentViewPoRepository;
     private final UserPoRepository userJpaRepository;
     private final PostPoRepository postPoRepository;
+
     @Override
-    public Page<PostVo> getRecentView(String username,String authorName, String authorEmail, String title, Integer page, Integer size) throws UsernameNotFoundException {;
+    public Page<PostVo> getRecentView(String username, String authorName, String authorEmail, String title, Integer page, Integer size) throws UsernameNotFoundException {
         Pageable pageable = PageRequest.of(page - 1, size);
         //利用username 查詢使用者
-        if(!StringUtils.hasText(authorName)) {
+        if (!StringUtils.hasText(authorName)) {
             throw new UsernameNotFoundException("請輸入作者名稱");
         }
         Optional<UserPo> user = userJpaRepository.findByUserName(authorName);
-        if(user.isEmpty()) {
+        if (user.isEmpty()) {
             throw new UsernameNotFoundException("找不到該使用者" + authorName);
         }
         Long userId = user.get().getId();
@@ -50,7 +51,7 @@ public class RecentViewServiceImpl implements RecentViewService {
     public void createRecentView(RecentViewDto recentViewDto) throws UsernameNotFoundException {
         // 找出對應使用者
         String userName = recentViewDto.getUserName();
-        if(!StringUtils.hasText(userName)) {
+        if (!StringUtils.hasText(userName)) {
             throw new UsernameNotFoundException("找不到該用戶");
         }
         RecentViewPo recentViewPo = RecentViewPoMapper.INSTANCE.toPo(recentViewDto);

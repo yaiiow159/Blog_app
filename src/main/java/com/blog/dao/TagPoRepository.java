@@ -12,9 +12,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TagPoRepository extends JpaRepository<TagPo, Long>, JpaSpecificationExecutor<TagPo> {
-    Optional<TagPo> findByName(String name);
     @Query(value = "SELECT t.* FROM tag t WHERE t.id IN (SELECT tp.tag_id FROM post_tag tp WHERE tp.post_id = :id)", nativeQuery = true)
     List<TagPo> findAllTagsByPostId(@Param("id") Long postId);
     @Query("SELECT t FROM TagPo t ORDER BY t.createDate DESC LIMIT 10")
     List<TagPo> findHotTags();
+
+    @Query(value = "SELECT COUNT(1) FROM tag INNER JOIN post_tag on tag.id = post_tag.tag_id WHERE tag.id = ?",nativeQuery = true)
+    int countByPostIfExist(Long id);
 }

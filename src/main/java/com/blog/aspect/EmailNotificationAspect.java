@@ -82,8 +82,7 @@ public class EmailNotificationAspect {
                     .emailAddress(postDto.getAuthorEmail())
                     .subject("文章變動通知")
                     .build();
-            CompletableFuture<Void> future = mailService.sendMailAsync(emailNotification);
-            future.thenRun(() -> logger.debug("生產者進行文章新增通知 完成"));
+            mailService.sendMailAsync(emailNotification);
         } else if (operatedClass.equals(CommentPo.class)) {
             // 執行 留言新增通知
             assert commentDto != null;
@@ -98,8 +97,7 @@ public class EmailNotificationAspect {
                     .emailAddress(postPo.getAuthorEmail())
                     .subject("文章變動通知")
                     .build();
-            CompletableFuture<Void> future = mailService.sendMailAsync(emailNotification);
-            future.thenRun(() -> logger.debug("生產者進行收藏文章通知 完成"));
+            mailService.sendMailAsync(emailNotification);
         }
         // 收藏文章者 可收到 收藏文章變動通知 (如果該作者有更動文章 則會收到郵件通知)
         if (operatedClass.equals(PostPo.class) && subscriptionService.checkSubscription(SpringSecurityUtil.getCurrentUser(), postDto.getId())) {
@@ -112,8 +110,7 @@ public class EmailNotificationAspect {
                     .emailAddress(postDto.getAuthorEmail())
                     .subject("文章變動通知")
                     .build();
-            CompletableFuture<Void> future = mailService.sendMailAsync(emailNotification);
-            future.thenRun(() -> logger.debug("生產者進行收藏文章通知 完成"));
+            mailService.sendMailAsync(emailNotification);
         }
         logger.info("生產者通知郵件寄送結束...");
     }

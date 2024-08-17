@@ -26,7 +26,7 @@ public class FileUtil {
     }
 
     /*
-     * 生成檔案公鑰 (圖片存儲服務器) 生成方式 (檔案名稱hash(sha-256) + 當前時間戳)
+     * 生成檔案公鑰 (圖片存儲服務器) 生成方式 (檔案名稱hash(md5) + 當前時間戳)
      */
     public static String generatePublicId(String originalFilename) {
         return DigestUtils.md5Hex(originalFilename) + "_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy:MM:dd:HH:mm:ss"));

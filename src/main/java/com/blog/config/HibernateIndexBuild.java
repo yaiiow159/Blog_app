@@ -22,7 +22,7 @@ public class HibernateIndexBuild implements ApplicationListener<ApplicationEvent
     @Override
     @Transactional(readOnly = true,rollbackFor = Exception.class)
     public void onApplicationEvent(ApplicationEvent event) {
-        logger.info("build hibernate index");
+        logger.debug("初始化 hibernate index 中...");
         SearchSession searchSession = Search.session(entityManager);
         MassIndexer indexer = searchSession.massIndexer();
         indexer.idFetchSize(100);
@@ -35,6 +35,6 @@ public class HibernateIndexBuild implements ApplicationListener<ApplicationEvent
             logger.error("初始化 hibernate index 失敗 原因: {}", e.getMessage());
             Thread.currentThread().interrupt();
         }
-        logger.info("初始化 hibernate index 完成");
+        logger.debug("初始化 hibernate index 完成");
     }
 }

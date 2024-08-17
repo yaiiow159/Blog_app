@@ -13,8 +13,10 @@ import com.blog.po.RolePo;
 import com.blog.po.UserGroupPo;
 import com.blog.po.UserPo;
 import com.blog.service.AuthService;
+import com.blog.utils.RedisCacheClient;
 import com.blog.utils.UUIDUtil;
 import jakarta.mail.MessagingException;
+import jakarta.mail.internet.InternetAddress;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class AuthServiceImpl implements AuthService {
 
-    private final StringRedisTemplate stringRedisTemplate;
+    private final RedisCacheClient redisCacheClient;
     private final UserPoRepository userJpaRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserDetailsService userDetailsService;
@@ -56,10 +58,9 @@ public class AuthServiceImpl implements AuthService {
      * @param newPassword 新密碼
      */
     @Override
-    @Transactional
     public void resetPassword(final String token,final String newPassword){
         // 比對存放在redis中的token
-        String email = stringRedisTemplate.opsForValue().get(token);
+        String email = redisCacheClient.get(token);
         UserPo userPo = userJpaRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("找不到使用者 " + email));
         userPo.setPassword(passwordEncoder.encode(newPassword));
 
@@ -83,14 +84,14 @@ public class AuthServiceImpl implements AuthService {
     public void forgotPassword(final String email) throws MessagingException, UsernameNotFoundException {
         userJpaRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("找不到該使用者對應的電子郵件" + email));
         String token = UUIDUtil.getUUID32();
-        stringRedisTemplate.opsForValue().set(token, email, 5, TimeUnit.MINUTES);
+        redisCacheClient.set(token, email, 60L, TimeUnit.MINUTES);
 
         final String content =
                 "<a target='_blank' style='color: #1a73e8; text-decoration: none; font-weight: bold' href='http://localhost:3030/api/v1/auth/reset?token=" + token + "'>點擊這裡重置密碼</a>";
 
         MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(javaMailSender.createMimeMessage());
-        mimeMessageHelper.setTo(email);
-        mimeMessageHelper.setSubject("重置密碼");
+        mimeMessageHelper.setTo(new InternetAddress(email));
+        mimeMessageHelper.setSubject("Blog-App重置密碼信件");
         mimeMessageHelper.setText(content, true);
 
         javaMailSender.send(mimeMessageHelper.getMimeMessage());

@@ -15,7 +15,8 @@ public interface MailNotificationPoMapper {
 
     MailNotificationDto toDto(MailNotificationPo mailNotificationPo);
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,ignoreUnmappedSourceProperties = "id")
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
     MailNotificationPo partialUpdate(MailNotificationDto mailNotificationDto, @MappingTarget MailNotificationPo mailNotificationPo);
 
     List<MailNotificationDto> toDtoList(List<MailNotificationPo> mailNotificationPoList);

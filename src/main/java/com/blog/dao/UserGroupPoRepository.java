@@ -14,4 +14,7 @@ public interface UserGroupPoRepository extends JpaRepository<UserGroupPo, Long>,
 
     @Query("select ug from UserGroupPo ug join ug.userPoList u on u.id = ?1 and u.userGroupPo = ug")
     UserGroupPo findByUserPoListContaining(Long id);
+
+    @Query("select count(ug) from UserGroupPo ug join ug.userPoList u on u.id = ?1 and u.userGroupPo = ug")
+    int countByUserGroupId(Long id);
 }

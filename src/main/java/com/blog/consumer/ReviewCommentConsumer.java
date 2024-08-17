@@ -6,7 +6,6 @@ import com.blog.dao.UserPoRepository;
 import com.blog.dao.UserReportPoRepository;
 import com.blog.dto.CommentDto;
 import com.blog.enumClass.CommentReportEnum;
-import com.blog.exception.ResourceNotFoundException;
 import com.blog.exception.ValidateFailedException;
 import com.blog.po.CommentPo;
 import com.blog.po.UserPo;
@@ -31,13 +30,14 @@ import java.time.ZoneId;
 @Component
 @RequiredArgsConstructor
 public class ReviewCommentConsumer {
+
     private final UserPoRepository userPoRepository;
     private final UserReportPoRepository userReportPoRepository;
     private final CommentPoRepository commentPoRepository;
 
     @KafkaListener(topics = "review-notification-topic", groupId = "review-notification-consumer",
             topicPartitions = @TopicPartition(topic = "review-notification-topic", partitions = {"0"}))
-    @RetryableTopic(dltStrategy = DltStrategy.ALWAYS_RETRY_ON_ERROR,timeout = "50000")
+    @RetryableTopic(dltStrategy = DltStrategy.ALWAYS_RETRY_ON_ERROR)
     @Transactional
     public void getReviewCommentPartition0(ConsumerRecord<String, String> record, Acknowledgment ack) {
         log.info("接收到 review-notification-topic 訊息: {}", record.value());
@@ -63,7 +63,7 @@ public class ReviewCommentConsumer {
 
     @KafkaListener(topics = "review-notification-topic", groupId = "review-notification-consumer",
             topicPartitions = @TopicPartition(topic = "review-notification-topic", partitions = {"1"}))
-    @RetryableTopic(dltStrategy = DltStrategy.ALWAYS_RETRY_ON_ERROR,timeout = "50000")
+    @RetryableTopic(dltStrategy = DltStrategy.ALWAYS_RETRY_ON_ERROR)
     @Transactional
     public void getReviewCommentPartition1(ConsumerRecord<String, String> record, Acknowledgment ack) {
         log.info("接收到 review-notification-topic 訊息: {}", record.value());
@@ -79,7 +79,6 @@ public class ReviewCommentConsumer {
             userReportPo.setReason(commentDto.getReason());
             userReportPo.setReportTime(LocalDateTime.now(ZoneId.of("Asia/Taipei")));
             userReportPoRepository.saveAndFlush(userReportPo);
-
             ack.acknowledge();
         } catch (Exception e) {
             log.error("處理審核通知失敗 原因: {}", e.getMessage());
@@ -89,7 +88,7 @@ public class ReviewCommentConsumer {
 
     @KafkaListener(topics = "review-notification-topic", groupId = "review-notification-consumer",
             topicPartitions = @TopicPartition(topic = "review-notification-topic", partitions = {"2"}))
-    @RetryableTopic(dltStrategy = DltStrategy.ALWAYS_RETRY_ON_ERROR,timeout = "50000")
+    @RetryableTopic(dltStrategy = DltStrategy.ALWAYS_RETRY_ON_ERROR)
     @Transactional
     public void getReviewCommentPartition2(ConsumerRecord<String, String> record, Acknowledgment ack) {
         log.info("接收到 review-notification-topic 訊息: {}", record.value());

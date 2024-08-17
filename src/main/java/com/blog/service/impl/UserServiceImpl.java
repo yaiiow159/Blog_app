@@ -5,6 +5,7 @@ import com.blog.dao.*;
 import com.blog.dto.UserDto;
 import com.blog.dto.UserProfileDto;
 import com.blog.exception.ValidateFailedException;
+import com.blog.mapper.UserGroupPoMapper;
 import com.blog.mapper.UserPoMapper;
 import com.blog.po.RolePo;
 import com.blog.po.UserGroupPo;
@@ -28,6 +29,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
@@ -50,6 +52,7 @@ public class UserServiceImpl implements UserService {
      * @throws Exception 遇到異常時拋出
      */
     @Override
+    @Transactional
     public void save(UserDto userDto) throws Exception {
         logger.debug("新增使用者資訊: {}", userDto);
         UserPo userPo = UserPoMapper.INSTANCE.toPo(userDto);
@@ -76,9 +79,12 @@ public class UserServiceImpl implements UserService {
      * @throws Exception 遇到異常時拋出
      */
     @Override
+    @Transactional
     public void update(UserDto userDto) throws Exception {
         logger.debug("更新使用者資訊: {}", userDto);
         UserPo userPo = userJpaRepository.findById(userDto.getId()).orElseThrow(() -> new EntityNotFoundException("找不到使用者 " + userDto.getId()));
+        // 更新使用者資訊
+        userPo = UserPoMapper.INSTANCE.partialUpdate(userDto, userPo);
         // 建立群組關聯
         UserGroupPo userGroupPo = userGroupPoRepository.findById(userDto.getGroupId()).orElseThrow(() -> new EntityNotFoundException("找不到群組資訊"));
         userPo.setUserGroupPo(userGroupPo);
@@ -113,6 +119,7 @@ public class UserServiceImpl implements UserService {
      * @throws Exception 遇到異常時拋出
      */
     @Override
+    @Transactional
     public void delete(Long id) throws Exception {
         logger.debug("刪除使用者序號: {}", id);
         if(id == null) {
@@ -176,6 +183,7 @@ public class UserServiceImpl implements UserService {
      * @param id 使用者序號
      */
     @Override
+    @Transactional
     public void lock(long id){
         UserPo userPo = userJpaRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("查無此使用者"));
         userPo.setLocked(true);
@@ -188,6 +196,7 @@ public class UserServiceImpl implements UserService {
      * @param id 使用者序號
      */
     @Override
+    @Transactional
     public void unlock(long id){
         UserPo userPo = userJpaRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("查無此使用者"));
         userPo.setLocked(false);
@@ -200,6 +209,7 @@ public class UserServiceImpl implements UserService {
      * @param userProfileDto 個人資訊
      */
     @Override
+    @Transactional
     public void updateProfile(UserProfileDto userProfileDto){
         UserPo userPo = userJpaRepository.findById(userProfileDto.getId()).orElseThrow(() -> new EntityNotFoundException("查無此使用者"));
         BeanUtils.copyProperties(userProfileDto, userPo, "id", "createUser", "createDate");

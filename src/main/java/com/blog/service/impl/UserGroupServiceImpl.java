@@ -12,6 +12,7 @@ import com.blog.service.UserGroupService;
 import jakarta.mail.MethodNotSupportedException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,7 @@ public class UserGroupServiceImpl implements UserGroupService {
      * @throws Exception 遭遇異常時拋出
      */
     @Override
+    @Transactional
     public void save(UserGroupDto userGroupDto) throws Exception {
         if(userGroupDto == null){
             throw new IllegalArgumentException("使用者群組資訊不能為空");
@@ -71,6 +73,7 @@ public class UserGroupServiceImpl implements UserGroupService {
      * @throws Exception 遭遇異常時拋出
      */
     @Override
+    @Transactional
     public void update(UserGroupDto userGroupDto) throws Exception {
         if(userGroupDto == null){
             throw new IllegalArgumentException("使用者群組資訊不能為空");
@@ -101,12 +104,16 @@ public class UserGroupServiceImpl implements UserGroupService {
      * @throws Exception 遭遇異常時拋出
      */
     @Override
+    @Transactional
     public void delete(Long id) throws Exception {
         if(id == null){
             throw new IllegalArgumentException("使用者群組id不能為空");
         }
         if(!userGroupRepository.existsById(id)){
             throw new EntityNotFoundException("使用者群組不存在");
+        }
+        if(userGroupRepository.countByUserGroupId(id) > 0){
+            throw new ValidateFailedException("該使用者群組有使用者");
         }
         userGroupRepository.deleteById(id);
     }
@@ -119,7 +126,7 @@ public class UserGroupServiceImpl implements UserGroupService {
      * @throws Exception 遭遇異常時拋出
      */
     @Override
-    public UserGroupDto findById(Long userGroupId) throws Exception {
+    public UserGroupDto findById(Long userGroupId) throws EntityNotFoundException {
         if(userGroupId == null){
             throw new IllegalArgumentException("使用者群組id不能為空");
         }

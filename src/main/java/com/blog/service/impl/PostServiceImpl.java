@@ -28,6 +28,8 @@ import org.hibernate.search.mapper.orm.Search;
 import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 
 import org.springframework.data.domain.PageRequest;
@@ -44,6 +46,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
+
     private final CategoryPoRepository categoryPoRepository;
     private final PostPoRepository postPoRepository;
     private final TagPoRepository tagPoRepository;
@@ -86,7 +89,7 @@ public class PostServiceImpl implements PostService {
      * @throws Exception 遭遇異常時拋出
      */
     @Override
-    @Notification(operation = "edit", operatedClass = PostPo.class)
+    @Notification(operation = "edit", operatedClass = PostDto.class)
     public void update(PostDto postDto) throws Exception {
         if (postDto == null) {
             throw new IllegalArgumentException("請輸入文章資訊");
@@ -188,7 +191,8 @@ public class PostServiceImpl implements PostService {
      * @param id  文章序號
      */
     @Override
-    public void like(Long id) {
+    @Cacheable(value = "like", key = "#id")
+    public  void like(Long id) {
         postPoRepository.addLike(id);
     }
 
@@ -198,6 +202,7 @@ public class PostServiceImpl implements PostService {
      * @param id 文章序號
      */
     @Override
+    @Cacheable(value = "disLike", key = "#id")
     public void cancelLike(Long id) {
         postPoRepository.disLike(id);
     }
@@ -209,6 +214,7 @@ public class PostServiceImpl implements PostService {
      * @return List<PostDto> 文章按讚數集合
      */
     @Override
+    @CacheEvict(value = "like", key = "#id")
     public Integer queryLikeCount(Long id) {
         return postPoRepository.getLikeCount(id);
     }

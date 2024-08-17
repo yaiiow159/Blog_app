@@ -3,6 +3,7 @@ package com.blog.service.impl;
 import com.blog.dao.CategoryPoRepository;
 import com.blog.dao.TagPoRepository;
 import com.blog.dto.TagDto;
+import com.blog.exception.ValidateFailedException;
 import com.blog.mapper.TagPoMapper;
 import com.blog.po.CategoryPo;
 import com.blog.po.TagPo;
@@ -15,14 +16,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +39,7 @@ public class TagServiceImpl implements TagService {
      * @throws Exception 遭遇異常時拋出
      */
     @Override
+    @Transactional
     public void save(TagDto tagDto) throws Exception {
         logger.debug("新增標籤... " + tagDto);
         TagPo tagPo = TagPoMapper.INSTANCE.toPo(tagDto);
@@ -62,6 +63,7 @@ public class TagServiceImpl implements TagService {
      * @throws Exception 遭遇異常時拋出
      */
     @Override
+    @Transactional
     public void update(TagDto tagDto) throws Exception {
         TagPo tagPo = tagPoRepository.findById(tagDto.getId()).orElseThrow(() -> new EntityNotFoundException("找不到標籤序號" + tagDto.getId() + "的資料"));
         TagPoMapper.INSTANCE.partialUpdate(tagDto, tagPo);
@@ -91,6 +93,7 @@ public class TagServiceImpl implements TagService {
      * @throws Exception 遭遇異常時拋出
      */
     @Override
+    @Transactional
     public void delete(Long id) throws Exception {
         logger.debug("刪除標籤... " + id);
         if(id == null){
@@ -98,6 +101,10 @@ public class TagServiceImpl implements TagService {
         }
         if(!tagPoRepository.existsById(id)){
             throw new EntityNotFoundException("找不到該標籤序號" + id + "的資料");
+        }
+        // 如果該標籤下有其他文章則 無法刪除
+        if(tagPoRepository.countByPostIfExist(id) > 0){
+            throw new ValidateFailedException("該標籤有文章在使用，無法進行刪除");
         }
         tagPoRepository.deleteById(id);
     }
@@ -149,7 +156,7 @@ public class TagServiceImpl implements TagService {
      * @throws Exception 遭遇異常時拋出
      */
     @Override
-    public List<TagDto> findHotTags() throws Exception {
+    public List<TagDto> findHotTags() {
         List<TagPo> hotTags = tagPoRepository.findHotTags();
         logger.debug("搜尋標籤... 標籤內容為 {}", hotTags);
         return hotTags.stream().map(TagPoMapper.INSTANCE::toDto).toList();

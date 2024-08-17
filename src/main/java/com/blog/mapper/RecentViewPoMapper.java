@@ -13,7 +13,8 @@ public interface RecentViewPoMapper {
 
     RecentViewDto toDto(RecentViewPo recentViewPo);
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,ignoreUnmappedSourceProperties = "id")
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
     RecentViewPo partialUpdate(RecentViewDto recentViewDto, @MappingTarget RecentViewPo recentViewPo);
 
 }

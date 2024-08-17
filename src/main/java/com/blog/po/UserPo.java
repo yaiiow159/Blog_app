@@ -63,6 +63,14 @@ public class UserPo extends BasicPo implements Serializable {
     @Column(name = "image_name")
     private String imageName;
 
+    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private Set<FollowPo> following = new HashSet<>();
+
+    @OneToMany(mappedBy = "followee", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private Set<FollowPo> followers = new HashSet<>();
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_group_po_id",nullable = false,
             foreignKey = @ForeignKey(name = "fk_user_group_user"),

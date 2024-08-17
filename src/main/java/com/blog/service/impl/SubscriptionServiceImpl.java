@@ -105,6 +105,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             SubscriptionPo subscriptionPo = subscriptionPoRepository.findByAuthorNameAndPostId(username, postId).orElse(null);
             return subscriptionPo != null;
         }
-        return false;
+        return Boolean.FALSE;
     }
 }

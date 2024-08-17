@@ -21,4 +21,7 @@ public interface RolePoRepository extends JpaRepository<RolePo, Long>, JpaSpecif
 
     @Query("SELECT r FROM RolePo r WHERE r.roleName = :roleName")
     Optional<RolePo> findByRoleName(@Param("roleName") String roleName);
+
+    @Query(value = "SELECT COUNT(1) FROM roles JOIN user_roles ur on roles.id = ur.role_id WHERE ur.role_id = ?1",nativeQuery = true)
+    int countByIdIfUserUse(long id);
 }

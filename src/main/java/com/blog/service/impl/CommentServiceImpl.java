@@ -1,5 +1,6 @@
 package com.blog.service.impl;
 
+import com.blog.annotation.Notification;
 import com.blog.dao.CommentPoRepository;
 import com.blog.dao.PostPoRepository;
 import com.blog.dao.UserPoRepository;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
+
     private final PostPoRepository postPoRepository;
     private final CommentPoRepository commentPoRepository;
     private final UserPoRepository userJpaRepository;
@@ -48,6 +50,7 @@ public class CommentServiceImpl implements CommentService {
      */
     @Override
     @Transactional
+    @Notification(operation = "add", operatedClass = CommentDto.class)
     public void save(CommentDto commentDto) throws Exception {
         if(commentDto == null) {
             throw new IllegalArgumentException("新增評論資訊不得為空");
@@ -71,7 +74,8 @@ public class CommentServiceImpl implements CommentService {
      * @throws Exception 遭遇異常時拋出
      */
     @Override
-    public void update(CommentDto commentDto) throws Exception {
+    @Transactional
+    public void update(CommentDto commentDto) {
         if(commentDto == null) {
             throw new IllegalArgumentException("更新評論資訊不得為空");
         }
@@ -101,7 +105,8 @@ public class CommentServiceImpl implements CommentService {
      * @throws Exception 遭遇異常時拋出
      */
     @Override
-    public void delete(Long id) throws Exception {
+    @Transactional
+    public void delete(Long id){
         if(id == null) {
             throw new IllegalArgumentException("刪除評論資訊不得為空");
         }

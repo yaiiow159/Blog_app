@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/communicate")
 @RestController
 public class CommunicateController {
+
     private final JavaMailSender javaMailSender;
 
     @NoResubmit(delaySecond = 3)

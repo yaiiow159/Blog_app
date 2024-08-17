@@ -5,24 +5,19 @@ import com.blog.service.ImageService;
 import com.blog.stragety.PostImageUploadStrategy;
 import com.blog.stragety.UploadImageContext;
 import com.blog.stragety.UserAvatarUploadStrategy;
-import com.cloudinary.Cloudinary;
-import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
-import org.apache.tomcat.util.http.fileupload.UploadContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
 public class ImageServiceImpl implements ImageService {
+
     private final UserAvatarUploadStrategy userAvatarUploadStrategy;
     private final PostImageUploadStrategy postImageUploadStrategy;
     private static final Logger logger = LoggerFactory.getLogger(ImageServiceImpl.class);
@@ -36,14 +31,8 @@ public class ImageServiceImpl implements ImageService {
      */
     @Override
     public String upload(MultipartFile file, String type) throws FileUploadException {
-        // 檢查 檔案類型 (png 才可以)
-        if (!Objects.equals(file.getContentType(), "image/png")) {
-            throw new ValidateFailedException("檔案類型不符, 限定 png");
-        }
-        // 最大不超過 5MB
-        if (file.getSize() > 1024 * 1024 * 5) {
-            throw new ValidateFailedException("檔案大小超過限制, 限定 1MB");
-        }
+        // 先進行驗證
+        validateFile(file);
         String url;
         UploadImageContext uploadImageContext;
         try {
@@ -64,5 +53,19 @@ public class ImageServiceImpl implements ImageService {
             throw new FileUploadException("上傳失敗 原因: " + e.getMessage());
         }
         return url;
+    }
+
+    private void validateFile(MultipartFile file) throws ValidateFailedException {
+        if (file == null) {
+            throw new ValidateFailedException("檔案不能為空");
+        }
+        // 檢查 檔案類型 (png 才可以)
+        if (!Objects.equals(file.getContentType(), "image/png")) {
+            throw new ValidateFailedException("檔案類型不符, 限定 png");
+        }
+        // 最大不超過 5MB
+        if (file.getSize() > 1024 * 1024 * 5) {
+            throw new ValidateFailedException("檔案大小超過限制, 限定 1MB");
+        }
     }
 }

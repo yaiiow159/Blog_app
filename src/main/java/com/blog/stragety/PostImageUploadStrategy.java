@@ -6,17 +6,16 @@ import com.blog.utils.FileUtil;
 import com.blog.utils.SpringSecurityUtil;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 
@@ -25,13 +24,13 @@ public class PostImageUploadStrategy implements ImageUploadStrategy {
 
     private final Cloudinary cloudinary;
     private final PostPoRepository postPoRepository;
-    private final ThreadPoolExecutor threadPoolExecutor;
+    private final ThreadPoolTaskExecutor threadPoolExecutor;
     private static final Logger logger = LoggerFactory.getLogger(PostImageUploadStrategy.class);
 
     @Autowired
     public PostImageUploadStrategy(Cloudinary cloudinary,
                                    PostPoRepository postPoRepository,
-                                   @Qualifier("defaultThreadPoolExecutor") ThreadPoolExecutor threadPoolExecutor) {
+                                   @Qualifier("defaultThreadPoolExecutor") ThreadPoolTaskExecutor threadPoolExecutor) {
         this.cloudinary = cloudinary;
         this.postPoRepository = postPoRepository;
         this.threadPoolExecutor = threadPoolExecutor;

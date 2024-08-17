@@ -4,12 +4,9 @@ import com.blog.dao.UserPoRepository;
 import com.blog.exception.ValidateFailedException;
 import com.blog.po.UserPo;
 import com.blog.utils.SpringSecurityUtil;
-
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.stereotype.Component;
@@ -41,7 +38,7 @@ public class UserLockedInterceptor implements HandlerInterceptor {
         if (user.isPresent()) {
             UserPo userPo = user.get();
             if (userPo.isLocked()) {
-                throw new ValidateFailedException("帳號已被鎖定");
+                throw new ValidateFailedException("帳號已被鎖戶，請聯繫管理員解除帳戶");
             }
         }
         return true;
